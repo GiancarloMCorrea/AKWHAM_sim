@@ -63,3 +63,16 @@ make_redo_failed_jobs_file <- function(failed_jobs, fn = paste0("~/SSRTWG/Ecov_s
     }
   }
 }
+
+set_F_scenario = function(input, Fmax, Fmin, change_time = 0.5){
+  nby <- input$data$n_years_model
+  year_change <- floor(nby * change_time)
+  F_vals = numeric(nby)
+  Slope = (Fmax - Fmin)/year_change
+  F_vals[1] = Fmin
+  F_vals[2:year_change] = Fmin + Slope*(2:year_change)
+  F_vals[(year_change+1):nby] = Fmax + Slope*(year_change - (year_change+1):nby)
+  input$par$log_F1[] = log(Fmin)
+  input$par$F_devs[] = F_vals[-1] - F_vals[-length(F_vals)]
+  return(input)
+}

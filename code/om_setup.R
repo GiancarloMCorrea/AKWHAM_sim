@@ -6,17 +6,16 @@
 # Load required libraries
 library(tidyr)
 library(dplyr)
-library(here)
 library(ggplot2)
 library(wham)
-
-# Set working directory:
-setwd("C:/Use/GitHub/AKWHAM_sim")
 
 # Load auxiliary functions:
 source(file.path('code', "make_basic_info.R"))
 source(file.path('code', "make_om.R"))
 source(file.path('code', "sim_management.R"))
+source(file.path('code', "set_simulation_options.R"))
+source(file.path('code', "set_q.R"))
+source(file.path('code', "set_M.R"))
 
 # folder to write dfom and dfem
 write.dir = "inputs"
@@ -33,7 +32,7 @@ df.oms <- expand.grid(Ecov_obs_sig=Ecov_obs_sig, Ecov_re_sig=Ecov_re_sig, Ecov_r
 n.mods = dim(df.oms)[1] 
 df.oms$Model <- paste0("om_",1:n.mods)
 df.oms <- df.oms %>% select(Model, everything()) 
-saveRDS(df.oms, file.path("inputs", "df.oms.RDS"))
+saveRDS(df.oms, file.path(write.dir, "df.oms.RDS"))
 
 # Create basic WHAM input:
 gf_info = make_basic_info()
@@ -78,9 +77,6 @@ gf_growth <- list(model='vB_classic', init_vals=c(k, Linf, L_a[1]),
                   SD_vals=c(CV_a*L_a[1], CV_a*L_a[10]))
 gf_LW <- list(init_vals=c(a_LW, b_LW))
 
-# Create Beta array:
-beta_vals <- list(rep(list(matrix(0,1,length(gf_info$ages))), 7)) # R, M, Q, + 4
-
 # Make OMs --------------------------------------------------------------
 om_inputs = list()
 for(i in 1:NROW(df.oms)){
@@ -99,28 +95,30 @@ for(i in 1:NROW(df.oms)){
     ecov_i$where = "growth"
     ecov_i$where_subindex = df.oms$growth_par[i]
   }
-  om_inputs[[i]] <- make_om(selectivity = gf_selectivity,
-                      M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
-                      growth = gf_growth, LW = gf_LW,
-                      catchability = gf_Q,
-                      age_comp = "logistic-normal-miss0", 
-                      om_input = TRUE, df.oms = df.oms[i,]) 
+  om_inputs[[i]] <- make_om(Fmax = 0.8, Fmin = 0.1,
+                            F_change_time = 0.7,
+                            selectivity = gf_selectivity,
+                            M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
+                            growth = gf_growth, LW = gf_LW,
+                            catchability = gf_Q,
+                            age_comp = "logistic-normal-miss0", 
+                            om_input = TRUE, df.oms = df.oms[i,]) 
   om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
     bias_correct_pe = FALSE, bias_correct_oe = FALSE)
   #set L-N SD parameters for catch and index age comp
   om_inputs[[i]]$par$catch_paa_pars[,1] = log(0.3)
   om_inputs[[i]]$par$index_paa_pars[,1] = log(0.3)
-  om_inputs[[i]]$data$agg_catch_sigma[] = 0.05
-  om_inputs[[i]]$data$agg_index_sigma[] = 0.2
-  om_inputs[[i]]$data$catch_Neff[] = 1
-  om_inputs[[i]]$data$index_Neff[] = 1
 }
 
-saveRDS(om_inputs, file.path(here(), "Ecov_study", "growth", "inputs", "om_inputs.RDS"))
+# Save OM inputs:
+saveRDS(om_inputs, file.path(write.dir, "om_inputs.RDS"))
 
+
+# -------------------------------------------------------------------------
+# Define seeds:
 #I don't think we want to use the same (e.g. 1000) seeds for everything.
 set.seed(8675309)
 seeds = sample(x = (-1e9):(1e9), size = NROW(df.oms)*1000, replace = FALSE)
 seeds <- lapply(1:NROW(df.oms), function(x) seeds[(1:1000) + 1000*(x-1)])
-saveRDS(seeds, file.path(here(), "Ecov_study", "growth", "inputs","seeds.RDS"))
-seeds = readRDS(file.path(here::here(), "Ecov_study", "growth", "inputs","seeds.RDS"))
+saveRDS(seeds, file.path(write.dir,"seeds.RDS"))
+seeds = readRDS(file.path(write.dir,"seeds.RDS"))

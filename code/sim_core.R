@@ -5,13 +5,13 @@ omj = as.integer(args[2])
 emk = as.integer(args[3])
 ## .libPaths("~/Rlib/")
 library(wham)
-source(file.path(here::here(), "Ecov_study", "growth", "code", "sim_management.R"))
+source(file.path("code", "sim_management.R"))
 ## verify_version()
 ## simi=5;omj=1; emk=1
-om_inputs <- readRDS(file.path(here::here(),"Ecov_study", "growth", "inputs", "om_inputs.RDS"))
-em_inputs <- readRDS(file.path(here::here(),"Ecov_study", "growth", "inputs", "em_inputs.RDS"))
-df.ems <- readRDS(file.path(here::here(),"Ecov_study", "growth", "inputs", "df.ems.RDS"))
-df.oms <- readRDS(file.path(here::here(),"Ecov_study", "growth", "inputs", "df.oms.RDS"))
+om_inputs <- readRDS(file.path("inputs", "om_inputs.RDS"))
+em_inputs <- readRDS(file.path("inputs", "em_inputs.RDS"))
+df.ems <- readRDS(file.path("inputs", "df.ems.RDS"))
+df.oms <- readRDS(file.path("inputs", "df.oms.RDS"))
 #######################################################
 #need to have matching assumptions about CVs for catch and indices, too
 
@@ -24,35 +24,32 @@ model <- cbind(im=simi, om=omj, em=emk, optimized=FALSE, sdreport=FALSE, y,x)
 ## only new data for growth study is the marginal lengths in
 ## index_pal for survey 2
 obs_names <- c("agg_catch","agg_catch_sigma", "agg_indices", "agg_index_sigma", "catch_paa", "index_paa",
-  "Ecov_obs", "obs", "obsvec", "index_pal")
+               "catch_pal", "index_pal", 'catch_caal', 'index_caal',
+               "Ecov_obs", "obs", "obsvec")
 #######################################################
 
 #######################################################
 #I don't think we want to use the same (e.g. 1000) seeds for everything.
-seeds <- readRDS(file.path(here::here(), "Ecov_study", "growth", "inputs","seeds.RDS"))
+seeds <- readRDS(file.path("inputs","seeds.RDS"))
 #######################################################
 
 cat(paste0("START OM: ", omj, " Sim: ", simi, " EM: ", emk, "\n"))
-write.dir <- file.path(here::here(),"Ecov_study", "growth", "results", paste0("om", omj))
+write.dir <- file.path("results", paste0("om", omj))
 dir.create(write.dir, recursive = T, showWarnings = FALSE)
 #script.full.path <- file.path(here::here(), "Ecov_study", "growth", "code", "M_Ecov_om_sim_fit_script_hpcc.R")
 #system(paste0("Rscript --vanilla ", script.full.path, " " , this_om, " ",  this_em, " ", this_sim, " \n"))
 
 # Set seed
 om <- fit_wham(om_inputs[[omj]], do.fit = FALSE, MakeADFun.silent = TRUE)
-##seeds are different for each om
-#cat(omj)
-#cat(simi)
-#cat(length(seeds))
+# Define seed:
 set.seed(seeds[[omj]][simi])
 sim_data <- om$simulate(complete=TRUE)
 truth <- sim_data
-#save the version for reproducibility
+# save the version for reproducibility
 truth$wham_version = om$wham_version
 EM_input <- em_inputs[[emk]] # Read in the EM
-## EM_input$map$growth_a
-## EM_input$map$SD_par
-#put simulated data into the em input
+# Put simulated data into EM input:
+# IMPORTANT !!!!!!!!!!!!!!! DECIDE HOW TO DEAL WITH THIS EFFICIENTLY
 EM_input$data[obs_names] = sim_data[obs_names]
 #not estimating observation error in Ecov
 EM_input$par$Ecov_obs_logsigma[] <- om_inputs[[omj]]$par$Ecov_obs_logsigma
