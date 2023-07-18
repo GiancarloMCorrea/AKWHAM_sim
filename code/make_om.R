@@ -2,7 +2,7 @@ make_om <- function(Fmax = 0.8, Fmin = 0,
                     selectivity = NULL, M = NULL, NAA_re = NULL,
                     catchability = NULL, growth = NULL, LW = NULL,
 					WAA = NULL, LAA = NULL,
-                    ecov = NULL, age_comp = "logistic-normal-miss0",
+                    ecov = NULL, age_comp = "multinomial",
                     len_comp='multinomial',
                     om_input = TRUE,
                     F_change_time = 0.5, df.oms = NULL) {
@@ -19,9 +19,6 @@ make_om <- function(Fmax = 0.8, Fmin = 0,
   basic_info$use_index_caal <- array(1, dim = c(ny, basic_info$n_indices, nlbins))
   basic_info$use_catch_waa <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
   basic_info$use_index_waa <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
-
-  # ## for now assuming multinomial N=100
-  # basic_info$index_NeffL <- cbind(rep(1,ny), rep(100,ny))
 
   #overfishing_mult = 2.5 #multiplier for Fmsy for overfishing
   input <- wham::prepare_wham_input(basic_info = basic_info, growth = growth,

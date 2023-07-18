@@ -39,7 +39,7 @@ gf_info = make_basic_info()
 #selectivity pars:
 gf_selectivity = list(
   model = c("double-normal", "logistic"),
-  initial_pars = list(c(4,-1,1.5,1.4,0,0.4), c(1,0.5)))
+  initial_pars = list(c(4,-3,-1,-1.5,0,0), c(1,0.5)))
 # M pars:
 gf_M = list(model = "constant",
             initial_means = 0.2)
@@ -65,7 +65,7 @@ gf_ecov <- list(
 )
 
 #  Growth configuration:
-Linf <- 85
+Linf <- 100
 k <- 0.2
 t0 <- 0
 a_LW <- exp(-12.1)
@@ -95,19 +95,15 @@ for(i in 1:NROW(df.oms)){
     ecov_i$where = "growth"
     ecov_i$where_subindex = df.oms$growth_par[i]
   }
-  om_inputs[[i]] <- make_om(Fmax = 0.8, Fmin = 0.1,
+  om_inputs[[i]] <- make_om(Fmax = 0.5, Fmin = 0.1,
                             F_change_time = 0.7,
                             selectivity = gf_selectivity,
                             M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
                             growth = gf_growth, LW = gf_LW,
-                            catchability = gf_Q,
-                            age_comp = "logistic-normal-miss0", 
+                            catchability = gf_Q, 
                             om_input = TRUE, df.oms = df.oms[i,]) 
   om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
     bias_correct_pe = FALSE, bias_correct_oe = FALSE)
-  #set L-N SD parameters for catch and index age comp
-  om_inputs[[i]]$par$catch_paa_pars[,1] = log(0.3)
-  om_inputs[[i]]$par$index_paa_pars[,1] = log(0.3)
 }
 
 # Save OM inputs:

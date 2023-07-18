@@ -1,4 +1,6 @@
-# Create basic input. Define obs error in OM
+# Create basic input. 
+# IMPORTANT !!!
+# This function is used by the OM and EM setup.
 
 make_basic_info <- function(base_years = 1970:2021, ages = 1:10, Fhist = "updown", n_feedback_years = 0) { #changed years
         
@@ -24,7 +26,7 @@ make_basic_info <- function(base_years = 1970:2021, ages = 1:10, Fhist = "updown
     if(Fhist == "downup") info$F <- matrix(0.2 + c(seq(0.4,0,length.out = mid),seq(0,0.4,length.out=nby-mid)),nby, info$n_fleets)
     if(n_feedback_years>0) info$F <- rbind(info$F, info$F[rep(nby, n_feedback_years),, drop = F]) #same F as terminal year for feedback period
 
-	# Define obs error:
+	# Define obs error: 
     info$catch_cv <- matrix(0.05, ny, info$n_fleets)
     info$index_cv <- matrix(0.2, ny, info$n_indices)
     info$catch_Neff <- matrix(100, ny, info$n_fleets)
@@ -35,10 +37,10 @@ make_basic_info <- function(base_years = 1970:2021, ages = 1:10, Fhist = "updown
     info$index_caal_Neff <- array(5, dim = c(ny, info$n_fleets, nlbins))	
 
 	# More information:
-    info$fracyr_indices <- matrix(0.5, ny, info$n_indices) # mid year
+    info$fracyr_indices <- matrix(0, ny, info$n_indices) # Jan 1st
     info$index_units <- rep(1, length(info$n_indices)) #biomass
     info$index_paa_units <- rep(2, length(info$n_indices)) #abundance
-    info$fracyr_SSB <- rep(0.25,ny)
+    info$fracyr_SSB <- rep(0, ny)
     info$q <- rep(1, info$n_indices) # what is this?
     info$selblock_pointer_fleets <- t(matrix(1:info$n_fleets, info$n_fleets, ny))
     info$selblock_pointer_indices <- t(matrix(info$n_fleets + 1:info$n_indices, info$n_indices, ny))
@@ -54,8 +56,8 @@ make_basic_info <- function(base_years = 1970:2021, ages = 1:10, Fhist = "updown
 	# Define biological parameters to create 'waa' matrix:
 	# Data simulated on Jan 1st
 	# This is not important since sim_data will do it correctly
-    Linf <- 85
-    k <- 0.3
+    Linf <- 100
+    k <- 0.2
     t0 <- 0
     a_LW <- exp(-12.1)
     b_LW <- 3.2
@@ -64,12 +66,15 @@ make_basic_info <- function(base_years = 1970:2021, ages = 1:10, Fhist = "updown
     nwaa <- info$n_indices + info$n_fleets + 2
     info$waa <- array(NA, dim = c(nwaa, ny, na))
     for(i in 1:nwaa) info$waa[i,,] <- t(matrix(W, na, ny))
+	
 	# Define pointers correctly (only works for 1 fishery and 1 survey):
+	# Leave it as it is here:
+	# Dim 3 and 4 will NOT be used
 	info$waa_pointer_fleets = 1
 	info$waa_pointer_indices = 2
 	info$waa_pointer_totcatch = 1
-	info$waa_pointer_ssb = 3
-	info$waa_pointer_jan1 = 4
+	info$waa_pointer_ssb = 2
+	info$waa_pointer_jan1 = 2
 
 	# Define obs error for waa:
 	info$waa_cv <- array(0.1, dim = c(nwaa, ny, na))

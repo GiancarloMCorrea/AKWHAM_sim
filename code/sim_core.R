@@ -4,6 +4,11 @@ simi = as.integer(args[1])
 omj = as.integer(args[2])
 emk = as.integer(args[3])
 ## .libPaths("~/Rlib/")
+
+
+simi = 1
+omj = 1
+emk = 1
 library(wham)
 source(file.path("code", "sim_management.R"))
 ## verify_version()
@@ -21,11 +26,11 @@ y <- data.frame(df.oms[omj,])
 names(y) <- paste0('om_',names(y))
 model <- cbind(im=simi, om=omj, em=emk, optimized=FALSE, sdreport=FALSE, y,x)
 
-## only new data for growth study is the marginal lengths in
-## index_pal for survey 2
-obs_names <- c("agg_catch","agg_catch_sigma", "agg_indices", "agg_index_sigma", "catch_paa", "index_paa",
-               "catch_pal", "index_pal", 'catch_caal', 'index_caal',
-               "Ecov_obs", "obs", "obsvec")
+# Select observations to pass to EM from sim_data:
+# DO NOT PASS 'use_xxx_xxx'
+obs_names <- c("agg_catch", "agg_indices", "catch_paa", "index_paa", "catch_pal", "index_pal", 
+               'catch_caal', 'index_caal', 'waa', "obsvec")
+# TODO: add Ecov information when ready
 #######################################################
 
 #######################################################
@@ -48,13 +53,18 @@ truth <- sim_data
 # save the version for reproducibility
 truth$wham_version = om$wham_version
 EM_input <- em_inputs[[emk]] # Read in the EM
-# Put simulated data into EM input:
-# IMPORTANT !!!!!!!!!!!!!!! DECIDE HOW TO DEAL WITH THIS EFFICIENTLY
-EM_input$data[obs_names] = sim_data[obs_names]
-#not estimating observation error in Ecov
-EM_input$par$Ecov_obs_logsigma[] <- om_inputs[[omj]]$par$Ecov_obs_logsigma
-## the fixed effects used to generate truth
 
+
+
+
+# Put simulated data into EM input: ------------------------------------
+# it is important to pass keep names since 'obsvec' is being passed and OM simulates data for all categories:
+keep_names = names(sim_data)[grep(pattern = 'keep_', x = names(sim_data))] 
+keep_names = c("keep_C", "keep_I", "keep_Cpaa", "keep_Ipaa")
+# Pass names:
+EM_input$data[c(obs_names, keep_names)] = sim_data[c(obs_names, keep_names)]
+
+# Create data.frame saving parameter names:
 ompars <- data.frame(par=names(om$par), value=om$par) |> dplyr::filter(par!='F_devs')
 ompars$par2 <- sapply(unique(ompars$par), function(x) {
   y <- which(ompars$par==x)
@@ -62,10 +72,10 @@ ompars$par2 <- sapply(unique(ompars$par), function(x) {
   x <- paste(x, 1:length(y), sep='_')
   return(x)
 }) %>% unlist
-res <- list(truth = truth, model=model, ompars=ompars)
+res <- list(truth = truth, model = model, ompars = ompars)
 res$fit <- list()
 
-#do fit withouth sdreport first
+# Run WHAM without sdreport first:
 fit <- tryCatch(fit_wham(EM_input, do.sdrep=F, do.osa=F, do.retro=F, do.proj=F, MakeADFun.silent=TRUE),
   error = function(e) conditionMessage(e))
 
