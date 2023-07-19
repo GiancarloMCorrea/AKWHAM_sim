@@ -2,16 +2,15 @@
 # IMPORTANT !!!
 # This function is used by the OM and EM setup.
 
-make_basic_info <- function(base_years = 1970:2021, ages = 1:10, Fhist = "updown", n_feedback_years = 0) { #changed years
+make_basic_info <- function(base_years = 1970:2021, ages = 1:10, fish_len = 1:100) { 
         
     info <- list()
     info$ages <- ages
-    info$years <- as.integer(base_years[1] - 1 + 1:(length(base_years) + n_feedback_years))
+    info$years <- as.integer(base_years[1] - 1 + 1:length(base_years))
     info$n_fleets <- 1 
     info$n_indices <- 1
 	ny <- length(info$years)
-	na <- 10
-	info$lengths <- seq(from = 2, to = 120, by = 2)
+	info$lengths <- fish_len
 	nlbins <- length(info$lengths)
 	info$n_lengths <- nlbins
     na <- length(info$ages)
@@ -19,13 +18,6 @@ make_basic_info <- function(base_years = 1970:2021, ages = 1:10, Fhist = "updown
     nby <- length(base_years)
     mid <- floor(nby/2)
     
-    # These F trajectories should be tied to reference points
-    #up then down
-    if(Fhist == "updown") info$F <- matrix(0.2 + c(seq(0,0.4,length.out = mid),seq(0.4,0,length.out=nby-mid)),nby, info$n_fleets)
-    #down then up
-    if(Fhist == "downup") info$F <- matrix(0.2 + c(seq(0.4,0,length.out = mid),seq(0,0.4,length.out=nby-mid)),nby, info$n_fleets)
-    if(n_feedback_years>0) info$F <- rbind(info$F, info$F[rep(nby, n_feedback_years),, drop = F]) #same F as terminal year for feedback period
-
 	# Define obs error: 
     info$catch_cv <- matrix(0.05, ny, info$n_fleets)
     info$index_cv <- matrix(0.2, ny, info$n_indices)
@@ -48,14 +40,14 @@ make_basic_info <- function(base_years = 1970:2021, ages = 1:10, Fhist = "updown
     # maturity of generic groundfish from IBMWG
     #mat <- c(0.04, 0.25, 0.60, 0.77, 0.85, 0.92, 1, 1, 1, 1)
     # params below get close to these values
-    m50 <- 2.89  # age at 50% maturity
-    mslope <- 0.88 # how quickly maturity increases with age
+    m50 <- 3  # age at 50% maturity
+    mslope <- 0.5 # how quickly maturity increases with age
     mat <- 1/(1+exp((m50 - 1:na)/mslope))
     info$maturity <- t(matrix(mat, na, ny))
 
 	# Define biological parameters to create 'waa' matrix:
 	# Data simulated on Jan 1st
-	# This is not important since sim_data will do it correctly
+	# This is NOT important since sim_data$waa will replace this
     Linf <- 100
     k <- 0.2
     t0 <- 0

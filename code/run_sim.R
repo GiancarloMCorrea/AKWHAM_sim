@@ -1,7 +1,13 @@
 library(snowfall)
 
+# Clear workspace
+rm(list=ls())
+
 # Set working directory:
 setwd("C:/Use/GitHub/AKWHAM_sim")
+
+# Make OM figures? 
+make_OM_figures = TRUE
 
 ## Make OM and EM inputs
 source(file.path("code", "om_setup.R"))

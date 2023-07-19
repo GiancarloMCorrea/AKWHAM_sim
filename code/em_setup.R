@@ -6,12 +6,9 @@ library(wham)
 library(tidyr)
 library(dplyr)
 
+source(file.path('code', "config_params.R"))
 source(file.path('code', "make_basic_info.R"))
-source(file.path('code', "set_M.R"))
-source(file.path('code', "set_q.R"))
 source(file.path('code', "set_simulation_options.R"))
-source(file.path('code', "make_om.R"))
-source(file.path('code', "sim_management.R"))
 
 # Create data.frame with EM configurations:
 method = c('EWAA', 'WAA', 'WAA')
@@ -24,33 +21,34 @@ df.ems = data.frame(method = method, re_method = re_method, est_fixed = est_fixe
 saveRDS(df.ems, file.path("inputs", "df.ems.RDS"))
 
 # Make basic inputs
-gf_info = make_basic_info()
+gf_info = make_basic_info(base_years = years_base, ages = ages_base, fish_len = lengths_base)
 
 # Selectivity configuration (age-based for now)
 gf_selectivity = list(
-  model = c("double-normal", "logistic"),
-  initial_pars = list(c(4,-3,-1,-1.5,0,0), c(1,0.5)))
+  model = agesel_based$model,
+  initial_pars = agesel_based$initial_pars,
+  fix_pars = list(5:6, NULL))
 
-# Natural mortality
-gf_M = list(initial_means = 0.2, model = "constant")
-# Q pars:
-gf_Q = list(initial_q = 1,
+# Natural mortality (fixed)
+gf_M = list(initial_means = M_base, model = "constant")
+# Q pars (estimated):
+gf_Q = list(initial_q = Q_base,
             q_lower = c(0),
             q_upper = c(10), prior_sd = c(NA))
 # NAA configuration
-gf_NAA_re = list(N1_pars = c(1e+05, 0),
+gf_NAA_re = list(N1_pars = c(N1_base, 0),
                 sigma = "rec", #random about mean
                 cor = "iid", #random effects are independent
                 recruit_model = 2,
                 N1_model = 1)
 
 # True parameter values:
-Linf <- 100
-k <- 0.2
-t0 <- 0
-a_LW <- exp(-12.1)
-b_LW <- 3.2
-L_a <- Linf*(1-exp(-k*(1:10 - t0)))
+Linf <- G_base[2]
+k_par <- G_base[1]
+L1 <- G_base[3]
+a_LW <- LW_base[1]
+b_LW <- LW_base[2]
+L_a <- Linf + (L1 - Linf)*exp(-k_par*(ages_base - 1))
 W_a <- a_LW*L_a^b_LW
 
 # WAA configuration:
@@ -73,7 +71,7 @@ for(i in 1:NROW(df.ems)){
       WAA_i$re = df.ems$re_method[i]
     }
     if(df.ems$est_fixed[i]) { # estimate fixed effects?
-      WAA_i$est_pars = 1:10
+      WAA_i$est_pars = ages_base
     }
   }
   if(df.ems$method[i] == 'EWAA') { # EWAA approach
@@ -84,9 +82,9 @@ for(i in 1:NROW(df.ems)){
   basic_info <- gf_info
   # Add length information:
   ny <- length(basic_info$years)
-  basic_info$lengths <- seq(2, 120, by=2) # length bins
   nlbins <- length(basic_info$lengths)
-  basic_info$n_lengths <- nlbins
+  # F placeholder:
+  basic_info$F = matrix(0.1, ncol = basic_info$n_fleets, nrow = ny)
   # Choose data to be used in EM (IMPORTANT STEP!)
   # For fishery:
   if(df.ems$catch_data[i] == 'paa') basic_info$use_catch_paa <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
@@ -107,7 +105,9 @@ for(i in 1:NROW(df.ems)){
   if(df.ems$index_data[i] == 'caal') {
     basic_info$use_index_caal <- array(1, dim = c(ny, basic_info$n_indices, nlbins))
     basic_info$use_index_paa <- matrix(0, ncol = basic_info$n_indices, nrow = ny) # turn off paa because default = 1
-  }  
+  }
+  # Turn on use of EWAA as obs (only use survey data):
+  if(df.ems$method[i] == 'WAA') basic_info$use_index_waa = matrix(1, ncol = basic_info$n_indices, nrow = ny)
   
   # Continue....
   em_inputs[[i]] = prepare_wham_input(basic_info = basic_info,
@@ -119,9 +119,11 @@ for(i in 1:NROW(df.ems)){
   #turn off bias correction
   em_inputs[[i]] = set_simulation_options(em_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
                                           bias_correct_pe = FALSE, bias_correct_oe = FALSE)
+  # Fix some parameters:
   em_inputs[[i]]$map$log_NAA_sigma <- factor(NA*em_inputs[[i]]$par$log_NAA_sigma) # Fix NAA sigma
   em_inputs[[i]]$map$log_N1_pars <- factor(c(1, NA)) # Fix F1 initial
-  
+  if(df.ems$method[i] == 'WAA') em_inputs[[i]]$random = 'WAA_re'
+    
 }
 
 saveRDS(em_inputs, file.path("inputs", "em_inputs.RDS")) 

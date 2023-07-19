@@ -10,21 +10,20 @@ library(ggplot2)
 library(wham)
 
 # Load auxiliary functions:
+source(file.path('code', "config_params.R"))
 source(file.path('code', "make_basic_info.R"))
 source(file.path('code', "make_om.R"))
-source(file.path('code', "sim_management.R"))
 source(file.path('code', "set_simulation_options.R"))
-source(file.path('code', "set_q.R"))
-source(file.path('code', "set_M.R"))
+source(file.path('code', "make_plot_om.R"))
 
 # folder to write dfom and dfem
 write.dir = "inputs"
 
 # OM parameters:
 Ecov_obs_sig = c(0.1) # obs error variance for Ecov
-Ecov_re_sig = c(0.1) # Ecov process error variance
+Ecov_re_sig = c(0) # Ecov process error SD (this will be exp() in WHAM)
 Ecov_re_cor <- c(0) # Ecov process error autocorrelation
-Ecov_effect <- c(0.5) # Effect on selected parameter (Beta)
+Ecov_effect <- c(0.25) # Effect on selected parameter (Beta)
 growth_par = 1:3 # on k, Linf, and L1 separately
 # Make OM df:
 df.oms <- expand.grid(Ecov_obs_sig=Ecov_obs_sig, Ecov_re_sig=Ecov_re_sig, Ecov_re_cor=Ecov_re_cor, Ecov_effect = Ecov_effect,
@@ -34,46 +33,45 @@ df.oms$Model <- paste0("om_",1:n.mods)
 df.oms <- df.oms %>% select(Model, everything()) 
 saveRDS(df.oms, file.path(write.dir, "df.oms.RDS"))
 
-# Create basic WHAM input:
-gf_info = make_basic_info()
 #selectivity pars:
 gf_selectivity = list(
-  model = c("double-normal", "logistic"),
-  initial_pars = list(c(4,-3,-1,-1.5,0,0), c(1,0.5)))
+  model = agesel_based$model,
+  initial_pars = agesel_based$initial_pars)
 # M pars:
 gf_M = list(model = "constant",
-            initial_means = 0.2)
+            initial_means = M_base)
 # Q pars:
-gf_Q = list(initial_q = 1,
+gf_Q = list(initial_q = Q_base,
             q_lower = c(0),
             q_upper = c(10), prior_sd = c(NA))
 # Recruitment pars:
-gf_NAA_re = list(N1_pars = c(1e+05, 0),
+gf_NAA_re = list(N1_pars = c(N1_base, 0),
                 sigma = "rec", #random about mean
                 cor = "iid", #random effects are independent
                 recruit_model = 2,
+                recruit_pars = N1_base, # mean recruitment
                 N1_model = 1) #defined above from naa_om_inputs
 # Ecov pars:
 gf_ecov <- list(
   label = "Ecov",
   process_model = "ar1",
   lag = 0,
-  mean = cbind(rep(0, length(gf_info$years))),
-  year = gf_info$years,
-  ages = list(1:10),
-  use_obs = cbind(rep(1, length(gf_info$years)))
+  mean = cbind(rep(0, length(years_base))),
+  year = years_base,
+  ages = list(ages_base),
+  use_obs = cbind(rep(1, length(years_base)))
 )
 
 #  Growth configuration:
-Linf <- 100
-k <- 0.2
-t0 <- 0
-a_LW <- exp(-12.1)
-b_LW <- 3.2
-L_a <- Linf*(1-exp(-k*(1:10 - t0)))
+Linf <- G_base[2]
+k_par <- G_base[1]
+L1 <- G_base[3]
+a_LW <- LW_base[1]
+b_LW <- LW_base[2]
+L_a <- Linf + (L1 - Linf)*exp(-k_par*(ages_base - 1))
 W_a <- a_LW*L_a^b_LW
 CV_a <- .1
-gf_growth <- list(model='vB_classic', init_vals=c(k, Linf, L_a[1]),
+gf_growth <- list(model='vB_classic', init_vals=c(k_par, Linf, L1),
                   SD_vals=c(CV_a*L_a[1], CV_a*L_a[10]))
 gf_LW <- list(init_vals=c(a_LW, b_LW))
 
@@ -95,15 +93,24 @@ for(i in 1:NROW(df.oms)){
     ecov_i$where = "growth"
     ecov_i$where_subindex = df.oms$growth_par[i]
   }
-  om_inputs[[i]] <- make_om(Fmax = 0.5, Fmin = 0.1,
-                            F_change_time = 0.7,
+  om_inputs[[i]] <- make_om(Fmax = F_max, 
+                            years_base = years_base, ages_base = ages_base, lengths_base = lengths_base,
+                            F_change_time = 0.8,
                             selectivity = gf_selectivity,
                             M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
                             growth = gf_growth, LW = gf_LW,
                             catchability = gf_Q, 
-                            om_input = TRUE, df.oms = df.oms[i,]) 
+                            df.oms = df.oms[i,]) 
   om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
     bias_correct_pe = FALSE, bias_correct_oe = FALSE)
+  
+  # Make basic plots:
+  if(make_OM_figures){
+    
+    om_toPlot = fit_wham(input = om_inputs[[i]], do.fit = FALSE, MakeADFun.silent = TRUE)
+    make_plot_om(om_toPlot, i)
+    
+  }
 }
 
 # Save OM inputs:
