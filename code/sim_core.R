@@ -4,18 +4,17 @@ simi = as.integer(args[1])
 omj = as.integer(args[2])
 emk = as.integer(args[3])
 
-
-simi = 1
-omj = 1
-emk = 1
+# Main directory:
+main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
 
 # Load required libraries:
 library(wham)
+source(file.path(main_dir, "code", "make_om_plots.R"))
 # Read inputs:
-om_inputs <- readRDS(file.path("inputs", "om_inputs.RDS"))
-em_inputs <- readRDS(file.path("inputs", "em_inputs.RDS"))
-df.ems <- readRDS(file.path("inputs", "df.ems.RDS"))
-df.oms <- readRDS(file.path("inputs", "df.oms.RDS"))
+om_inputs <- readRDS(file.path(main_dir, "inputs", "om_inputs.RDS"))
+em_inputs <- readRDS(file.path(main_dir, "inputs", "em_inputs.RDS"))
+df.ems <- readRDS(file.path(main_dir, "inputs", "df.ems.RDS"))
+df.oms <- readRDS(file.path(main_dir, "inputs", "df.oms.RDS"))
 # Make data.frame summarizing scenario:
 x <- data.frame(df.ems[emk,])
 names(x) <- paste0('em_',names(x))
@@ -31,11 +30,11 @@ obs_names <- c("agg_catch", "agg_indices", "catch_paa", "index_paa", "catch_pal"
 #######################################################
 # Read seed:
 # I don't think we want to use the same (e.g. 1000) seeds for everything.
-seeds <- readRDS(file.path("inputs","seeds.RDS"))
+seeds <- readRDS(file.path(main_dir, "inputs","seeds.RDS"))
 # Print scenario name:
 cat(paste0("START OM: ", omj, " Sim: ", simi, " EM: ", emk, "\n"))
 # Create folder to save results:
-write.dir <- file.path("results", paste0("om", omj))
+write.dir <- file.path(main_dir, "results", paste0("om", omj))
 dir.create(write.dir, recursive = T, showWarnings = FALSE)
 
 #######################################################
@@ -45,6 +44,7 @@ om <- fit_wham(om_inputs[[omj]], do.fit = FALSE, MakeADFun.silent = TRUE)
 set.seed(seeds[[omj]][simi])
 # Simulate data:
 sim_data <- om$simulate(complete=TRUE)
+if(simi == 1) make_plot_om(sim_data, omj, main_dir) # Make plot 
 truth <- sim_data
 # Save the version for reproducibility
 truth$wham_version = om$wham_version
@@ -88,6 +88,6 @@ if(!'err' %in% names(fit) & class(fit) != "character"){
 }
 
 # Save EM results:
-rds.fn = file.path("results", paste0("om", omj), paste0("sim", simi, "_em", emk, ".RDS"))
+rds.fn = file.path(main_dir, "results", paste0("om", omj), paste0("sim", simi, "_em", emk, ".RDS"))
 saveRDS(res, file = rds.fn)
 cat(paste0("END OM: ", omj, " Sim: ", simi, " EM: ", emk, "\n"))

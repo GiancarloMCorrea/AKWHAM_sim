@@ -14,7 +14,6 @@ source(file.path('code', "config_params.R"))
 source(file.path('code', "make_basic_info.R"))
 source(file.path('code', "make_om.R"))
 source(file.path('code', "set_simulation_options.R"))
-source(file.path('code', "make_plot_om.R"))
 
 # folder to write dfom and dfem
 write.dir = "inputs"
@@ -33,10 +32,10 @@ df.oms$Model <- paste0("om_",1:n.mods)
 df.oms <- df.oms %>% select(Model, everything()) 
 saveRDS(df.oms, file.path(write.dir, "df.oms.RDS"))
 
-#selectivity pars:
+#selectivity pars (len based always):
 gf_selectivity = list(
-  model = agesel_based$model,
-  initial_pars = agesel_based$initial_pars)
+  model = lensel_based$model,
+  initial_pars = lensel_based$initial_pars)
 # M pars:
 gf_M = list(model = "constant",
             initial_means = M_base)
@@ -104,13 +103,6 @@ for(i in 1:NROW(df.oms)){
   om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
     bias_correct_pe = FALSE, bias_correct_oe = FALSE)
   
-  # Make basic plots:
-  if(make_OM_figures){
-    
-    om_toPlot = fit_wham(input = om_inputs[[i]], do.fit = FALSE, MakeADFun.silent = TRUE)
-    make_plot_om(om_toPlot, i)
-    
-  }
 }
 
 # Save OM inputs:

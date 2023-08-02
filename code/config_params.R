@@ -8,8 +8,8 @@ lengths_base = seq(from = 2, to = 120, by = 2)
 
 
 # Mortality -------------------------------------------------------
-M_base = 0.2
-F_max = 0.15
+M_base = 0.35
+F_max = 0.35
 
 # Catchability ------------------------------------------------------------
 Q_base = 1
@@ -30,9 +30,9 @@ N1_base = 1e+05 # Initial Recruitment and mean recruitment over time period
 
 # Selectivity ------------------------------------------------------
 agesel_based = list(model = c("double-normal", "logistic"),
-                    initial_pars = list(c(5, -1, 0.5, 0.1, -5, -3), c(1.5, 0.3)))
+                    initial_pars = list(c(4, -2, 0, 0, -5, -3), c(1.5, 0.3)))
 lensel_based = list(model = c("len-double-normal", "len-logistic"),
-                    initial_pars = list(c(40,-3,-1,-1.5,0,0), c(20, 3)))
+                    initial_pars = list(c(50,-1,4,4,-5,-2), c(15, 3)))
 
 
 

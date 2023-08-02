@@ -42,6 +42,7 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
   input$par$Ecov_process_pars[2,] = df.oms$Ecov_re_sig # This is cond sd for the AR1 Ecov process
   input$par$Ecov_process_pars[3,] = df.oms$Ecov_re_cor # This is phi for the AR1 Ecov process
   input$par$Ecov_beta[4,1,1,] = df.oms$Ecov_effect # 4 = growth effect. change if number of surveys change
+  input$map$log_N1_pars <- factor(c(1, NA)) # Important to do this for plotting
 
   return(input)
 }

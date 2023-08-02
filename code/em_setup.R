@@ -29,8 +29,8 @@ gf_selectivity = list(
   initial_pars = agesel_based$initial_pars,
   fix_pars = list(5:6, NULL))
 
-# Natural mortality (fixed)
-gf_M = list(initial_means = M_base, model = "constant")
+# Natural mortality (estimated)
+gf_M = list(initial_means = M_base, model = "constant", est_ages = 1)
 # Q pars (estimated):
 gf_Q = list(initial_q = Q_base,
             q_lower = c(0),
