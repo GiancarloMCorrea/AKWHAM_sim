@@ -2,13 +2,18 @@
 # IMPORTANT !!!
 # This function is used by the OM and EM setup.
 
-make_basic_info <- function(base_years = 1970:2021, ages = 1:10, fish_len = 1:100) { 
+make_basic_info <- function(base_years = 1970:2021, ages = 1:10, fish_len = 1:100,
+                        n_fisheries = 1, n_indices = 1,
+                        catch_sigma = NULL, agg_index_cv = NULL,
+                        catch_Neff = NULL, index_Neff = NULL, catch_NeffL = NULL,
+                        index_NeffL = NULL, catch_Neff_caal = NULL, 
+                        index_Neff_caal = NULL, waa_cv = NULL) { 
         
     info <- list()
     info$ages <- ages
     info$years <- as.integer(base_years[1] - 1 + 1:length(base_years))
-    info$n_fleets <- 1 
-    info$n_indices <- 1
+    info$n_fleets <- n_fisheries
+    info$n_indices <- n_indices
 	ny <- length(info$years)
 	info$lengths <- fish_len
 	nlbins <- length(info$lengths)
@@ -19,14 +24,14 @@ make_basic_info <- function(base_years = 1970:2021, ages = 1:10, fish_len = 1:10
     mid <- floor(nby/2)
     
 	# Define obs error: 
-    info$catch_cv <- matrix(0.05, ny, info$n_fleets)
-    info$index_cv <- matrix(0.2, ny, info$n_indices)
-    info$catch_Neff <- matrix(100, ny, info$n_fleets)
-    info$index_Neff <- matrix(100, ny, info$n_indices)
-    info$catch_NeffL <- matrix(100, ny, info$n_fleets)
-    info$index_NeffL <- matrix(100, ny, info$n_indices)
-    info$catch_caal_Neff <- array(5, dim = c(ny, info$n_fleets, nlbins))
-    info$index_caal_Neff <- array(5, dim = c(ny, info$n_fleets, nlbins))	
+    info$catch_cv <- catch_sigma
+    info$index_cv <- agg_index_cv
+    info$catch_Neff <- catch_Neff
+    info$index_Neff <- index_Neff
+    info$catch_NeffL <- catch_NeffL
+    info$index_NeffL <- index_NeffL
+    info$catch_caal_Neff <- catch_Neff_caal
+    info$index_caal_Neff <- index_Neff_caal
 
 	# More information:
     info$fracyr_indices <- matrix(0, ny, info$n_indices) # Jan 1st
@@ -69,11 +74,11 @@ make_basic_info <- function(base_years = 1970:2021, ages = 1:10, fish_len = 1:10
 	info$waa_pointer_jan1 = 2
 
 	# Define obs error for waa:
-	info$waa_cv <- array(0.1, dim = c(nwaa, ny, na))
+	info$waa_cv <- waa_cv
 
-    #Don't bias correct anything (why?)
-    info$bias_correct_process = FALSE
-    info$bias_correct_observation = FALSE
+    #Do bias correct anything (why?)
+    info$bias_correct_process = TRUE
+    info$bias_correct_observation = TRUE
     
     return(info)
 	

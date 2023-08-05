@@ -44,7 +44,7 @@ set_simulation_options <- function(input, simulate_data = TRUE, simulate_process
   bias_correct_oe = as.integer(bias_correct_oe)
   
   data$simulate_data[] = simulate_data
-  data$simulate_process[] = simulate_process
+  data$simulate_state[] = simulate_process
   data$simulate_period[2] = simulate_projection
   input$data = data
   return(input)

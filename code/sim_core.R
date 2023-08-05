@@ -1,8 +1,7 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 simi = as.integer(args[1])
-omj = as.integer(args[2])
-emk = as.integer(args[3])
+scenj = as.integer(args[2])
 
 # Main directory:
 main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
@@ -13,43 +12,40 @@ source(file.path(main_dir, "code", "make_om_plots.R"))
 # Read inputs:
 om_inputs <- readRDS(file.path(main_dir, "inputs", "om_inputs.RDS"))
 em_inputs <- readRDS(file.path(main_dir, "inputs", "em_inputs.RDS"))
-df.ems <- readRDS(file.path(main_dir, "inputs", "df.ems.RDS"))
-df.oms <- readRDS(file.path(main_dir, "inputs", "df.oms.RDS"))
+df.scenario <- readRDS(file.path(main_dir, "inputs", "df.scenarios.RDS"))
+
 # Make data.frame summarizing scenario:
-x <- data.frame(df.ems[emk,])
-names(x) <- paste0('em_',names(x))
-y <- data.frame(df.oms[omj,])
-names(y) <- paste0('om_',names(y))
-model <- cbind(im=simi, om=omj, em=emk, optimized=FALSE, sdreport=FALSE, y,x)
+this_scenario <- data.frame(df.scenario[scenj, ])
+model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, this_scenario)
 # Select observations to pass to EM from sim_data:
 # DO NOT PASS 'use_xxx_xxx'
 obs_names <- c("agg_catch", "agg_indices", "catch_paa", "index_paa", "catch_pal", "index_pal", 
-               'catch_caal', 'index_caal', 'waa', "obsvec", "agesvec")
-# TODO: add Ecov information when ready
+               'catch_caal', 'index_caal', 'waa', 'Ecov_obs', "obsvec", "agesvec")
 
 #######################################################
 # Read seed:
 # I don't think we want to use the same (e.g. 1000) seeds for everything.
 seeds <- readRDS(file.path(main_dir, "inputs","seeds.RDS"))
 # Print scenario name:
-cat(paste0("START OM: ", omj, " Sim: ", simi, " EM: ", emk, "\n"))
+cat(paste0("START Scenario: ", scenj, " Sim: ", simi, "\n"))
 # Create folder to save results:
-write.dir <- file.path(main_dir, "results", paste0("om", omj))
+write.dir <- file.path(main_dir, "results", paste0("scenario", scenj))
 dir.create(write.dir, recursive = T, showWarnings = FALSE)
 
 #######################################################
 # Run OM:
-om <- fit_wham(om_inputs[[omj]], do.fit = FALSE, MakeADFun.silent = TRUE)
+om <- fit_wham(om_inputs[[scenj]], do.fit = FALSE, MakeADFun.silent = TRUE)
 # Define seed:
-set.seed(seeds[[omj]][simi])
+# TODO: use same seeds based on OM? 
+set.seed(seeds[[scenj]][simi])
 # Simulate data:
 sim_data <- om$simulate(complete=TRUE)
-if(simi == 1) make_plot_om(sim_data, omj, main_dir) # Make plot 
+if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
 truth <- sim_data
 # Save the version for reproducibility
 truth$wham_version = om$wham_version
 # Read EM input data:
-EM_input <- em_inputs[[emk]] 
+EM_input <- em_inputs[[scenj]] 
 # Put simulated data into EM input:
 # it is important to pass keep names since 'obsvec' is being passed and OM simulates data for all categories:
 keep_names = names(sim_data)[grep(pattern = 'keep', x = names(sim_data))] 
@@ -88,6 +84,6 @@ if(!'err' %in% names(fit) & class(fit) != "character"){
 }
 
 # Save EM results:
-rds.fn = file.path(main_dir, "results", paste0("om", omj), paste0("sim", simi, "_em", emk, ".RDS"))
+rds.fn = file.path(main_dir, "results", paste0("scenario", scenj), paste0("sim", simi, ".RDS"))
 saveRDS(res, file = rds.fn)
-cat(paste0("END OM: ", omj, " Sim: ", simi, " EM: ", emk, "\n"))
+cat(paste0("END Scenario: ", scenj, " Sim: ", simi, "\n"))

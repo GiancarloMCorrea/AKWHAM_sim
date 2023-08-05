@@ -1,13 +1,7 @@
 # remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='growth', INSTALL_opts = c("--no-docs", "--no-multiarch", "--no-demo"))
 
 # -------------------------------------------------------------------------
-# OM configuration 
-
-# Load required libraries
-library(tidyr)
-library(dplyr)
-library(ggplot2)
-library(wham)
+# Create OM WHAM inputs 
 
 # Load auxiliary functions:
 source(file.path('code', "config_params.R"))
@@ -15,22 +9,11 @@ source(file.path('code', "make_basic_info.R"))
 source(file.path('code', "make_om.R"))
 source(file.path('code', "set_simulation_options.R"))
 
-# folder to write dfom and dfem
-write.dir = "inputs"
+# Read Config Scenarios DF:
+df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
 
-# OM parameters:
-Ecov_obs_sig = c(0.1) # obs error variance for Ecov
-Ecov_re_sig = c(0) # Ecov process error SD (this will be exp() in WHAM)
-Ecov_re_cor <- c(0) # Ecov process error autocorrelation
-Ecov_effect <- c(0.25) # Effect on selected parameter (Beta)
-growth_par = 1:3 # on k, Linf, and L1 separately
-# Make OM df:
-df.oms <- expand.grid(Ecov_obs_sig=Ecov_obs_sig, Ecov_re_sig=Ecov_re_sig, Ecov_re_cor=Ecov_re_cor, Ecov_effect = Ecov_effect,
-                      growth_par = growth_par,  stringsAsFactors = FALSE)
-n.mods = dim(df.oms)[1] 
-df.oms$Model <- paste0("om_",1:n.mods)
-df.oms <- df.oms %>% select(Model, everything()) 
-saveRDS(df.oms, file.path(write.dir, "df.oms.RDS"))
+# --------------------------------------------------------
+# Parameter information:
 
 #selectivity pars (len based always):
 gf_selectivity = list(
@@ -41,8 +24,9 @@ gf_M = list(model = "constant",
             initial_means = M_base)
 # Q pars:
 gf_Q = list(initial_q = Q_base,
-            q_lower = c(0),
-            q_upper = c(10), prior_sd = c(NA))
+            q_lower = rep(0, times = length(Q_base)),
+            q_upper = rep(10, times = length(Q_base)), 
+            prior_sd = rep(NA, times = length(Q_base)))
 # Recruitment pars:
 gf_NAA_re = list(N1_pars = c(N1_base, 0),
                 sigma = "rec", #random about mean
@@ -53,12 +37,14 @@ gf_NAA_re = list(N1_pars = c(N1_base, 0),
 # Ecov pars:
 gf_ecov <- list(
   label = "Ecov",
-  process_model = "ar1",
+  process_model = 'ar1',
+  logsigma = cbind(rep(log(Ecov_obs), length(years_base))),
   lag = 0,
   mean = cbind(rep(0, length(years_base))),
   year = years_base,
   ages = list(ages_base),
-  use_obs = cbind(rep(1, length(years_base)))
+  use_obs = cbind(rep(1, length(years_base))),
+  how = 0
 )
 
 #  Growth configuration:
@@ -76,21 +62,18 @@ gf_LW <- list(init_vals=c(a_LW, b_LW))
 
 # Make OMs --------------------------------------------------------------
 om_inputs = list()
-for(i in 1:NROW(df.oms)){
+for(i in 1:NROW(df.scenario)){
   
   # Print model name:
   print(paste0("row ", i))
   
   # Add more information to Ecov:
   ecov_i = gf_ecov
-  ecov_i$logsigma = cbind(rep(log(df.oms$Ecov_obs_sig[i]), length(ecov_i$year)))
-  if(df.oms$Ecov_effect[i] < 1e-7){
-    ecov_i$how = 0
+  if(Ecov_effect < 1e-7){
     ecov_i$where = "none"
   } else {
-    ecov_i$how = 1
     ecov_i$where = "growth"
-    ecov_i$where_subindex = df.oms$growth_par[i]
+    ecov_i$where_subindex = df.scenario$growth_par[i]
   }
   om_inputs[[i]] <- make_om(Fmax = F_max, 
                             years_base = years_base, ages_base = ages_base, lengths_base = lengths_base,
@@ -99,9 +82,15 @@ for(i in 1:NROW(df.oms)){
                             M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
                             growth = gf_growth, LW = gf_LW,
                             catchability = gf_Q, 
-                            df.oms = df.oms[i,]) 
+                            n_fisheries = n_fisheries, n_indices = n_indices,
+                            catch_sigma = catch_sigma, agg_index_cv = agg_index_cv,
+                            catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
+                            index_NeffL = index_NeffL, catch_Neff_caal = catch_Neff_caal, 
+                            index_Neff_caal = index_Neff_caal, waa_cv = waa_cv,
+                            Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, Ecov_effect = Ecov_effect,
+                            df.scenario = df.scenario[i,]) 
   om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
-    bias_correct_pe = FALSE, bias_correct_oe = FALSE)
+    bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?
   
 }
 
@@ -113,7 +102,7 @@ saveRDS(om_inputs, file.path(write.dir, "om_inputs.RDS"))
 # Define seeds:
 #I don't think we want to use the same (e.g. 1000) seeds for everything.
 set.seed(8675309)
-seeds = sample(x = (-1e9):(1e9), size = NROW(df.oms)*1000, replace = FALSE)
-seeds <- lapply(1:NROW(df.oms), function(x) seeds[(1:1000) + 1000*(x-1)])
+seeds = sample(x = (-1e9):(1e9), size = NROW(df.scenario)*1000, replace = FALSE)
+seeds <- lapply(1:NROW(df.scenario), function(x) seeds[(1:1000) + 1000*(x-1)])
 saveRDS(seeds, file.path(write.dir,"seeds.RDS"))
 seeds = readRDS(file.path(write.dir,"seeds.RDS"))
