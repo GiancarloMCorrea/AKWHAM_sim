@@ -28,10 +28,10 @@ df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
 # Function to run sim:
 # WARNING: before running this change main_dir in sim_core.R
 # TODO: use here::here()
-# run_iter <- function(sim, scen){
-#   cmd <- paste("Rscript --vanilla code/sim_core.R", sim, scen)
-#   system(cmd)
-# }
+run_iter <- function(sim, scen){
+  cmd <- paste("Rscript --vanilla code/sim_core.R", sim, scen)
+  system(cmd)
+}
 
 # Only run 1 replicate for 1 OM and 1 EM:
 # run_iter(1, 1)

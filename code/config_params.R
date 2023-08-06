@@ -2,7 +2,7 @@
 # These values are also used in EM as starting values
 
 # Years, Ages and lengths --------------------------------------------------------
-years_base = 1970:2021
+years_base = 1981:2020 # 20 years
 ages_base = 1:10
 lengths_base = seq(from = 2, to = 120, by = 2)
 n_fisheries = 1
@@ -10,7 +10,7 @@ n_indices = 1
 
 # Mortality -------------------------------------------------------
 M_base = 0.35
-F_max = 0.35
+F_max = 0.4
 
 # Catchability ------------------------------------------------------------
 Q_base = 1

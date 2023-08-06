@@ -80,13 +80,12 @@ gf_LW <- list(init_vals=c(a_LW, b_LW)) # fixed
 gf_LAA = list(LAA_vals = L_a,
               re = c('none'),
               SD_vals=c(CV_a*L_a[1], CV_a*L_a[10]),
-              SD_est = 1:2)
+              SD_est = 1:2)# Always estimate SD parameters
 # WAA configuration:
 gf_WAA = list(WAA_vals = W_a,
               re = c('none'))
 
 #make inputs for estimating model (smaller objects to save, can overwrinte data elements with simulated data)
-base_re_growth = c('none', 'none', 'none')
 em_inputs = list()
 for(i in 1:NROW(df.scenario)){
   print(paste0("EM config ", i))
@@ -94,6 +93,7 @@ for(i in 1:NROW(df.scenario)){
   M_i = gf_M
   WAA_i = gf_WAA
   growth_i = gf_growth
+  base_re_growth = c('none', 'none', 'none')
   LW_i = gf_LW
   LAA_i = gf_LAA
   Ecov_i = gf_ecov
