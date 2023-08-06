@@ -1,8 +1,8 @@
 make_om <- function(Fmax = 0.8, Fmin = 0.05,
-					          years_base = NULL, ages_base = NULL, lengths_base = NULL,
-                    selectivity = NULL, M = NULL, NAA_re = NULL,
+					years_base = NULL, ages_base = NULL, lengths_base = NULL,
+                    selectivity = NULL, M = NULL, NAA_re = NULL, sigma_R = NULL,
                     catchability = NULL, growth = NULL, LW = NULL,
-					          WAA = NULL, LAA = NULL,
+					WAA = NULL, LAA = NULL,
                     n_fisheries = NULL, n_indices = NULL,
                     catch_sigma = NULL, agg_index_cv = NULL,
                     catch_Neff = NULL, index_Neff = NULL, catch_NeffL = NULL,
@@ -72,6 +72,8 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
   input$par$Ecov_process_pars[2,] = Ecov_re_sig # This is cond sd for the AR1 Ecov process
   input$par$Ecov_process_pars[3,] = Ecov_re_cor # This is phi for the AR1 Ecov process
   input$par$Ecov_beta[4,1,1,] = Ecov_effect # 4 = growth effect. change if number of surveys change
+  input$par$log_NAA_sigma = log(sigma_R) # sigmaR recruitment
+  input$map$log_NAA_sigma = factor(NA) # fix sigma
   input$map$log_N1_pars <- factor(c(1, NA)) # Important to do this for plotting
 
   return(input)

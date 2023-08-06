@@ -145,6 +145,15 @@ for(i in 1:NROW(df.scenario)){
     LAA_i = NULL # turn off LAA nonparametric 
     WAA_i = NULL # turn off WAA nonparametric 
   }  
+  # Semiparametric G approach:
+  if(df.scenario$method[i] == 'SemiG') { 
+    growth_i$re = base_re_growth# random effects structure.
+	LAA_i$re = df.scenario$re_method[i] # random effects structure
+    if(df.scenario$est_fixed[i]) growth_i$est_pars = 1:3 # estimate growth parameters
+	LAA_i$SD_est = NULL # turn off estimation SD LAA
+    WAA_i = NULL # turn off WAA nonparametric 
+	Ecov_i = NULL # Turn off Ecov
+  }  
 
   # Basic info created above:
   basic_info <- gf_info
@@ -190,13 +199,15 @@ for(i in 1:NROW(df.scenario)){
   em_inputs[[i]] = set_simulation_options(em_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
                                           bias_correct_pe = TRUE, bias_correct_oe = TRUE)
   # Fix some parameters:
-  em_inputs[[i]]$map$log_NAA_sigma <- factor(NA*em_inputs[[i]]$par$log_NAA_sigma) # Fix NAA sigma
+  em_inputs[[i]]$par$log_NAA_sigma = log(sigma_R)
+  em_inputs[[i]]$map$log_NAA_sigma <- factor(NA) # Fix NAA sigma
   em_inputs[[i]]$map$log_N1_pars <- factor(c(1, NA)) # Fix F1 initial
   if(df.scenario$method[i] == 'EWAA') em_inputs[[i]]$random = NULL
   if(df.scenario$method[i] == 'WAA') em_inputs[[i]]$random = 'WAA_re'
   if(df.scenario$method[i] == 'growth') em_inputs[[i]]$random = 'growth_re'
   if(df.scenario$method[i] == 'LAA') em_inputs[[i]]$random = 'LAA_re'
   if(df.scenario$method[i] == 'Ecov') em_inputs[[i]]$random = 'Ecov_re'
+  if(df.scenario$method[i] == 'SemiG') em_inputs[[i]]$random = 'LAA_re'
     
 }
 

@@ -9,11 +9,11 @@ write.dir = "inputs"
 growth_par = 1:3 # on k, Linf, and L1 separately
 
 # Create EM configuration df:
-method = c('EWAA', 'WAA', 'growth', 'growth', 'LAA', 'LAA', 'Ecov', 'Ecov')
-re_method = c(NA, '2dar1', 'ar1_y', 'ar1_y', '2dar1', '2dar1', 'ar1', 'ar1')
-est_fixed = c(NA, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE)
-catch_data = c('paa', 'paa', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal')
-index_data = c('paa', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal', 'paa')
+method = c('EWAA', 'WAA', 'growth', 'growth', 'Ecov', 'Ecov', 'LAA', 'LAA', 'SemiG', 'SemiG')
+re_method = c(NA, '2dar1', 'ar1_y', 'ar1_y', 'ar1', 'ar1', '2dar1', '2dar1', '2dar1', '2dar1')
+est_fixed = c(NA, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE)
+catch_data = c('paa', 'paa', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal')
+index_data = c('paa', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal', 'paa')
 
 # Make scenario DF:
 df.scenario = data.frame(growth_par = rep(growth_par, times = length(method)),

@@ -10,7 +10,7 @@ n_indices = 1
 
 # Mortality -------------------------------------------------------
 M_base = 0.35
-F_max = 0.4
+F_max = 0.35
 
 # Catchability ------------------------------------------------------------
 Q_base = 1
@@ -21,8 +21,9 @@ G_base = c(0.2, 100, 10) # K, Linf, L1
 # LW relationship ---------------------------------------------------------
 LW_base = c(exp(-12.1), 3.2) # a and b parameters LW
 
-# Initial abundance -------------------------------------------------------
+# Initial abundance and sigmaR -------------------------------------------------------
 N1_base = 1e+05 # Initial Recruitment and mean recruitment over time period
+sigma_R = 0.6 # sigma R recruitment
 
 # Selectivity ------------------------------------------------------
 agesel_based = list(model = c("double-normal", "logistic"),

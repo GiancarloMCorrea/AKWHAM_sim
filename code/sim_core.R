@@ -28,9 +28,6 @@ obs_names <- c("agg_catch", "agg_indices", "catch_paa", "index_paa", "catch_pal"
 seeds <- readRDS(file.path(main_dir, "inputs","seeds.RDS"))
 # Print scenario name:
 cat(paste0("START Scenario: ", scenj, " Sim: ", simi, "\n"))
-# Create folder to save results:
-write.dir <- file.path(main_dir, "results", paste0("scenario", scenj))
-dir.create(write.dir, recursive = T, showWarnings = FALSE)
 
 #######################################################
 # Run OM:

@@ -79,6 +79,7 @@ for(i in 1:NROW(df.scenario)){
   om_inputs[[i]] <- make_om(Fmax = F_max, 
                             years_base = years_base, ages_base = ages_base, lengths_base = lengths_base,
                             F_change_time = 0.8,
+							sigma_R = sigma_R,
                             selectivity = gf_selectivity,
                             M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
                             growth = gf_growth, LW = gf_LW,
