@@ -23,11 +23,14 @@ source(file.path("code", "em_setup.R"))
 # Clear workspace
 rm(list=ls())
 
+# Read main dir again
+main_dir = getwd()
+
 # Read OM and EM data frames
 df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
 
 # Create folder to save results:
-for(k in 1:nrow(scenario)) {
+for(k in 1:nrow(df.scenario)) {
 	write.dir <- file.path(main_dir, "results", paste0("scenario", k))
 	dir.create(write.dir, recursive = T, showWarnings = FALSE)
 }
@@ -58,6 +61,6 @@ sfInit(parallel=TRUE, cpus=10)
 sfExportAll()
 for(sc in 1:nrow(df.scenario)){
     sfExportAll()
-    trash <- sfLapply(1:20, function(sim) run_iter(sim, sc))
+    trash <- sfLapply(1:10, function(sim) run_iter(sim, sc))
 }
 sfStop()
