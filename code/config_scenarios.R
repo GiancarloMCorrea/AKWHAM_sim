@@ -9,9 +9,9 @@ write.dir = "inputs"
 growth_par = 1:3 # on k, Linf, and L1 separately
 
 # Create EM configuration df:
-method = c('EWAA', 'WAA', 'growth', 'growth', 'Ecov', 'Ecov', 'LAA', 'LAA', 'SemiG', 'SemiG')
+method = c('EWAA', 'WAA', 'growth', 'growth', 'Ecov', 'Ecov', 'SemiG', 'SemiG', 'LAA', 'LAA')
 re_method = c(NA, '2dar1', 'ar1_y', 'ar1_y', 'ar1', 'ar1', '2dar1', '2dar1', '2dar1', '2dar1')
-est_fixed = c(NA, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE)
+est_fixed = c(NA, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE)
 catch_data = c('paa', 'paa', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal')
 index_data = c('paa', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal', 'paa', 'pal', 'paa')
 

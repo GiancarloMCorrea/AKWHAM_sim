@@ -1,4 +1,3 @@
-# remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='growth', INSTALL_opts = c("--no-docs", "--no-multiarch", "--no-demo"))
 
 # -------------------------------------------------------------------------
 # Create EM WHAM inputs 
@@ -52,7 +51,7 @@ gf_ecov <- list(
   label = "Ecov_sim",
   lag = 0,
   mean = cbind(rep(0, length(years_base))), # replace by sim data
-  logsigma = cbind(rep(0.2, length(years_base))), # sigma specified in om_setup
+  logsigma = cbind(rep(log(Ecov_obs), length(years_base))), # sigma specified in om_setup
   year = years_base,
   ages = list(ages_base),
   use_obs = cbind(rep(1, length(years_base))),

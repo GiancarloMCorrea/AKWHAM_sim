@@ -1,3 +1,4 @@
+# remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='growth', INSTALL_opts = c("--no-docs", "--no-multiarch", "--no-demo"))
 
 # Clear workspace
 rm(list=ls())

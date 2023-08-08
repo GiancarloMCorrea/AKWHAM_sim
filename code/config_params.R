@@ -2,7 +2,7 @@
 # These values are also used in EM as starting values
 
 # Years, Ages and lengths --------------------------------------------------------
-years_base = 1981:2020 # 20 years
+years_base = 1981:2020 # 40 years
 ages_base = 1:10
 lengths_base = seq(from = 2, to = 120, by = 2)
 n_fisheries = 1

@@ -4,7 +4,7 @@ simi = as.integer(args[1])
 scenj = as.integer(args[2])
 
 # Main directory:
-main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
+main_dir = '~/GitHub/AKWHAM_sim'
 
 # Load required libraries:
 library(wham)
