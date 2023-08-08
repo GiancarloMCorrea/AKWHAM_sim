@@ -68,7 +68,7 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
 									selectivity = selectivity, NAA_re = NAA_re, M = M, ecov = ecov,
 									age_comp = age_comp, catchability = catchability)
   # Change Ecov information:
-  input$par$Ecov_process_pars[1,] = 0 # mean Ecov value = 1
+  input$par$Ecov_process_pars[1,] = 0 # mean Ecov value 
   input$par$Ecov_process_pars[2,] = Ecov_re_sig # This is cond sd for the AR1 Ecov process
   input$par$Ecov_process_pars[3,] = Ecov_re_cor # This is phi for the AR1 Ecov process
   input$par$Ecov_beta[4,1,1,] = Ecov_effect # 4 = growth effect. change if number of surveys change

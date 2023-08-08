@@ -16,7 +16,7 @@ F_max = 0.35
 Q_base = 1
 
 # Growth ------------------------------------------------------------------
-G_base = c(0.2, 100, 10) # K, Linf, L1
+G_base = c(0.2, 90, 10) # K, Linf, L1
 
 # LW relationship ---------------------------------------------------------
 LW_base = c(exp(-12.1), 3.2) # a and b parameters LW
@@ -35,7 +35,7 @@ lensel_based = list(model = c("len-double-normal", "len-logistic"),
 
 Ecov_re_sig = c(0) # Ecov process error SD (this will be exp() in WHAM)
 Ecov_re_cor <- c(0) # Ecov process error autocorrelation
-Ecov_effect <- c(0.25) # Effect on selected parameter (Beta)
+Ecov_effect <- c(0.25, 0.15, 0.3) # Effect on growth parameter (Beta, parameter-specific: k, Linf, L1)
 
 # Obs error information ------------------------------------------------------
 catch_sigma = matrix(0.05, ncol = n_fisheries, nrow = length(years_base))

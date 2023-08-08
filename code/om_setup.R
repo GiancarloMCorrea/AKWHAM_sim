@@ -70,7 +70,7 @@ for(i in 1:NROW(df.scenario)){
   
   # Add more information to Ecov:
   ecov_i = gf_ecov
-  if(Ecov_effect < 1e-7){
+  if(Ecov_effect[df.scenario$growth_par[i]] < 1e-7){
     ecov_i$where = "none"
   } else {
     ecov_i$where = "growth"
@@ -89,7 +89,7 @@ for(i in 1:NROW(df.scenario)){
                             catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
                             index_NeffL = index_NeffL, catch_Neff_caal = catch_Neff_caal, 
                             index_Neff_caal = index_Neff_caal, waa_cv = waa_cv,
-                            Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, Ecov_effect = Ecov_effect,
+                            Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, Ecov_effect = Ecov_effect[df.scenario$growth_par[i]],
                             df.scenario = df.scenario[i,]) 
   om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
     bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?

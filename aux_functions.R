@@ -82,7 +82,8 @@ get_selex <- function(fits){
              sim=as.factor(im), maxgrad=get_maxgrad(fit))
     return(selex)
   }
-  lapply(fits, function(i) ff(i)) %>% bind_rows()%>% add_labels
+  # lapply(fits, function(i) ff(i)) %>% bind_rows()%>% add_labels
+  lapply(fits, function(i) ff(i)) %>% bind_rows() 
 }
 
 get_laa <- function(fits){
@@ -103,7 +104,8 @@ get_laa <- function(fits){
              sim=as.factor(im),  maxgrad=get_maxgrad(fit))
     return(laa)
   }
-  lapply(fits, function(i) ff(i)) %>% bind_rows() %>% add_labels
+  # lapply(fits, function(i) ff(i)) %>% bind_rows() %>% add_labels
+  lapply(fits, function(i) ff(i)) %>% bind_rows() 
 }
 
 get_waa <- function(fits, nages = 10, waapos = 2){
@@ -136,12 +138,12 @@ get_pars <- function(fits){
     }
     #fit$empars$par2[fit$empars$par2 == 'log_N1_pars'] = 'log_N1_pars_1' # IMPORTANT to merge OM and EM dfs.
     pars <- merge(fit$ompars, fit$empars, by='par2') %>%
-      filter(grepl(x=par.y, "Ecov|growth_a|SD_par|mean_rec_pars|logit_q|log_F1|log_N1_pars|logit_selpars"))
+      filter(grepl(x=par.y, "Ecov|growth_a|SD_par|mean_rec_pars|logit_q|log_F1|log_N1_pars|M_a"))
     # Transform to original scale (TODO: do this for other variables logit)
-    pars$value.x = ifelse(test = grepl(x = par.x, "growth_a|SD_par|mean_rec_pars|log_F1|log_N1_pars"), 
-                          yes = exp(pars$value.x), no = pars$value.x)
-    pars$value.y = ifelse(test = grepl(x = par.y, "growth_a|SD_par|mean_rec_pars|log_F1|log_N1_pars"), 
-                          yes = exp(pars$value.y), no = pars$value.y)
+	pars = pars %>% mutate(value.x = if_else(grepl(x = par.x, "growth_a|SD_par|mean_rec_pars|log_F1|log_N1_pars|M_a"), 
+											exp(value.x), value.x),
+						   value.y = if_else(grepl(x = par.y, "growth_a|SD_par|mean_rec_pars|log_F1|log_N1_pars|M_a"), 
+											exp(value.y), value.y))
     pars <- pars %>% select(par=par.x, par2, truth=value.x, est=value.y) %>%
       bind_cols(fit$model) %>%
       mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
@@ -161,19 +163,16 @@ get_growth <- function(fits){
     p1 <- data.frame(par=c('k', 'L1', 'Linf'),
                      est=exp(fit$fit$rep$growth_a[1:3,1]),
                      truth=exp(fit$truth$growth_a[1:3,1]))
-    ## p2 <- data.frame(par=c('SDold'),
-    ##                  est=fit$empars$value[fit$empars$par=='SDgrowth_par'],
-    ##                  truth=fit$ompars$value[fit$ompars$par=='SDgrowth_par'][2])
-    ## p2 <- data.frame(par=c('SD1', 'SD2'),
-    ##                  est=fit$fit$rep$expSD,
-    ##                  truth=fit$truth$expSD)
-    p2 <- NULL
+    p2 <- data.frame(par=c('SD1', 'SDA'),
+                     est=fit$fit$rep$SD_len,
+                     truth=fit$truth$SD_len)
     growth <- bind_rows(p1,p2) %>% bind_cols(fit$model) %>%
       mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
              sim=as.factor(im),  maxgrad=get_maxgrad(fit))
     return(growth)
   }
-  warning("need to fix growth pars")
-  lapply(fits, function(i) ff(i)) %>% bind_rows() %>% add_labels
+  # warning("need to fix growth pars")
+  # lapply(fits, function(i) ff(i)) %>% bind_rows() %>% add_labels
+  lapply(fits, function(i) ff(i)) %>% bind_rows()
 }
 
