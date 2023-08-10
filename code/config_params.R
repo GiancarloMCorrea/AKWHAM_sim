@@ -48,4 +48,3 @@ catch_Neff_caal = array(5, dim = c(length(years_base), n_fisheries, length(lengt
 index_Neff_caal = array(5, dim = c(length(years_base), n_indices, length(lengths_base)))
 Ecov_obs = 0.2
 waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
-
