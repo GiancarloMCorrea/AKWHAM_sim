@@ -33,6 +33,7 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
     basic_info$use_catch_pal <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
   }
   if(df.scenario$catch_data == 'caal') {
+    basic_info$use_catch_pal <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
     basic_info$use_catch_caal <- array(1, dim = c(ny, basic_info$n_fleets, nlbins))
     basic_info$use_catch_paa <- matrix(0, ncol = basic_info$n_fleets, nrow = ny)
   }
@@ -44,6 +45,7 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
     basic_info$use_index_pal <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
   }
   if(df.scenario$index_data == 'caal') {
+    basic_info$use_index_pal <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
     basic_info$use_index_caal <- array(1, dim = c(ny, basic_info$n_indices, nlbins))
     basic_info$use_index_paa <- matrix(0, ncol = basic_info$n_indices, nrow = ny)
   }
@@ -73,7 +75,7 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
   input$par$Ecov_process_pars[3,] = Ecov_re_cor # This is phi for the AR1 Ecov process
   input$par$Ecov_beta[4,1,1,] = Ecov_effect # 4 = growth effect. change if number of surveys change
   input$par$log_NAA_sigma = log(sigma_R) # sigmaR recruitment
-  input$map$log_NAA_sigma = factor(NA) # fix sigma
+  input$map$log_NAA_sigma = factor(NA) # fix sigma Important to do this for plotting
   input$map$log_N1_pars <- factor(c(1, NA)) # Important to do this for plotting
 
   return(input)

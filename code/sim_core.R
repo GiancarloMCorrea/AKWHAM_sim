@@ -18,7 +18,7 @@ df.scenario <- readRDS(file.path(main_dir, "inputs", "df.scenarios.RDS"))
 this_scenario <- data.frame(df.scenario[scenj, ])
 model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, this_scenario)
 # Select observations to pass to EM from sim_data:
-# DO NOT PASS 'use_xxx_xxx'
+# DO NOT PASS 'use_xxx_xxx' (except for caal, see below)
 obs_names <- c("agg_catch", "agg_indices", "catch_paa", "index_paa", "catch_pal", "index_pal", 
                'catch_caal', 'index_caal', 'waa', 'Ecov_obs', "obsvec", "agesvec")
 
@@ -38,6 +38,123 @@ set.seed(seeds[[scenj]][simi])
 # Simulate data:
 sim_data <- om$simulate(complete=TRUE)
 if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
+
+# CAAL sampling: ----------------------------------------------
+# Only works for multinomial 
+
+if(df.scenario$catch_data[scenj] == 'caal') {
+  
+  Nsamp_CAAL = 50 # Nsamp size for CAAL
+  
+  # Also pass caal_Neff
+  obs_names = c(obs_names, 'catch_caal_Neff', 'use_catch_caal')
+  
+  # Order to sort: year, fleet, len bin, age
+  to_obsvec = NULL
+  for(j in 1:sim_data$n_years_model) {
+    for(i in 1:sim_data$n_fleets) {
+      # Random sampling:
+      # len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$catch_pal[i,j,]) 
+      # len_subsam = as.vector(len_subsam)
+      # Length-stratified sampling:
+      len_samp = sim_data$catch_pal[i,j,]*sim_data$catch_NeffL[j,i]
+      len_subsam = numeric(length(len_samp)) # save CAAL Neff
+      if(sum(len_samp) == Nsamp_CAAL) {
+        len_subsam = len_samp
+      } else {
+        i_len_samp = len_samp
+        for(s in 1:Nsamp_CAAL) {
+          n_left_i = length(which(i_len_samp > 0)) 
+          n_in_i = sum(len_subsam)
+          if((n_left_i+n_in_i) < Nsamp_CAAL) {
+            # Sample all lengths in length sample
+            pos_samp = which(i_len_samp > 0)
+            len_subsam[pos_samp] = len_subsam[pos_samp] + 1
+            i_len_samp = len_samp - len_subsam
+          } else {
+            # Random sample of remaining lengths to complete Nsamp CAAL
+            pos_samp = sample(x = which(i_len_samp > 0), size = Nsamp_CAAL-n_in_i, replace = F)
+            len_subsam[pos_samp] = len_subsam[pos_samp] + 1
+            break
+          }
+        } # loop
+      }
+      # Continue code:
+      for(k in 1:sim_data$n_lengths) {
+        sim_data$catch_caal_Neff[j,i,k] = len_subsam[k]
+        tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_CAAL[j,i,k,])
+        # Save sim sampling:
+        to_obsvec = c(to_obsvec, tmp_caal_sim)
+        if(sum(tmp_caal_sim) == 0) sim_data$catch_caal[i,j,k,] = 0
+        else sim_data$catch_caal[i,j,k,] = tmp_caal_sim[,1]/sum(tmp_caal_sim[,1])
+        # Replace use/not use:
+        sim_data$use_catch_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
+      } # len bin loop
+    } # fleet loop
+  } # year loop
+  # Now replace values in obsvec vector:
+  sim_data$obsvec[sim_data$obs$type == 'catchcaal'] = to_obsvec
+  
+}
+
+if(df.scenario$index_data[scenj] == 'caal') {
+  
+  Nsamp_CAAL = 50 # Nsamp size for CAAL
+  
+  # Also pass caal_Neff
+  obs_names = c(obs_names, 'index_caal_Neff', 'use_index_caal')
+  
+  # Order to sort: year, fleet, len bin, age
+  to_obsvec = NULL
+  for(j in 1:sim_data$n_years_model) {
+    for(i in 1:sim_data$n_indices) {
+      # Random sampling:
+      # len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$index_pal[i,j,]) 
+      # len_subsam = as.vector(len_subsam)
+      # Length-stratified sampling:
+      len_samp = sim_data$index_pal[i,j,]*sim_data$index_NeffL[j,i]
+      len_subsam = numeric(length(len_samp)) # save CAAL Neff
+      if(sum(len_samp) == Nsamp_CAAL) {
+        len_subsam = len_samp
+      } else {
+        i_len_samp = len_samp
+        for(s in 1:Nsamp_CAAL) {
+          n_left_i = length(which(i_len_samp > 0)) 
+          n_in_i = sum(len_subsam)
+          if((n_left_i+n_in_i) < Nsamp_CAAL) {
+            # Sample all lengths in length sample
+            pos_samp = which(i_len_samp > 0)
+            len_subsam[pos_samp] = len_subsam[pos_samp] + 1
+            i_len_samp = len_samp - len_subsam
+          } else {
+            # Random sample of remaining lengths to complete Nsamp CAAL
+            pos_samp = sample(x = which(i_len_samp > 0), size = Nsamp_CAAL-n_in_i, replace = F)
+            len_subsam[pos_samp] = len_subsam[pos_samp] + 1
+            break
+          }
+        } # loop
+      }
+      # Continue code:
+      for(k in 1:sim_data$n_lengths) {
+        sim_data$index_caal_Neff[j,i,k] = len_subsam[k]
+        tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_IAAL[j,i,k,])
+        # Save sim sampling:
+        to_obsvec = c(to_obsvec, tmp_caal_sim)
+        if(sum(tmp_caal_sim) == 0) sim_data$index_caal[i,j,k,] = 0
+        else sim_data$index_caal[i,j,k,] = tmp_caal_sim[,1]/sum(tmp_caal_sim[,1])
+        # Replace use/not use:
+        sim_data$use_index_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
+      } # len bin loop
+    } # fleet loop
+  } # year loop
+  # Now replace values in obsvec vector:
+  sim_data$obsvec[sim_data$obs$type == 'indexcaal'] = to_obsvec
+  
+}
+
+# -------------------------------------------------------------------------
+
+# Continue code:
 truth <- sim_data
 # Save the version for reproducibility
 truth$wham_version = om$wham_version

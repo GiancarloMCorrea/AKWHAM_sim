@@ -2,9 +2,9 @@
 # These values are also used in EM as starting values
 
 # Years, Ages and lengths --------------------------------------------------------
-years_base = 1981:2020 # 40 years
+years_base = 1976:2020 # 45 years
 ages_base = 1:10
-lengths_base = seq(from = 2, to = 120, by = 2)
+lengths_base = seq(from = 2, to = 130, by = 2)
 n_fisheries = 1
 n_indices = 1
 
@@ -44,7 +44,7 @@ catch_Neff = matrix(100, ncol = n_fisheries, nrow = length(years_base))
 index_Neff = matrix(100, ncol = n_indices, nrow = length(years_base))
 catch_NeffL = matrix(100, ncol = n_fisheries, nrow = length(years_base))
 index_NeffL = matrix(100, ncol = n_indices, nrow = length(years_base))
-catch_Neff_caal = array(5, dim = c(length(years_base), n_fisheries, length(lengths_base)))
-index_Neff_caal = array(5, dim = c(length(years_base), n_indices, length(lengths_base)))
+# Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
 Ecov_obs = 0.2
+# Nsamp for WAA, this should change in the future (function of NAA), TODO:
 waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))

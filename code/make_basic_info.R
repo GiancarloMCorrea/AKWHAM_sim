@@ -30,8 +30,8 @@ make_basic_info <- function(base_years = 1970:2021, ages = 1:10, fish_len = 1:10
     info$index_Neff <- index_Neff
     info$catch_NeffL <- catch_NeffL
     info$index_NeffL <- index_NeffL
-    info$catch_caal_Neff <- catch_Neff_caal
-    info$index_caal_Neff <- index_Neff_caal
+    info$catch_caal_Neff <- array(50, dim = c(ny, info$n_fleets, nlbins)) #Not important, will be replaced later
+    info$index_caal_Neff <- array(50, dim = c(ny, info$n_indices, nlbins)) #Not important, will be replaced later
 
 	# More information:
     info$fracyr_indices <- matrix(0, ny, info$n_indices) # Jan 1st

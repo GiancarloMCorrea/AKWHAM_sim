@@ -21,8 +21,7 @@ gf_selectivity = list(
   initial_pars = lensel_based$initial_pars)
 # M pars:
 gf_M = list(model = "constant",
-            initial_means = M_base,
-            est_ages = 1) # Does not matter, important for plotting
+            initial_means = M_base) 
 # Q pars:
 gf_Q = list(initial_q = Q_base,
             q_lower = rep(0, times = length(Q_base)),
