@@ -44,7 +44,8 @@ if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot
 
 if(df.scenario$catch_data[scenj] == 'caal') {
   
-  Nsamp_CAAL = 50 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 25 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
   
   # Also pass caal_Neff
   obs_names = c(obs_names, 'catch_caal_Neff', 'use_catch_caal')
@@ -53,32 +54,37 @@ if(df.scenario$catch_data[scenj] == 'caal') {
   to_obsvec = NULL
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_fleets) {
-      # Random sampling:
-      # len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$catch_pal[i,j,]) 
-      # len_subsam = as.vector(len_subsam)
-      # Length-stratified sampling:
-      len_samp = sim_data$catch_pal[i,j,]*sim_data$catch_NeffL[j,i]
-      len_subsam = numeric(length(len_samp)) # save CAAL Neff
-      if(sum(len_samp) == Nsamp_CAAL) {
-        len_subsam = len_samp
-      } else {
-        i_len_samp = len_samp
-        for(s in 1:Nsamp_CAAL) {
-          n_left_i = length(which(i_len_samp > 0)) 
-          n_in_i = sum(len_subsam)
-          if((n_left_i+n_in_i) < Nsamp_CAAL) {
-            # Sample all lengths in length sample
-            pos_samp = which(i_len_samp > 0)
-            len_subsam[pos_samp] = len_subsam[pos_samp] + 1
-            i_len_samp = len_samp - len_subsam
-          } else {
-            # Random sample of remaining lengths to complete Nsamp CAAL
-            pos_samp = sample(x = which(i_len_samp > 0), size = Nsamp_CAAL-n_in_i, replace = F)
-            len_subsam[pos_samp] = len_subsam[pos_samp] + 1
-            break
-          }
-        } # loop
+      if(df.scenario$caal_samp[scenj] == 'random') {
+        # Random sampling:
+        len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$catch_pal[i,j,]) 
+        len_subsam = as.vector(len_subsam)
       }
+      if(df.scenario$caal_samp[scenj] == 'strat') {
+        # Length-stratified sampling:
+        len_samp = sim_data$catch_pal[i,j,]*sim_data$catch_NeffL[j,i]
+        len_subsam = numeric(length(len_samp)) # save CAAL Neff
+        if(sum(len_samp) == Nsamp_CAAL) {
+          len_subsam = len_samp
+        } else {
+          i_len_samp = len_samp
+          for(s in 1:Nsamp_CAAL) {
+            n_left_i = length(which(i_len_samp > 0)) 
+            n_in_i = sum(len_subsam)
+            if((n_left_i+n_in_i) < Nsamp_CAAL) {
+              # Sample all lengths in length sample
+              pos_samp = which(i_len_samp > 0)
+              len_subsam[pos_samp] = len_subsam[pos_samp] + 1
+              i_len_samp = len_samp - len_subsam
+            } else {
+              # Random sample of remaining lengths to complete Nsamp CAAL
+              pos_samp = sample(x = which(i_len_samp > 0), size = Nsamp_CAAL-n_in_i, replace = F)
+              len_subsam[pos_samp] = len_subsam[pos_samp] + 1
+              break
+            }
+          } # loop
+        }
+      } # conditional
+
       # Continue code:
       for(k in 1:sim_data$n_lengths) {
         sim_data$catch_caal_Neff[j,i,k] = len_subsam[k]
@@ -87,19 +93,20 @@ if(df.scenario$catch_data[scenj] == 'caal') {
         to_obsvec = c(to_obsvec, tmp_caal_sim)
         if(sum(tmp_caal_sim) == 0) sim_data$catch_caal[i,j,k,] = 0
         else sim_data$catch_caal[i,j,k,] = tmp_caal_sim[,1]/sum(tmp_caal_sim[,1])
-        # Replace use/not use:
-        sim_data$use_catch_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
       } # len bin loop
+      # Replace use/not use:
+      sim_data$use_catch_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
     } # fleet loop
   } # year loop
   # Now replace values in obsvec vector:
   sim_data$obsvec[sim_data$obs$type == 'catchcaal'] = to_obsvec
   
-}
+} # catch_caal conditional
 
 if(df.scenario$index_data[scenj] == 'caal') {
   
-  Nsamp_CAAL = 50 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 25 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
   
   # Also pass caal_Neff
   obs_names = c(obs_names, 'index_caal_Neff', 'use_index_caal')
@@ -108,32 +115,37 @@ if(df.scenario$index_data[scenj] == 'caal') {
   to_obsvec = NULL
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_indices) {
-      # Random sampling:
-      # len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$index_pal[i,j,]) 
-      # len_subsam = as.vector(len_subsam)
-      # Length-stratified sampling:
-      len_samp = sim_data$index_pal[i,j,]*sim_data$index_NeffL[j,i]
-      len_subsam = numeric(length(len_samp)) # save CAAL Neff
-      if(sum(len_samp) == Nsamp_CAAL) {
-        len_subsam = len_samp
-      } else {
-        i_len_samp = len_samp
-        for(s in 1:Nsamp_CAAL) {
-          n_left_i = length(which(i_len_samp > 0)) 
-          n_in_i = sum(len_subsam)
-          if((n_left_i+n_in_i) < Nsamp_CAAL) {
-            # Sample all lengths in length sample
-            pos_samp = which(i_len_samp > 0)
-            len_subsam[pos_samp] = len_subsam[pos_samp] + 1
-            i_len_samp = len_samp - len_subsam
-          } else {
-            # Random sample of remaining lengths to complete Nsamp CAAL
-            pos_samp = sample(x = which(i_len_samp > 0), size = Nsamp_CAAL-n_in_i, replace = F)
-            len_subsam[pos_samp] = len_subsam[pos_samp] + 1
-            break
-          }
-        } # loop
+      if(df.scenario$caal_samp[scenj] == 'random') {
+        # Random sampling:
+        len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$index_pal[i,j,]) 
+        len_subsam = as.vector(len_subsam)
       }
+      if(df.scenario$caal_samp[scenj] == 'strat') {
+        # Length-stratified sampling:
+        len_samp = sim_data$index_pal[i,j,]*sim_data$index_NeffL[j,i]
+        len_subsam = numeric(length(len_samp)) # save CAAL Neff
+        if(sum(len_samp) == Nsamp_CAAL) {
+          len_subsam = len_samp
+        } else {
+          i_len_samp = len_samp
+          for(s in 1:Nsamp_CAAL) {
+            n_left_i = length(which(i_len_samp > 0)) 
+            n_in_i = sum(len_subsam)
+            if((n_left_i+n_in_i) < Nsamp_CAAL) {
+              # Sample all lengths in length sample
+              pos_samp = which(i_len_samp > 0)
+              len_subsam[pos_samp] = len_subsam[pos_samp] + 1
+              i_len_samp = len_samp - len_subsam
+            } else {
+              # Random sample of remaining lengths to complete Nsamp CAAL
+              pos_samp = sample(x = which(i_len_samp > 0), size = Nsamp_CAAL-n_in_i, replace = F)
+              len_subsam[pos_samp] = len_subsam[pos_samp] + 1
+              break
+            }
+          } # loop
+        }
+      }# conditional
+
       # Continue code:
       for(k in 1:sim_data$n_lengths) {
         sim_data$index_caal_Neff[j,i,k] = len_subsam[k]
@@ -142,15 +154,15 @@ if(df.scenario$index_data[scenj] == 'caal') {
         to_obsvec = c(to_obsvec, tmp_caal_sim)
         if(sum(tmp_caal_sim) == 0) sim_data$index_caal[i,j,k,] = 0
         else sim_data$index_caal[i,j,k,] = tmp_caal_sim[,1]/sum(tmp_caal_sim[,1])
-        # Replace use/not use:
-        sim_data$use_index_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
       } # len bin loop
+      # Replace use/not use:
+      sim_data$use_index_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
     } # fleet loop
   } # year loop
   # Now replace values in obsvec vector:
   sim_data$obsvec[sim_data$obs$type == 'indexcaal'] = to_obsvec
   
-}
+} # index_caal conditional
 
 # -------------------------------------------------------------------------
 

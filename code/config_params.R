@@ -34,17 +34,8 @@ lensel_based = list(model = c("len-double-normal", "len-logistic"),
 # Ecov information ------------------------------------------------------
 
 Ecov_re_sig = c(0) # Ecov process error SD (this will be exp() in WHAM)
-Ecov_re_cor <- c(0) # Ecov process error autocorrelation
-Ecov_effect <- c(0.25, 0.15, 0.3) # Effect on growth parameter (Beta, parameter-specific: k, Linf, L1)
+Ecov_re_cor <- c(0.3) # Ecov process error autocorrelation: in WHAM: -1 + 2/(1 + exp(-phi))
+Ecov_effect <- c(0, 0.25, 0.15, 0.3) # Effect on growth parameter (Beta, parameter-specific: none, k, Linf, L1)
 
 # Obs error information ------------------------------------------------------
-catch_sigma = matrix(0.05, ncol = n_fisheries, nrow = length(years_base))
-agg_index_cv = matrix(0.2, ncol = n_indices, nrow = length(years_base))
-catch_Neff = matrix(100, ncol = n_fisheries, nrow = length(years_base))
-index_Neff = matrix(100, ncol = n_indices, nrow = length(years_base))
-catch_NeffL = matrix(100, ncol = n_fisheries, nrow = length(years_base))
-index_NeffL = matrix(100, ncol = n_indices, nrow = length(years_base))
-# Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-Ecov_obs = 0.2
-# Nsamp for WAA, this should change in the future (function of NAA), TODO:
-waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
+# Defined in om_setup.R and em_setup.R depending on the data quality scenario

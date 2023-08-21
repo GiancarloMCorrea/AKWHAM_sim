@@ -38,7 +38,6 @@ gf_NAA_re = list(N1_pars = c(N1_base, 0),
 gf_ecov <- list(
   label = "Ecov",
   process_model = 'ar1',
-  logsigma = cbind(rep(log(Ecov_obs), length(years_base))),
   lag = 0,
   mean = cbind(rep(0, length(years_base))),
   year = years_base,
@@ -66,19 +65,50 @@ for(i in 1:NROW(df.scenario)){
   
   # Print model name:
   print(paste0("row ", i))
-  
-  # Add more information to Ecov:
+
+  # Ecov information
   ecov_i = gf_ecov
-  if(Ecov_effect[df.scenario$growth_par[i]] < 1e-7){
-    ecov_i$where = "none"
+
+  # ---------------------
+  # Define obs error scenarios (data rich vs data poor):
+  if(df.scenario$data_scen[i] == 'rich') {
+    catch_sigma = matrix(0.05, ncol = n_fisheries, nrow = length(years_base))
+    agg_index_cv = matrix(0.15, ncol = n_indices, nrow = length(years_base))
+    catch_Neff = matrix(200, ncol = n_fisheries, nrow = length(years_base))
+    index_Neff = matrix(400, ncol = n_indices, nrow = length(years_base))
+    catch_NeffL = matrix(200, ncol = n_fisheries, nrow = length(years_base))
+    index_NeffL = matrix(400, ncol = n_indices, nrow = length(years_base))
+    # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
+    ecov_i$logsigma = cbind(rep(log(0.1), length(years_base))) # logsigma Ecov
+    # Nsamp for WAA, this should change in the future (function of NAA), TODO:
+    waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
+  }
+
+  if(df.scenario$data_scen[i] == 'poor') {
+    catch_sigma = matrix(0.1, ncol = n_fisheries, nrow = length(years_base))
+    agg_index_cv = matrix(0.3, ncol = n_indices, nrow = length(years_base))
+    catch_Neff = matrix(50, ncol = n_fisheries, nrow = length(years_base))
+    index_Neff = matrix(100, ncol = n_indices, nrow = length(years_base))
+    catch_NeffL = matrix(50, ncol = n_fisheries, nrow = length(years_base))
+    index_NeffL = matrix(100, ncol = n_indices, nrow = length(years_base))
+    # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
+    ecov_i$logsigma = cbind(rep(log(0.2), length(years_base))) # logsigma Ecov
+    # Nsamp for WAA, this should change in the future (function of NAA), TODO:
+    waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
+  }
+
+  # ---------------------
+  # Add more information to Ecov:
+  if(df.scenario$growth_par[i] == 0){
+    ecov_i$where = "none" # none effect
   } else {
-    ecov_i$where = "growth"
-    ecov_i$where_subindex = df.scenario$growth_par[i]
+    ecov_i$where = "growth" # effect on growth parameter
+    ecov_i$where_subindex = df.scenario$growth_par[i] # select growth parameter
   }
   om_inputs[[i]] <- make_om(Fmax = F_max, 
                             years_base = years_base, ages_base = ages_base, lengths_base = lengths_base,
                             F_change_time = 0.8,
-							sigma_R = sigma_R,
+							               sigma_R = sigma_R,
                             selectivity = gf_selectivity,
                             M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
                             growth = gf_growth, LW = gf_LW,
@@ -88,7 +118,7 @@ for(i in 1:NROW(df.scenario)){
                             catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
                             index_NeffL = index_NeffL, catch_Neff_caal = catch_Neff_caal, 
                             index_Neff_caal = index_Neff_caal, waa_cv = waa_cv,
-                            Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, Ecov_effect = Ecov_effect[df.scenario$growth_par[i]],
+                            Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, Ecov_effect = Ecov_effect[df.scenario$growth_par[i]+1],
                             df.scenario = df.scenario[i,]) 
   om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
     bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?
