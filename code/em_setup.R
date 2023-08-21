@@ -75,7 +75,7 @@ gf_growth <- list(model='vB_classic', init_vals=c(k_par, Linf, L1),
                   SD_est = 1:2) # Always estimate SD parameters
 gf_LW <- list(init_vals=c(a_LW, b_LW)) # fixed
 
-# WAA configuration:
+# LAA configuration:
 gf_LAA = list(LAA_vals = L_a,
               re = c('none'),
               SD_vals=c(CV_a*L_a[1], CV_a*L_a[10]),
@@ -97,9 +97,6 @@ for(i in 1:NROW(df.scenario)){
   LAA_i = gf_LAA
   Ecov_i = gf_ecov
   selectivity_i = gf_selectivity_age # will be replaced below
-  
-  if(df.scenario$catch_data[i] == 'paa' & df.scenario$index_data[i] == 'paa') selectivity_i = gf_selectivity_age
-  else  selectivity_i = gf_selectivity_len # use len selex when len info available
   Q_i = gf_Q
 
   # Change input parameters information -------------------------------
@@ -149,11 +146,11 @@ for(i in 1:NROW(df.scenario)){
   # Semiparametric G approach:
   if(df.scenario$method[i] == 'SemiG') { 
     growth_i$re = base_re_growth# random effects structure.
-	LAA_i$re = df.scenario$re_method[i] # random effects structure
+	  LAA_i$re = df.scenario$re_method[i] # random effects structure
     if(df.scenario$est_fixed[i]) growth_i$est_pars = 1:3 # estimate growth parameters
-	LAA_i$SD_est = NULL # turn off estimation SD LAA
+	  LAA_i$SD_est = NULL # turn off estimation SD LAA
     WAA_i = NULL # turn off WAA nonparametric 
-	Ecov_i = NULL # Turn off Ecov
+	  Ecov_i = NULL # Turn off Ecov
   }  
 
   # Basic info created above:
@@ -174,15 +171,15 @@ for(i in 1:NROW(df.scenario)){
   if(df.scenario$catch_data[i] == 'pal') {
     basic_info$use_catch_pal <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
     basic_info$use_catch_paa <- matrix(0, ncol = basic_info$n_fleets, nrow = ny) # turn off paa because default = 1
-	 selectivity_i$model[1] = lensel_based$model[1] # use len-based selectivity when len data for fishery or survey
-	 selectivity_i$initial_pars[[1]] = lensel_based$initial_pars[[1]]
+	  selectivity_i$model[1] = lensel_based$model[1] # use len-based selectivity when len data for fishery or survey
+	  selectivity_i$initial_pars[[1]] = lensel_based$initial_pars[[1]]
   }
   if(df.scenario$catch_data[i] == 'caal') {
     basic_info$use_catch_pal <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
     basic_info$use_catch_caal <- array(1, dim = c(ny, basic_info$n_fleets, nlbins))
     basic_info$use_catch_paa <- matrix(0, ncol = basic_info$n_fleets, nrow = ny) # turn off paa because default = 1
-	 selectivity_i$model[1] = lensel_based$model[1] # use len-based selectivity when len data for fishery or survey
-	 selectivity_i$initial_pars[[1]] = lensel_based$initial_pars[[1]]
+	  selectivity_i$model[1] = lensel_based$model[1] # use len-based selectivity when len data for fishery or survey
+	  selectivity_i$initial_pars[[1]] = lensel_based$initial_pars[[1]]
   }
 
   # For survey:
@@ -194,15 +191,15 @@ for(i in 1:NROW(df.scenario)){
   if(df.scenario$index_data[i] == 'pal') {
     basic_info$use_index_pal <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
     basic_info$use_index_paa <- matrix(0, ncol = basic_info$n_indices, nrow = ny) # turn off paa because default = 1
-	 selectivity_i$model[2] = lensel_based$model[2] # use len-based selectivity when len data for fishery or survey
-	 selectivity_i$initial_pars[[2]] = lensel_based$initial_pars[[2]]
+	  selectivity_i$model[2] = lensel_based$model[2] # use len-based selectivity when len data for fishery or survey
+	  selectivity_i$initial_pars[[2]] = lensel_based$initial_pars[[2]]
   }
   if(df.scenario$index_data[i] == 'caal') {
     basic_info$use_index_pal <- matrix(1, ncol = basic_info$n_indices, nrow = ny) # use len comps as well
     basic_info$use_index_paa <- matrix(0, ncol = basic_info$n_indices, nrow = ny) # turn off paa because default = 1
     basic_info$use_index_caal <- array(1, dim = c(ny, basic_info$n_indices, nlbins))
-	 selectivity_i$model[2] = lensel_based$model[2] # use len-based selectivity when len data for fishery or survey
-	 selectivity_i$initial_pars[[2]] = lensel_based$initial_pars[[2]]
+	  selectivity_i$model[2] = lensel_based$model[2] # use len-based selectivity when len data for fishery or survey
+	  selectivity_i$initial_pars[[2]] = lensel_based$initial_pars[[2]]
   }
   # Turn on use of EWAA as obs (only use survey data):
   if(df.scenario$method[i] == 'WAA') basic_info$use_index_waa = matrix(1, ncol = basic_info$n_indices, nrow = ny)

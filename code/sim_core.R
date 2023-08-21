@@ -176,6 +176,15 @@ ompars$par2 <- sapply(unique(ompars$par), function(x) {
 res <- list(truth = truth, model = model, ompars = ompars)
 res$fit <- list()
 
+# Modify initial values for nonparametric approach:
+# This is important. Convergence problems might appear if this is not done
+if(df.scenario$method[scenj] == 'WAA') {
+  EM_input$par$WAA_a = log(colMeans(sim_data$waa[2,,]))
+}
+if(df.scenario$method[scenj] == 'LAA') {
+  EM_input$par$LAA_a = log(colMeans(sim_data$LAA))
+}
+
 #######################################################
 # Run WHAM without sdreport first:
 fit <- tryCatch(fit_wham(EM_input, do.sdrep=F, do.osa=F, do.retro=F, do.proj=F, MakeADFun.silent=TRUE),
