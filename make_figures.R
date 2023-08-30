@@ -1,6 +1,4 @@
-## Cole made this custom file to quickly look at results for
-## R&D. Note the script to run things has modified code w/ what
-## to return
+# Code to make figures
 
 library(ggplot2)
 library(dplyr)
