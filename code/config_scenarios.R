@@ -57,5 +57,5 @@ n.mods = dim(df.scenario)[1]
 df.scenario$Scenario <- paste0("Scenario_",1:n.mods)
 df.scenario <- df.scenario %>% select(Scenario, everything()) 
 # Turn off RE structure when growth_par = 0 (except for Ecov)
-df.scenario$re_method[df.scenario$method %in% c('WAA', 'growth', 'LAA', 'SemiG') & df.scenario$growth_par == 0] = NA
+df.scenario$re_method[df.scenario$method %in% c('WAA', 'growth', 'LAA', 'SemiG') & df.scenario$growth_par == 0] = 'none'
 saveRDS(df.scenario, file.path(write.dir, "df.scenarios.RDS"))

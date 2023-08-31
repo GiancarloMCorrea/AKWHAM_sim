@@ -130,7 +130,7 @@ for(i in 1:NROW(df.scenario)){
   }
   # nonparametric WAA approach:
   if(df.scenario$method[i] == 'WAA') { 
-    if(df.scenario$growth_par[i] > 0) WAA_i$re = df.scenario$re_method[i] # random effects structure, only when temp variability
+    WAA_i$re = df.scenario$re_method[i] # random effects structure
     if(df.scenario$est_fixed[i]) WAA_i$est_pars = ages_base # estimate fixed effects?
     growth_i = NULL # turn off parametric growth
     LW_i = NULL # turn off LW
@@ -139,10 +139,8 @@ for(i in 1:NROW(df.scenario)){
   }
   # parametric approach:
   if(df.scenario$method[i] == 'growth') { 
-	if(df.scenario$growth_par[i] > 0) { # random effects structure, only when temp variability
-		base_re_growth[df.scenario$growth_par[i]] = df.scenario$re_method[i] 
-		growth_i$re = base_re_growth
-	}
+	base_re_growth[df.scenario$growth_par[i]] = df.scenario$re_method[i] 
+	growth_i$re = base_re_growth# random effects structure, only when temp variability
     if(df.scenario$est_fixed[i]) growth_i$est_pars = 1:3 # estimate growth parameters
     LAA_i = NULL # turn off LAA nonparametric approach
     WAA_i = NULL # turn off WAA nonparametric approach
@@ -150,7 +148,7 @@ for(i in 1:NROW(df.scenario)){
   }
   # nonparametric LAA approach:
   if(df.scenario$method[i] == 'LAA') { 
-    if(df.scenario$growth_par[i] > 0) LAA_i$re = df.scenario$re_method[i] # random effects structure, only when temp variability
+    LAA_i$re = df.scenario$re_method[i] # random effects structure
     if(df.scenario$est_fixed[i]) LAA_i$est_pars = ages_base # estimate fixed effects?
     growth_i = NULL # turn off parametric growth
     WAA_i = NULL # turn off WAA
@@ -172,7 +170,7 @@ for(i in 1:NROW(df.scenario)){
   # Semiparametric G approach:
   if(df.scenario$method[i] == 'SemiG') { 
     growth_i$re = base_re_growth# random effects structure = none 
-	if(df.scenario$growth_par[i] > 0) LAA_i$re = df.scenario$re_method[i] # random effects structure, only when temp variability
+	LAA_i$re = df.scenario$re_method[i] # random effects structure
     if(df.scenario$est_fixed[i]) growth_i$est_pars = 1:3 # estimate growth parameters
 	LAA_i$SD_est = NULL # turn off estimation SD LAA
     WAA_i = NULL # turn off WAA nonparametric 
