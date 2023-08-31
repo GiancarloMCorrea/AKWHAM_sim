@@ -130,7 +130,7 @@ for(i in 1:NROW(df.scenario)){
   }
   # nonparametric WAA approach:
   if(df.scenario$method[i] == 'WAA') { 
-    WAA_i$re = df.scenario$re_method[i] # random effects structure
+    if(df.scenario$growth_par[i] > 0) WAA_i$re = df.scenario$re_method[i] # random effects structure, only when temp variability
     if(df.scenario$est_fixed[i]) WAA_i$est_pars = ages_base # estimate fixed effects?
     growth_i = NULL # turn off parametric growth
     LW_i = NULL # turn off LW
@@ -139,8 +139,10 @@ for(i in 1:NROW(df.scenario)){
   }
   # parametric approach:
   if(df.scenario$method[i] == 'growth') { 
-    base_re_growth[df.scenario$growth_par[i]] = df.scenario$re_method[i]
-    growth_i$re = base_re_growth# random effects structure. 
+	if(df.scenario$growth_par[i] > 0) { # random effects structure, only when temp variability
+		base_re_growth[df.scenario$growth_par[i]] = df.scenario$re_method[i] 
+		growth_i$re = base_re_growth
+	}
     if(df.scenario$est_fixed[i]) growth_i$est_pars = 1:3 # estimate growth parameters
     LAA_i = NULL # turn off LAA nonparametric approach
     WAA_i = NULL # turn off WAA nonparametric approach
@@ -148,15 +150,15 @@ for(i in 1:NROW(df.scenario)){
   }
   # nonparametric LAA approach:
   if(df.scenario$method[i] == 'LAA') { 
-    LAA_i$re = df.scenario$re_method[i] # random effects structure
+    if(df.scenario$growth_par[i] > 0) LAA_i$re = df.scenario$re_method[i] # random effects structure, only when temp variability
     if(df.scenario$est_fixed[i]) LAA_i$est_pars = ages_base # estimate fixed effects?
     growth_i = NULL # turn off parametric growth
-    WAA_i = NULL # turn off LW
+    WAA_i = NULL # turn off WAA
     Ecov_i = NULL # Turn off Ecov
   }
   # Ecov approach:
   if(df.scenario$method[i] == 'Ecov') { 
-    Ecov_i$process_model = df.scenario$re_method[i] # random effects structure
+    Ecov_i$process_model = df.scenario$re_method[i] # random effects structure (always)
     if(df.scenario$growth_par[i] == 0) {
       Ecov_i$where = 'none'
     } else {
@@ -169,12 +171,12 @@ for(i in 1:NROW(df.scenario)){
   }  
   # Semiparametric G approach:
   if(df.scenario$method[i] == 'SemiG') { 
-    growth_i$re = base_re_growth# random effects structure.
-	  LAA_i$re = df.scenario$re_method[i] # random effects structure
+    growth_i$re = base_re_growth# random effects structure = none 
+	if(df.scenario$growth_par[i] > 0) LAA_i$re = df.scenario$re_method[i] # random effects structure, only when temp variability
     if(df.scenario$est_fixed[i]) growth_i$est_pars = 1:3 # estimate growth parameters
-	  LAA_i$SD_est = NULL # turn off estimation SD LAA
+	LAA_i$SD_est = NULL # turn off estimation SD LAA
     WAA_i = NULL # turn off WAA nonparametric 
-	  Ecov_i = NULL # Turn off Ecov
+	Ecov_i = NULL # Turn off Ecov
   }  
 
   # Make basic inputs (defined above)
@@ -251,12 +253,13 @@ for(i in 1:NROW(df.scenario)){
   em_inputs[[i]]$par$log_NAA_sigma = log(sigma_R)
   em_inputs[[i]]$map$log_NAA_sigma <- factor(NA) # Fix NAA sigma
   em_inputs[[i]]$map$log_N1_pars <- factor(c(1, NA)) # Fix F1 initial
-  if(df.scenario$method[i] == 'EWAA') em_inputs[[i]]$random = NULL
-  if(df.scenario$method[i] == 'WAA') em_inputs[[i]]$random = 'WAA_re'
-  if(df.scenario$method[i] == 'growth') em_inputs[[i]]$random = 'growth_re'
-  if(df.scenario$method[i] == 'LAA') em_inputs[[i]]$random = 'LAA_re'
-  if(df.scenario$method[i] == 'Ecov') em_inputs[[i]]$random = 'Ecov_re'
-  if(df.scenario$method[i] == 'SemiG') em_inputs[[i]]$random = 'LAA_re'
+  # Define random variable:
+  em_inputs[[i]]$random = NULL # default for EWAA
+  if(df.scenario$method[i] == 'WAA' & df.scenario$growth_par[i] > 0) em_inputs[[i]]$random = 'WAA_re'
+  if(df.scenario$method[i] == 'growth' & df.scenario$growth_par[i] > 0) em_inputs[[i]]$random = 'growth_re'
+  if(df.scenario$method[i] == 'LAA' & df.scenario$growth_par[i] > 0) em_inputs[[i]]$random = 'LAA_re'
+  if(df.scenario$method[i] == 'Ecov') em_inputs[[i]]$random = 'Ecov_re' # always activate random variable here
+  if(df.scenario$method[i] == 'SemiG' & df.scenario$growth_par[i] > 0) em_inputs[[i]]$random = 'LAA_re'
     
 }
 
