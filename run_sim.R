@@ -1,3 +1,4 @@
+# Make sure you update the WHAM package:
 # remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='growth', INSTALL_opts = c("--no-docs", "--no-multiarch", "--no-demo"))
 
 # Clear workspace
@@ -17,7 +18,7 @@ setwd(main_dir)
 # Create Scenario DF:
 source(file.path("code", "config_scenarios.R"))
 
-## Make OM and EM WHAM inputs
+# Make OM and EM WHAM inputs
 source(file.path("code", "om_setup.R"))
 source(file.path("code", "em_setup.R"))
 
@@ -58,10 +59,10 @@ run_iter <- function(sim, scen){
 # sfStop()
 
 # Run in parallel several simulations for all scenarios
-sfInit(parallel=TRUE, cpus=10)
+sfInit(parallel=TRUE, cpus=10) # modify this
 sfExportAll()
 for(sc in 1:nrow(df.scenario)){
     sfExportAll()
-    trash <- sfLapply(1:10, function(sim) run_iter(sim, sc))
+    trash <- sfLapply(1:120, function(sim) run_iter(sim, sc))
 }
 sfStop()

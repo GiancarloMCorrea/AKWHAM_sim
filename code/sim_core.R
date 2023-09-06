@@ -3,6 +3,7 @@ args = commandArgs(trailingOnly=TRUE)
 simi = as.integer(args[1])
 scenj = as.integer(args[2])
 
+# CHANGE THIS IF REQUIRED!
 # Main directory:
 main_dir = '~/GitHub/AKWHAM_sim'
 

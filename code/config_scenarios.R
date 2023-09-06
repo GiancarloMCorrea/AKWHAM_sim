@@ -12,34 +12,34 @@ data_scen = c('poor', 'rich')
 # Create EM configuration df:
 method = c('EWAA', 'WAA', 
            'growth', 'growth', 'growth', 'growth',
-           'Ecov', 'Ecov', 'Ecov', 'Ecov',
-           'SemiG', 'SemiG', 'SemiG', 'SemiG',
-           'LAA', 'LAA', 'LAA', 'LAA')
+           'Ecov', 'Ecov', 'Ecov', 'Ecov')
+           #'SemiG', 'SemiG', 'SemiG', 'SemiG',
+           #'LAA', 'LAA', 'LAA', 'LAA')
 re_method = c(NA, '2dar1', 
               'ar1_y', 'ar1_y', 'ar1_y', 'ar1_y',
-              'ar1', 'ar1', 'ar1', 'ar1',
-              '2dar1', '2dar1', '2dar1', '2dar1', 
-              '2dar1', '2dar1', '2dar1', '2dar1')
+              'ar1', 'ar1', 'ar1', 'ar1')
+              #'2dar1', '2dar1', '2dar1', '2dar1', 
+              #'2dar1', '2dar1', '2dar1', '2dar1')
 est_fixed = c(NA, TRUE, 
               TRUE, TRUE, TRUE, TRUE, 
-              TRUE, TRUE, TRUE, TRUE,
-              TRUE, TRUE, TRUE, TRUE,
-              FALSE, FALSE, FALSE, FALSE)
+              TRUE, TRUE, TRUE, TRUE)
+              #TRUE, TRUE, TRUE, TRUE,
+              #FALSE, FALSE, FALSE, FALSE)
 catch_data = c('paa', 'paa', 
                'pal', 'pal', 'pal', 'pal',
-               'pal', 'pal', 'pal', 'pal',
-               'pal', 'pal', 'pal', 'pal', 
                'pal', 'pal', 'pal', 'pal')
+               #'pal', 'pal', 'pal', 'pal', 
+               #'pal', 'pal', 'pal', 'pal')
 index_data = c('paa', 'paa', 
                'pal', 'paa', 'caal', 'caal', 
-               'pal', 'paa', 'caal', 'caal',
-               'pal', 'paa', 'caal', 'caal',
                'pal', 'paa', 'caal', 'caal')
+               #'pal', 'paa', 'caal', 'caal',
+               #'pal', 'paa', 'caal', 'caal')
 caal_samp = c(NA, NA, 
               NA, NA, 'random', 'strat',
-              NA, NA, 'random', 'strat',
-              NA, NA, 'random', 'strat',
               NA, NA, 'random', 'strat')
+              #NA, NA, 'random', 'strat',
+              #NA, NA, 'random', 'strat')
 
 # Make scenario DF:
 tmp.scenario = data.frame(growth_par = rep(growth_par, times = length(method)),
