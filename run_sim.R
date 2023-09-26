@@ -9,12 +9,11 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(wham)
-library(snowfall)
-require(doSNOW)
-require(parallel)
+require(doParallel)
+require(foreach)
 
 # Set working directory:
-main_dir = "~/GitHub/AKWHAM_sim"
+main_dir = "C:/Giancarlo/AKWHAM_sim"
 setwd(main_dir)
 
 # Create Scenario DF:
@@ -73,7 +72,7 @@ for(k in 1:nrow(df.scenario)) {
 # Run in parallel ---------------------------------------------------------
 
 # Specify scenarios and replicates to be run:
-scenj = 41:80
+scenj = 56:80
 simi = 1:120
 
 # Combine in DF:
@@ -82,14 +81,14 @@ nSim = nrow(iter_df)
 
 # Specify number of cores:
 nCores = 18
-cl = makeCluster(nCores)
-registerDoSNOW(cl)
+cl = parallel::makeCluster(nCores)
+doParallel::registerDoParallel(cl)
 
 # Run in parallel:
-foreach(ix = 1:nSim) %dopar% {
+foreach::foreach(ix = 1:nSim) %dopar% {
   source(file.path('code', 'sim_core.R'))
   sim_core(iter_df = iter_df[ix,])
 }
 
 # Stop cluster:
-stopCluster(cl)
+parallel::stopCluster(cl)
