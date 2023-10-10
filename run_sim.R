@@ -13,7 +13,7 @@ require(doParallel)
 require(foreach)
 
 # Set working directory:
-main_dir = "C:/Giancarlo/AKWHAM_sim"
+main_dir = "C:/Use/GitHub/AKWHAM_sim"
 setwd(main_dir)
 
 # Create Scenario DF:
@@ -40,12 +40,12 @@ for(k in 1:nrow(df.scenario)) {
 
 # -------------------------------------------------------------
 # Function to run sim:
-# WARNING: before running this change main_dir in sim_core.R
+# WARNING: before running this change main_dir in sim_core2.R
 # TODO: use here::here()
-# run_iter <- function(sim, scen){
-#   cmd <- paste("Rscript --vanilla code/sim_core.R", sim, scen)
-#   system(cmd)
-# }
+run_iter <- function(sim, scen){
+  cmd <- paste("Rscript --vanilla code/sim_core2.R", sim, scen)
+  system(cmd)
+}
 
 # -------------------------------------------------------------
 # Run Simulation
@@ -60,35 +60,36 @@ for(k in 1:nrow(df.scenario)) {
 # sfStop()
 
 # Run in parallel several simulations for all scenarios
-# sfInit(parallel=TRUE, cpus=10) # modify this
-# sfExportAll()
-# for(sc in 1:nrow(df.scenario)){
-#     sfExportAll()
-#     trash <- sfLapply(1:120, function(sim) run_iter(sim, sc))
-# }
-# sfStop()
+these_scenarios = c(63,64,72)
+snowfall::sfInit(parallel=TRUE, cpus=15) # modify this
+snowfall::sfExportAll()
+for(sc in these_scenarios){
+    snowfall::sfExportAll()
+    trash <- snowfall::sfLapply(11:120, function(sim) run_iter(sim, sc))
+}
+snowfall::sfStop()
 
 
 # Run in parallel ---------------------------------------------------------
 
 # Specify scenarios and replicates to be run:
-scenj = 56:80
-simi = 1:120
-
-# Combine in DF:
-iter_df = tidyr::crossing(scenj, simi)
-nSim = nrow(iter_df)
-
-# Specify number of cores:
-nCores = 18
-cl = parallel::makeCluster(nCores)
-doParallel::registerDoParallel(cl)
-
-# Run in parallel:
-foreach::foreach(ix = 1:nSim) %dopar% {
-  source(file.path('code', 'sim_core.R'))
-  sim_core(iter_df = iter_df[ix,])
-}
-
-# Stop cluster:
-parallel::stopCluster(cl)
+# scenj = 75:80
+# simi = 1:120
+# 
+# # Combine in DF:
+# iter_df = tidyr::crossing(scenj, simi)
+# nSim = nrow(iter_df)
+# 
+# # Specify number of cores:
+# nCores = 15
+# cl = parallel::makeCluster(nCores)
+# doParallel::registerDoParallel(cl)
+# 
+# # Run in parallel:
+# foreach::foreach(ix = 1:nSim) %dopar% {
+#   source(file.path('code', 'sim_core.R'))
+#   sim_core(iter_df = iter_df[ix,])
+# }
+# 
+# # Stop cluster:
+# parallel::stopCluster(cl)

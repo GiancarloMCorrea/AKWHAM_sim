@@ -9,48 +9,70 @@ write.dir = "inputs"
 growth_par = 0:3 # none, k, Linf, and L1 separately
 data_scen = c('poor', 'rich')
 
-# Create EM configuration df:
-method = c('EWAA', 'WAA', 
+
+# -------------------------------------------------------------------------
+# Create EM configuration df (first set: EWAA, WAA, growth, Ecov)
+method1 = c('EWAA', 'WAA', 
            'growth', 'growth', 'growth', 'growth',
            'Ecov', 'Ecov', 'Ecov', 'Ecov')
-           #'SemiG', 'SemiG', 'SemiG', 'SemiG',
-           #'LAA', 'LAA', 'LAA', 'LAA')
-re_method = c(NA, '2dar1', 
+re_method1 = c(NA, '2dar1', 
               'ar1_y', 'ar1_y', 'ar1_y', 'ar1_y',
               'ar1', 'ar1', 'ar1', 'ar1')
-              #'2dar1', '2dar1', '2dar1', '2dar1', 
-              #'2dar1', '2dar1', '2dar1', '2dar1')
-est_fixed = c(NA, TRUE, 
+est_fixed1 = c(NA, TRUE, 
               TRUE, TRUE, TRUE, TRUE, 
               TRUE, TRUE, TRUE, TRUE)
-              #TRUE, TRUE, TRUE, TRUE,
-              #FALSE, FALSE, FALSE, FALSE)
-catch_data = c('paa', 'paa', 
+catch_data1 = c('paa', 'paa', 
                'pal', 'pal', 'pal', 'pal',
                'pal', 'pal', 'pal', 'pal')
-               #'pal', 'pal', 'pal', 'pal', 
-               #'pal', 'pal', 'pal', 'pal')
-index_data = c('paa', 'paa', 
+index_data1 = c('paa', 'paa', 
                'pal', 'paa', 'caal', 'caal', 
                'pal', 'paa', 'caal', 'caal')
-               #'pal', 'paa', 'caal', 'caal',
-               #'pal', 'paa', 'caal', 'caal')
-caal_samp = c(NA, NA, 
+caal_samp1 = c(NA, NA, 
               NA, NA, 'random', 'strat',
               NA, NA, 'random', 'strat')
-              #NA, NA, 'random', 'strat',
-              #NA, NA, 'random', 'strat')
 
-# Make scenario DF:
-tmp.scenario = data.frame(growth_par = rep(growth_par, times = length(method)),
-                         method = rep(method, each = length(growth_par)),
-                         re_method = rep(re_method, each = length(growth_par)), 
-                         est_fixed = rep(est_fixed, each = length(growth_par)), 
-                         catch_data = rep(catch_data, each = length(growth_par)), 
-                         index_data = rep(index_data, each = length(growth_par)),
-                         caal_samp = rep(caal_samp, each = length(growth_par)))
-df.scenario = tmp.scenario %>% slice(rep(1:n(), times = length(data_scen))) %>% 
-                                mutate(data_scen = rep(data_scen, each = nrow(tmp.scenario)))
+# Make scenario DF1:
+tmp.scenario1 = data.frame(growth_par = rep(growth_par, times = length(method1)),
+                          method = rep(method1, each = length(growth_par)),
+                          re_method = rep(re_method1, each = length(growth_par)), 
+                          est_fixed = rep(est_fixed1, each = length(growth_par)), 
+                          catch_data = rep(catch_data1, each = length(growth_par)), 
+                          index_data = rep(index_data1, each = length(growth_par)),
+                          caal_samp = rep(caal_samp1, each = length(growth_par)))
+df.scenario1 = tmp.scenario1 %>% slice(rep(1:n(), times = length(data_scen))) %>% 
+                  mutate(data_scen = rep(data_scen, each = nrow(tmp.scenario1)))
+
+
+# -------------------------------------------------------------------------
+# Create EM configuration df (second set: LAA or SemiG)
+method2 = c('SemiG', 'SemiG', 'SemiG', 'SemiG',
+            'LAA', 'LAA', 'LAA', 'LAA')
+re_method2 = c('2dar1', '2dar1', '2dar1', '2dar1', 
+               '2dar1', '2dar1', '2dar1', '2dar1')
+est_fixed2 = c(TRUE, TRUE, TRUE, TRUE,
+               TRUE, TRUE, TRUE, TRUE)
+catch_data2 = c('pal', 'pal', 'pal', 'pal', 
+                'pal', 'pal', 'pal', 'pal')
+index_data2 = c('pal', 'paa', 'caal', 'caal',
+                'pal', 'paa', 'caal', 'caal')
+caal_samp2 = c(NA, NA, 'random', 'strat',
+               NA, NA, 'random', 'strat')
+
+# Make scenario DF2:
+tmp.scenario2 = data.frame(growth_par = rep(growth_par, times = length(method2)),
+                           method = rep(method2, each = length(growth_par)),
+                           re_method = rep(re_method2, each = length(growth_par)), 
+                           est_fixed = rep(est_fixed2, each = length(growth_par)), 
+                           catch_data = rep(catch_data2, each = length(growth_par)), 
+                           index_data = rep(index_data2, each = length(growth_par)),
+                           caal_samp = rep(caal_samp2, each = length(growth_par)))
+df.scenario2 = tmp.scenario2 %>% slice(rep(1:n(), times = length(data_scen))) %>% 
+  mutate(data_scen = rep(data_scen, each = nrow(tmp.scenario2)))
+
+
+# -------------------------------------------------------------------------
+# Merge both data.frames:
+df.scenario = rbind(df.scenario1, df.scenario2)
 
 # Save scenario DF:
 n.mods = dim(df.scenario)[1] 

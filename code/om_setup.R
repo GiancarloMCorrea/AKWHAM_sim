@@ -56,7 +56,7 @@ L_a <- Linf + (L1 - Linf)*exp(-k_par*(ages_base - 1))
 W_a <- a_LW*L_a^b_LW
 CV_a <- .1
 gf_growth <- list(model='vB_classic', init_vals=c(k_par, Linf, L1),
-                  SD_vals=c(CV_a*L_a[1], CV_a*L_a[10]))
+                  SD_vals=c(CV_a*L_a[1], CV_a*L_a[max(ages_base)]))
 gf_LW <- list(init_vals=c(a_LW, b_LW))
 
 # Make OMs --------------------------------------------------------------
