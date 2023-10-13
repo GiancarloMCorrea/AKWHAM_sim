@@ -25,6 +25,7 @@ ts_results = list()
 par_results = list()
 laa_results = list()
 waa_results = list()
+sel_results = list()
 countList = 1
 for(k in seq_along(scenario_names)) {
   
@@ -35,6 +36,11 @@ for(k in seq_along(scenario_names)) {
     for(j in seq_along(replicates)) { # loop over replicates
       rep_i = readRDS(file = file.path('results', scenario_names[k], replicates[j]))
       
+	    ts_df = NULL
+      par_df = NULL
+      laa_df = NULL
+      waa_df = NULL
+      sel_df = NULL
       if(rep_i$model$optimized) {
         nyears = rep_i$truth$n_years_model
         nages = rep_i$truth$n_ages
@@ -70,7 +76,7 @@ for(k in seq_along(scenario_names)) {
                                                  10*exp(value.y)/(1+exp(value.y)), value.y))
         pars = pars %>% select('par2', 'value.y', 'value.x') %>% rename('par' = 'par2', 'est' = 'value.y', 'truth' = 'value.x')
         # Growth parameters:
-        grw1 <- data.frame(par = c('k', 'L1', 'Linf'),
+        grw1 <- data.frame(par = c('k', 'Linf', 'L1'),
                          est = exp(rep_i$fit$rep$growth_a[1:3,1]),
                          truth = exp(rep_i$truth$growth_a[1:3,1]))
         grw2 <- data.frame(par = c('SD1', 'SDA'),
@@ -115,8 +121,18 @@ for(k in seq_along(scenario_names)) {
           mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
                  sim=as.factor(im),  maxgrad=get_maxgrad(rep_i))
         
-        # Selectivity too?
-        # TODO
+        # Selectivity values (only when OM and EM uses size-based selex)
+        my_lens = rep_i$truth$lengths
+        selFish = data.frame(par='selLL', len = my_lens, type = 'fishery',
+                              est=rep_i$fit$rep$selLL[[1]][1,],
+                              truth=rep_i$truth$selLL[[1]][1,])
+        selSurv = data.frame(par='selLL', len = my_lens, type = 'survey',
+                             est=rep_i$fit$rep$selLL[[2]][1,],
+                             truth=rep_i$truth$selLL[[2]][1,])
+        sel = rbind(selFish, selSurv) %>% bind_cols(rep_i$model)
+        sel_df = sel %>% bind_rows() %>%
+                  mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
+                         sim=as.factor(im),  maxgrad=get_maxgrad(rep_i))
         
       } # conditional if optimized
       
@@ -124,6 +140,7 @@ for(k in seq_along(scenario_names)) {
       par_results[[countList]] = par_df
       laa_results[[countList]] = laa_df
       waa_results[[countList]] = waa_df
+      sel_results[[countList]] = sel_df
       countList = countList + 1
       
     } # rep loop
@@ -138,9 +155,11 @@ ts_results = dplyr::bind_rows(ts_results)
 par_results = dplyr::bind_rows(par_results)
 laa_results = dplyr::bind_rows(laa_results)
 waa_results = dplyr::bind_rows(waa_results)
+sel_results = dplyr::bind_rows(sel_results)
 
 # Save results
 saveRDS(ts_results, 'results/ts_results.RDS')
 saveRDS(par_results, 'results/par_results.RDS')
 saveRDS(laa_results, 'results/laa_results.RDS')
 saveRDS(waa_results, 'results/waa_results.RDS')
+saveRDS(sel_results, 'results/sel_results.RDS')

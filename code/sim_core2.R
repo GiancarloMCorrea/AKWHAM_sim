@@ -5,7 +5,7 @@ scenj = as.integer(args[2])
 
 # CHANGE THIS IF REQUIRED!
 # Main directory:
-main_dir = 'C:/Giancarlo/AKWHAM_sim'
+main_dir = 'C:/Use/GitHub/AKWHAM_sim'
 
 # Load required libraries:
 library(wham)
