@@ -176,3 +176,12 @@ get_growth <- function(fits){
   lapply(fits, function(i) ff(i)) %>% bind_rows()
 }
 
+# Aux function to plot:
+my_label_parsed <- function (variable, value) {
+  if (variable == "impact") {
+    return(as.character(value))
+  } else {
+    llply(as.character(value), function(x) parse(text = x))    
+  }
+}
+

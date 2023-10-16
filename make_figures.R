@@ -18,15 +18,6 @@ save_folder = 'plots'
 # Read scenarios df
 df.scenario = readRDS('inputs/df.scenarios.RDS')
 
-# Aux function to plot:
-my_label_parsed <- function (variable, value) {
-  if (variable == "impact") {
-    return(as.character(value))
-  } else {
-    llply(as.character(value), function(x) parse(text = x))    
-  }
-}
-
 # Order EM labels:
 EM_order = c("EWa-paa-paa", "WNP-paa-paa", "LP-pal-pal", "LP-pal-paa", "LP-pal-caal-random", "LP-pal-caal-strat",  
              "LEc-pal-pal", "LEc-pal-paa", "LEc-pal-caal-random", "LEc-pal-caal-strat")
