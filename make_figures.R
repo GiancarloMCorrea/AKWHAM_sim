@@ -19,8 +19,8 @@ save_folder = 'plots'
 df.scenario = readRDS('inputs/df.scenarios.RDS')
 
 # Order EM labels:
-EM_order = c("EWa-paa-paa", "WNP-paa-paa", "LP-pal-pal", "LP-pal-paa", "LP-pal-caal-random", "LP-pal-caal-strat",  
-             "LEc-pal-pal", "LEc-pal-paa", "LEc-pal-caal-random", "LEc-pal-caal-strat")
+EM_order = c("WEm-paa-paa", "WNP-paa-paa", "LP-pal-pal", "LP-pal-paa", "LP-pal-pal/caal(r)", "LP-pal-pal/caal(s)",  
+             "LEc-pal-pal", "LEc-pal-paa", "LEc-pal-pal/caal(r)", "LEc-pal-pal/caal(s)")
 
 
 # -------------------------------------------------------------------------
@@ -52,15 +52,18 @@ waa_df = rbind(waa_df1, waa_df2)
 temp = par_df %>% filter(par %in% c('log_F1', 'log_N1_pars', 'logit_q', 'mean_rec_pars'))
 temp = temp %>% filter(maxgrad < 1)
 temp = temp %>% mutate(method = factor(method, levels = c('EWAA', 'WAA', 'growth', 'Ecov'),
-                                     labels = c('EWa', 'WNP', 'LP', 'LEc')))
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'caal', 
-                                                true = paste(method,catch_data,index_data,caal_samp, sep = '-'),
+                                     labels = c('WEm', 'WNP', 'LP', 'LEc')))
+temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
+temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
+temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
+temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
+                                                true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
                                                 false = paste(method,catch_data,index_data, sep = '-')))
 temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
 temp = temp %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_N1_pars', 'log_F1'),
-                                     labels = c(expression(bar(R)), 'Q', expression(R[1]), 'F[1]')))
+                                     labels = c(expression(bar(R)), 'Q', expression(N["1,1"]), 'F[1]')))
 temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                     labels = c('No~variability', 'k~variability', expression(L[infinity]~'variability'), expression(L[1]~'variability'))))
+                                     labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
 
 # Make plot:
 p1 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
@@ -69,7 +72,8 @@ p1 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
         coord_cartesian(ylim = c(-0.5, 0.5)) +
         geom_hline(yintercept=0, color=1, linetype='dashed') +
         theme(legend.position = 'none',
-              axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+              axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+              strip.text = element_text(size = 10)) +
         scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
         xlab(NULL) + ylab('Relative error') +
         facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
@@ -83,15 +87,18 @@ temp = ts_df %>% filter(maxgrad < 1)
 temp = temp %>% dplyr::group_by(par, data_scen, catch_data, index_data, caal_samp, method, growth_par, im) %>% 
             dplyr::summarise(rel_error = median(rel_error))
 temp = temp %>% mutate(method = factor(method, levels = c('EWAA', 'WAA', 'growth', 'Ecov'),
-                                       labels = c('EWa', 'WNP', 'LP', 'LEc')))
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'caal', 
-                                          true = paste(method,catch_data,index_data,caal_samp, sep = '-'),
+                                       labels = c('WEm', 'WNP', 'LP', 'LEc')))
+temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
+temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
+temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
+temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
+                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
                                           false = paste(method,catch_data,index_data, sep = '-')))
 temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
 temp = temp %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
                                      labels = c('SSB', 'R', 'F')))
 temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('No~variability', 'k~variability', expression(L[infinity]~'variability'), expression(L[1]~'variability'))))
+                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
 
 # Make plot:
 p2 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
@@ -100,8 +107,9 @@ p2 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
   coord_cartesian(ylim = c(-0.5, 0.5)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.text = element_text(size = 10)) +
+  scale_y_continuous(breaks=c(-0.3, 0, 0.3)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
 ggsave(filename = file.path(save_folder, 'ts.jpg'), plot = p2, 
@@ -119,14 +127,17 @@ temp = par_df %>% filter(par %in% c('k', 'Linf', 'L1', 'SD1', 'SDA'))
 temp = temp %>% filter(maxgrad < 1, scenario %in% c(9:40, 49:80)) # select only relevant scenarios
 temp = temp %>% mutate(method = factor(method, levels = c('growth', 'Ecov'),
                                        labels = c('LP', 'LEc')))
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'caal', 
-                                          true = paste(method,catch_data,index_data,caal_samp, sep = '-'),
+temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
+temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
+temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
+temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
+                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
                                           false = paste(method,catch_data,index_data, sep = '-')))
 temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
 temp = temp %>% mutate(par2 = factor(par, levels = c('k', 'Linf', 'L1', 'SD1', 'SDA'),
                                      labels = c('k', expression(L[infinity]), expression(L[1]), expression(SD[1]), expression(SD[A]))))
 temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('No~variability', 'k~variability', expression(L[infinity]~'variability'), expression(L[1]~'variability'))))
+                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
 
 # Make plot:
 p4 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
@@ -135,7 +146,8 @@ p4 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
   coord_cartesian(ylim = c(-0.5, 0.5)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.text = element_text(size = 10)) +
   scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
@@ -148,14 +160,17 @@ temp = par_df %>% filter(par %in% c('sigma', 'rho', 'EcovBeta')) # meanEcov too?
 temp = temp %>% filter(maxgrad < 1, scenario %in% c(25:40, 65:80)) # select only relevant scenarios
 temp = temp %>% mutate(method = factor(method, levels = c('Ecov'),
                                        labels = c('LEc')))
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'caal', 
-                                          true = paste(method,catch_data,index_data,caal_samp, sep = '-'),
+temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
+temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
+temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
+temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
+                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
                                           false = paste(method,catch_data,index_data, sep = '-')))
 temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
 temp = temp %>% mutate(par2 = factor(par, levels = c('sigma', 'rho', 'EcovBeta'),
                                      labels = c(expression(sigma[X]^2), expression(rho[X]), expression(beta))))
 temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('No~variability', 'k~variability', expression(L[infinity]~'variability'), expression(L[1]~'variability'))))
+                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
 
 # Make plot:
 p5 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
@@ -164,7 +179,8 @@ p5 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
   coord_cartesian(ylim = c(-1, 1)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.text = element_text(size = 10)) +
   scale_y_continuous(breaks=c(-1, -0.5, 0, 0.5, 1)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
@@ -178,15 +194,18 @@ temp = temp %>% filter(maxgrad < 1, scenario %in% c(1:8, 41:48)) # select only r
 temp = temp %>% dplyr::group_by(age, data_scen, catch_data, index_data, caal_samp, method, growth_par, im) %>% 
             dplyr::summarise(rel_error = median(rel_error))
 temp = temp %>% mutate(method = factor(method, levels = c('EWAA', 'WAA'),
-                                       labels = c('EWa', 'WNP')))
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'caal', 
-                                          true = paste(method,catch_data,index_data,caal_samp, sep = '-'),
+                                       labels = c('WEm', 'WNP')))
+temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
+temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
+temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
+temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
+                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
                                           false = paste(method,catch_data,index_data, sep = '-')))
 temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
 temp = temp %>% mutate(par2 = factor(age, levels = 1:10,
                                      labels = 1:10))
 temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('No~variability', 'k~variability', expression(L[infinity]~'variability'), expression(L[1]~'variability'))))
+                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
 
 # Make plot:
 p6 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
@@ -195,7 +214,8 @@ p6 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
   coord_cartesian(ylim = c(-0.2, 0.2)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.text = element_text(size = 10)) +
   scale_y_continuous(breaks=c(-0.1, 0, 0.1)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
@@ -211,14 +231,17 @@ temp = temp %>% dplyr::group_by(age, data_scen, catch_data, index_data, caal_sam
   dplyr::summarise(rel_error = median(rel_error))
 temp = temp %>% mutate(method = factor(method, levels = c('growth', 'Ecov'),
                                        labels = c('LP', 'LEc')))
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'caal', 
-                                          true = paste(method,catch_data,index_data,caal_samp, sep = '-'),
+temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
+temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
+temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
+temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
+                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
                                           false = paste(method,catch_data,index_data, sep = '-')))
 temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
 temp = temp %>% mutate(par2 = factor(age, levels = 1:10,
                                      labels = 1:10))
 temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('No~variability', 'k~variability', expression(L[infinity]~'variability'), expression(L[1]~'variability'))))
+                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
 
 # Make plot:
 p7 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
@@ -227,16 +250,13 @@ p7 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
   coord_cartesian(ylim = c(-0.2, 0.2)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.text = element_text(size = 10)) +
   scale_y_continuous(breaks=c(-0.1, 0, 0.1)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
 ggsave(filename = file.path(save_folder, 'laa.jpg'), plot = p7, 
        width = 190 , height = 240, units = 'mm', dpi = 500)
-
-
-
-
 
 
 # -------------------------------------------------------------------------

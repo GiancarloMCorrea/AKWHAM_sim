@@ -39,6 +39,7 @@ set.seed(seeds[[scenj]][simi])
 # Simulate data:
 sim_data <- om$simulate(complete=TRUE)
 if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
+if(simi == 1 & scenj <= 4) saveRDS(object = om, file = paste0('inputs/om_sample_', scenj,'.RDS')) # Save OM data to make plots later
 
 # CAAL sampling: ----------------------------------------------
 # Only works for multinomial 
