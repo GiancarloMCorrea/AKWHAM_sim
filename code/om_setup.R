@@ -72,12 +72,13 @@ for(i in 1:NROW(df.scenario)){
   # ---------------------
   # Define obs error scenarios (data rich vs data poor):
   if(df.scenario$data_scen[i] == 'rich') {
-    catch_sigma = matrix(0.05, ncol = n_fisheries, nrow = length(years_base))
-    agg_index_cv = matrix(0.15, ncol = n_indices, nrow = length(years_base))
-    catch_Neff = matrix(200, ncol = n_fisheries, nrow = length(years_base))
-    index_Neff = matrix(400, ncol = n_indices, nrow = length(years_base))
-    catch_NeffL = matrix(200, ncol = n_fisheries, nrow = length(years_base))
-    index_NeffL = matrix(400, ncol = n_indices, nrow = length(years_base))
+    catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = length(years_base))
+    agg_index_cv = matrix(0.1, ncol = n_indices, nrow = length(years_base))
+    # Neff values in OM:
+    catch_Neff = matrix(200, ncol = n_fisheries, nrow = length(years_base)) # This will not be used, will be replaced later
+    index_Neff = matrix(400, ncol = n_indices, nrow = length(years_base)) # This will not be used, will be replaced later
+    catch_NeffL = matrix(8000, ncol = n_fisheries, nrow = length(years_base))
+    index_NeffL = matrix(16000, ncol = n_indices, nrow = length(years_base))
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
     ecov_i$logsigma = cbind(rep(log(0.1), length(years_base))) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
@@ -86,13 +87,14 @@ for(i in 1:NROW(df.scenario)){
 
   if(df.scenario$data_scen[i] == 'poor') {
     catch_sigma = matrix(0.1, ncol = n_fisheries, nrow = length(years_base))
-    agg_index_cv = matrix(0.3, ncol = n_indices, nrow = length(years_base))
-    catch_Neff = matrix(50, ncol = n_fisheries, nrow = length(years_base))
-    index_Neff = matrix(100, ncol = n_indices, nrow = length(years_base))
-    catch_NeffL = matrix(50, ncol = n_fisheries, nrow = length(years_base))
-    index_NeffL = matrix(100, ncol = n_indices, nrow = length(years_base))
+    agg_index_cv = matrix(0.4, ncol = n_indices, nrow = length(years_base))
+    # Neff values in OM:
+    catch_Neff = matrix(50, ncol = n_fisheries, nrow = length(years_base)) # This will not be used, will be replaced later
+    index_Neff = matrix(100, ncol = n_indices, nrow = length(years_base)) # This will not be used, will be replaced later
+    catch_NeffL = matrix(2000, ncol = n_fisheries, nrow = length(years_base))
+    index_NeffL = matrix(4000, ncol = n_indices, nrow = length(years_base))
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    ecov_i$logsigma = cbind(rep(log(0.2), length(years_base))) # logsigma Ecov
+    ecov_i$logsigma = cbind(rep(log(0.4), length(years_base))) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
     waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
   }

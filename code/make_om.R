@@ -25,30 +25,38 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
   ny = length(basic_info$years)
   nlbins = basic_info$n_lengths
   # Select data to simulate by OM:
-  if(df.scenario$catch_data == 'paa') {
-    basic_info$use_catch_paa <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
-  }
-  if(df.scenario$catch_data == 'pal') {
-    basic_info$use_catch_paa <- matrix(0, ncol = basic_info$n_fleets, nrow = ny)
-    basic_info$use_catch_pal <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
-  }
-  if(df.scenario$catch_data == 'caal') {
-    basic_info$use_catch_pal <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
-    basic_info$use_catch_caal <- array(1, dim = c(ny, basic_info$n_fleets, nlbins))
-    basic_info$use_catch_paa <- matrix(0, ncol = basic_info$n_fleets, nrow = ny)
-  }
-  if(df.scenario$index_data == 'paa') {
-    basic_info$use_index_paa <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
-  }
-  if(df.scenario$index_data == 'pal') {
-    basic_info$use_index_paa <- matrix(0, ncol = basic_info$n_indices, nrow = ny)
-    basic_info$use_index_pal <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
-  }
-  if(df.scenario$index_data == 'caal') {
-    basic_info$use_index_pal <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
-    basic_info$use_index_caal <- array(1, dim = c(ny, basic_info$n_indices, nlbins))
-    basic_info$use_index_paa <- matrix(0, ncol = basic_info$n_indices, nrow = ny)
-  }
+  # if(df.scenario$catch_data == 'paa') {
+  #   basic_info$use_catch_paa <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
+  # }
+  # if(df.scenario$catch_data == 'pal') {
+  #   basic_info$use_catch_paa <- matrix(0, ncol = basic_info$n_fleets, nrow = ny)
+  #   basic_info$use_catch_pal <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
+  # }
+  # if(df.scenario$catch_data == 'caal') {
+  #   basic_info$use_catch_pal <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
+  #   basic_info$use_catch_caal <- array(1, dim = c(ny, basic_info$n_fleets, nlbins))
+  #   basic_info$use_catch_paa <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
+  # }
+  basic_info$use_catch_pal <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
+  basic_info$use_catch_caal <- array(1, dim = c(ny, basic_info$n_fleets, nlbins))
+  basic_info$use_catch_paa <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)  
+  
+  # if(df.scenario$index_data == 'paa') {
+  #   basic_info$use_index_paa <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
+  # }
+  # if(df.scenario$index_data == 'pal') {
+  #   basic_info$use_index_paa <- matrix(0, ncol = basic_info$n_indices, nrow = ny)
+  #   basic_info$use_index_pal <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
+  # }
+  # if(df.scenario$index_data == 'caal') {
+  #   basic_info$use_index_pal <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
+  #   basic_info$use_index_caal <- array(1, dim = c(ny, basic_info$n_indices, nlbins))
+  #   basic_info$use_index_paa <- matrix(0, ncol = basic_info$n_indices, nrow = ny)
+  # }
+  basic_info$use_index_pal <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
+  basic_info$use_index_caal <- array(1, dim = c(ny, basic_info$n_indices, nlbins))
+  basic_info$use_index_paa <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
+  
   if(df.scenario$method == 'WAA' | df.scenario$method == 'EWAA') { # only simulate waa index data when method = WAA or EWAA
     basic_info$use_index_waa <- matrix(1, ncol = basic_info$n_indices, nrow = ny)
     basic_info$use_catch_waa <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
