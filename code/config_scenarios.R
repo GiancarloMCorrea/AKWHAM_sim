@@ -9,6 +9,7 @@ write.dir = "inputs"
 growth_par = 0:3 # none, k, Linf, and L1 separately
 data_scen = c('poor', 'rich')
 samp_scheme = c('random', 'strat')
+Ecov_sim = c('stationary', 'trend')
 
 # -------------------------------------------------------------------------
 # Create EM configuration df (first set: EWAA, WAA, growth, Ecov)
@@ -73,7 +74,8 @@ df.scenario1 = tmp.scenario1 %>% slice(rep(1:n(), times = length(data_scen))) %>
 # -------------------------------------------------------------------------
 # Merge both data.frames:
 #df.scenario = rbind(df.scenario1, df.scenario2)
-df.scenario = df.scenario1
+df.scenario = df.scenario1 %>% slice(rep(1:n(), times = length(Ecov_sim))) %>% 
+  mutate(Ecov_sim = rep(Ecov_sim, each = nrow(df.scenario1)))
 
 # Save scenario DF:
 n.mods = dim(df.scenario)[1] 

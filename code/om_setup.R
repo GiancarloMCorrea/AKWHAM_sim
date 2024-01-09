@@ -1,6 +1,14 @@
 # remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='growth', INSTALL_opts = c("--no-docs", "--no-multiarch", "--no-demo"))
 
 # -------------------------------------------------------------------------
+# Define seeds:
+# These seeds will be the same across scenarios
+set.seed(8675309)
+seeds = sample(x = (-1e9):(1e9), size = 1000, replace = FALSE) # max number of replicates per scenario: 1000, but will only use 100 or 150
+saveRDS(seeds, file.path(write.dir,"seeds.RDS"))
+seeds = readRDS(file.path(write.dir,"seeds.RDS"))
+
+# -------------------------------------------------------------------------
 # Create OM WHAM inputs 
 
 # Load auxiliary functions:
@@ -80,7 +88,7 @@ for(i in 1:NROW(df.scenario)){
     catch_NeffL = matrix(8000, ncol = n_fisheries, nrow = length(years_base))
     index_NeffL = matrix(16000, ncol = n_indices, nrow = length(years_base))
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    ecov_i$logsigma = cbind(rep(log(0.1), length(years_base))) # logsigma Ecov
+    ecov_i$logsigma = cbind(rep(log(0.4), length(years_base))) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
     waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
   }
@@ -94,7 +102,7 @@ for(i in 1:NROW(df.scenario)){
     catch_NeffL = matrix(2000, ncol = n_fisheries, nrow = length(years_base))
     index_NeffL = matrix(4000, ncol = n_indices, nrow = length(years_base))
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    ecov_i$logsigma = cbind(rep(log(0.4), length(years_base))) # logsigma Ecov
+    ecov_i$logsigma = cbind(rep(log(0.8), length(years_base))) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
     waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
   }
@@ -124,18 +132,10 @@ for(i in 1:NROW(df.scenario)){
                             df.scenario = df.scenario[i,]) 
   om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
     bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?
+  om_inputs[[i]]$data$simulate_state[4] = 0 # DO NOT simulate Ecov process in WHAM
   
 }
 
 # Save OM inputs:
 saveRDS(om_inputs, file.path(write.dir, "om_inputs.RDS"))
 
-
-# -------------------------------------------------------------------------
-# Define seeds:
-#I don't think we want to use the same (e.g. 1000) seeds for everything.
-set.seed(8675309)
-seeds = sample(x = (-1e9):(1e9), size = NROW(df.scenario)*1000, replace = FALSE)
-seeds <- lapply(1:NROW(df.scenario), function(x) seeds[(1:1000) + 1000*(x-1)])
-saveRDS(seeds, file.path(write.dir,"seeds.RDS"))
-seeds = readRDS(file.path(write.dir,"seeds.RDS"))

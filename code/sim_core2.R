@@ -5,11 +5,12 @@ scenj = as.integer(args[2])
 
 # CHANGE THIS IF REQUIRED!
 # Main directory:
-main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
+main_dir = 'C:/Use/GitHub/AKWHAM_sim'
 
 # Load required libraries:
 library(wham)
 source(file.path(main_dir, "code", "make_om_plots.R"))
+source(file.path(main_dir, "code", "config_params.R"))
 # Read inputs:
 om_inputs <- readRDS(file.path(main_dir, "inputs", "om_inputs.RDS"))
 em_inputs <- readRDS(file.path(main_dir, "inputs", "em_inputs.RDS"))
@@ -30,13 +31,43 @@ seeds <- readRDS(file.path(main_dir, "inputs","seeds.RDS"))
 # Print scenario name:
 cat(paste0("START Scenario: ", scenj, " Sim: ", simi, "\n"))
 
+# -------------------------------------------------------------------------
+# Simulate environmental time series:
+
+if(df.scenario$Ecov_sim[i] == 'stationary') {
+  
+  set.seed(seeds[simi])
+  ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
+  alpha = 1
+  beta = Ecov_trend[1] # trend
+  theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
+  sim_ecov = 0
+  for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+  sim_ecov = scale(sim_ecov)
+
+}
+
+if(df.scenario$Ecov_sim[i] == 'trend') {
+  
+  set.seed(seeds[simi])
+  ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
+  alpha = 1
+  beta = Ecov_trend[2] # trend
+  theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
+  sim_ecov = 0
+  for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+  sim_ecov = scale(sim_ecov)
+  
+}
+
+# Now replace the sim_ecov in the OM input:
+om_inputs[[scenj]]$par$Ecov_re = sim_ecov
+
 #######################################################
 # Run OM:
 om <- fit_wham(om_inputs[[scenj]], do.fit = FALSE, MakeADFun.silent = TRUE)
-# Define seed:
-# TODO: use same seeds based on OM? 
-set.seed(seeds[[scenj]][simi])
-# Simulate data:
+# Define seed and simulate WHAM data:
+set.seed(seeds[simi])
 sim_data <- om$simulate(complete=TRUE)
 if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
 if(simi == 1 & scenj <= 4) saveRDS(object = om, file = paste0('inputs/om_sample_', scenj,'.RDS')) # Save OM data to make plots later

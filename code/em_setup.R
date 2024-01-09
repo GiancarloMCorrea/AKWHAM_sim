@@ -100,7 +100,7 @@ for(i in 1:NROW(df.scenario)){
     catch_NeffL = matrix(100, ncol = n_fisheries, nrow = length(years_base))
     index_NeffL = matrix(200, ncol = n_indices, nrow = length(years_base))
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    Ecov_i$logsigma = cbind(rep(log(0.1), length(years_base))) # logsigma Ecov
+    Ecov_i$logsigma = cbind(rep(log(0.4), length(years_base))) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
     waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
   }
@@ -113,7 +113,7 @@ for(i in 1:NROW(df.scenario)){
     catch_NeffL = matrix(25, ncol = n_fisheries, nrow = length(years_base))
     index_NeffL = matrix(50, ncol = n_indices, nrow = length(years_base))
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    Ecov_i$logsigma = cbind(rep(log(0.4), length(years_base))) # logsigma Ecov
+    Ecov_i$logsigma = cbind(rep(log(0.8), length(years_base))) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
     waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
   }
