@@ -5,7 +5,7 @@ scenj = as.integer(args[2])
 
 # CHANGE THIS IF REQUIRED!
 # Main directory:
-main_dir = 'C:/Use/GitHub/AKWHAM_sim'
+main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
 
 # Load required libraries:
 library(wham)
@@ -21,7 +21,7 @@ model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, thi
 # Select observations to pass to EM from sim_data:
 # DO NOT PASS either 'use_xxx_xxx' or Neff (except for caal, see below)
 obs_names <- c("agg_catch", "agg_indices", "catch_paa", "index_paa", "catch_pal", "index_pal", 
-               'catch_caal', 'index_caal', 'waa', 'Ecov_obs', "obsvec", "agesvec")
+               'catch_caal', 'index_caal', 'waa', 'waa_cv', 'Ecov_obs', "obsvec", "agesvec")
 
 #######################################################
 # Read seed:
@@ -386,6 +386,7 @@ if(df.scenario$method[scenj] == 'LAA') {
 fit <- tryCatch(fit_wham(EM_input, do.sdrep=F, do.osa=F, do.retro=F, do.proj=F, MakeADFun.silent=TRUE),
                 error = function(e) conditionMessage(e))
 
+# fit$rep[grep('nll',names(fit$rep))] %>% lapply(sum) %>% unlist
 # Deal with issues fitting EM to non-matching OM data
 # empty elements below can be used to summarize convergence information
 if(!'err' %in% names(fit) & class(fit) != "character"){
