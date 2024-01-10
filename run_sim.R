@@ -13,7 +13,7 @@ require(doParallel)
 require(foreach)
 
 # Set working directory:
-main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
+main_dir = 'C:/USE/GitHub/AKWHAM_sim'
 setwd(main_dir)
 
 # Create Scenario DF:

@@ -23,7 +23,7 @@ get_maxgrad <- function(fit){
 scenario_names = list.files(path = 'results')
 ts_results = list()
 par_results = list()
-laa_results = list()
+#laa_results = list()
 waa_results = list()
 sel_results = list()
 countList = 1
@@ -38,7 +38,7 @@ for(k in seq_along(scenario_names)) {
       
 	    ts_df = NULL
       par_df = NULL
-      laa_df = NULL
+      #laa_df = NULL
       waa_df = NULL
       sel_df = NULL
       if(rep_i$model$optimized) {
@@ -97,16 +97,16 @@ for(k in seq_along(scenario_names)) {
                       mutate(rel_error = (est-truth)/truth, abs_error = est-truth,
                               sim = as.factor(im),  maxgrad = get_maxgrad(rep_i))
         # LAA TIME SERIES
-        laa <- list()
-        for(year in 1:nyears){
-          laa[[year]] <- data.frame(par='LAA', age=1:nages, year=year,
-                                    est=rep_i$fit$rep$LAA[year,],
-                                    truth=rep_i$truth$LAA[year,]) %>%
-            bind_cols(rep_i$model)
-        }
-        laa_df <- laa %>% bind_rows() %>%
-          mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
-                 sim=as.factor(im),  maxgrad=get_maxgrad(rep_i))
+        # laa <- list()
+        # for(year in 1:nyears){
+        #   laa[[year]] <- data.frame(par='LAA', age=1:nages, year=year,
+        #                             est=rep_i$fit$rep$LAA[year,],
+        #                             truth=rep_i$truth$LAA[year,]) %>%
+        #     bind_cols(rep_i$model)
+        # }
+        # laa_df <- laa %>% bind_rows() %>%
+        #   mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
+        #          sim=as.factor(im),  maxgrad=get_maxgrad(rep_i))
         
         # WAA TIME SERIES
         waa <- list()
@@ -138,7 +138,7 @@ for(k in seq_along(scenario_names)) {
       
       ts_results[[countList]] = ts_df
       par_results[[countList]] = par_df
-      laa_results[[countList]] = laa_df
+      #laa_results[[countList]] = laa_df
       waa_results[[countList]] = waa_df
       sel_results[[countList]] = sel_df
       countList = countList + 1
@@ -153,7 +153,7 @@ for(k in seq_along(scenario_names)) {
 
 ts_results = dplyr::bind_rows(ts_results)
 par_results = dplyr::bind_rows(par_results)
-laa_results = dplyr::bind_rows(laa_results)
+#laa_results = dplyr::bind_rows(laa_results)
 waa_results = dplyr::bind_rows(waa_results)
 sel_results = dplyr::bind_rows(sel_results)
 

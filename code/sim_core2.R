@@ -5,7 +5,7 @@ scenj = as.integer(args[2])
 
 # CHANGE THIS IF REQUIRED!
 # Main directory:
-main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
+main_dir = 'C:/USE/GitHub/AKWHAM_sim'
 
 # Load required libraries:
 library(wham)
@@ -125,7 +125,8 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
       # Continue code:
       for(k in 1:sim_data$n_lengths) {
         sim_data$catch_caal_Neff[j,i,k] = len_subsam[k]*0.1 # multiplied by 0.1 to mimic GOA pcod
-        tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_CAAL[j,i,k,])
+        if(sum(sim_data$pred_CAAL[j,i,k,]) == 0) tmp_caal_sim = matrix(0, ncol = 1, nrow = sim_data$n_ages)
+        else tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_CAAL[j,i,k,])
         # Save sim sampling:
         to_obsvec = c(to_obsvec, tmp_caal_sim*sim_data$catch_caal_Neff[j,i,k])
         if(sum(tmp_caal_sim) == 0) sim_data$catch_caal[i,j,k,] = 0
@@ -277,7 +278,8 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
       # Continue code:
       for(k in 1:sim_data$n_lengths) {
         sim_data$index_caal_Neff[j,i,k] = len_subsam[k]*0.1 # multiplied by 0.1 to mimic GOA pcod
-        tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_IAAL[j,i,k,])
+        if(sum(sim_data$pred_IAAL[j,i,k,]) == 0) tmp_caal_sim = matrix(0, ncol = 1, nrow = sim_data$n_ages)
+        else tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_IAAL[j,i,k,])
         # Save sim sampling:
         to_obsvec = c(to_obsvec, tmp_caal_sim*sim_data$index_caal_Neff[j,i,k])
         if(sum(tmp_caal_sim) == 0) sim_data$index_caal[i,j,k,] = 0

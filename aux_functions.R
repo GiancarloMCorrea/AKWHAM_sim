@@ -185,3 +185,26 @@ my_label_parsed <- function (variable, value) {
   }
 }
 
+# Set EM and OM labels in df to plot:
+set_labels = function(df) {
+  
+  temp = df %>% filter(maxgrad < 1) # convergent replicates
+  temp = temp %>% mutate(method = factor(method, levels = c('EWAA', 'WAA', 'growth', 'Ecov'),
+                                         labels = c('WEm', 'WNP', 'LP', 'LEc')))
+  temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
+  temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
+  temp$index_data[temp$index_data == 'caal'] = 'pal+caal'
+  # Set EM labels:
+  temp = temp %>% mutate(fish_label = if_else(condition = catch_data != 'pal',  true = paste0(catch_data, caal_samp), false = catch_data))
+  temp = temp %>% mutate(surv_label = if_else(condition = index_data != 'pal',  true = paste0(index_data, caal_samp), false = index_data))
+  temp = temp %>% mutate(em_label = paste0(method,':', fish_label, '/', surv_label))
+  temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
+  temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
+                                           labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
+  
+  return(temp)
+  
+}
+
+
+

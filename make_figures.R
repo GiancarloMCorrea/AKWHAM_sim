@@ -19,55 +19,47 @@ save_folder = 'plots'
 df.scenario = readRDS('inputs/df.scenarios.RDS')
 
 # Order EM labels:
-EM_order = c("WEm:paa/paa(r)", "WEm:paa/paa(s)", "WNP:paa/paa(r)", "WNP:paa/paa(s)", 
-             "LP:pal/pal", "LP:pal/paa", "LP:pal/pal+caal(r)", "LP:pal/pal+caal(s)",  
-             "LEc:pal/pal", "LEc:pal/paa", "LEc:pal/pal+caal(r)", "LEc:pal/pal+caal(s)")
-
+EM_order = c("WEm:paa(r)/paa(r)", "WEm:paa(s)/paa(s)", "WNP:paa(r)/paa(r)", "WNP:paa(s)/paa(s)", 
+             "LP:pal/pal", "LP:pal/paa(r)", "LP:pal/paa(s)", "LP:pal/pal+caal(r)", "LP:pal/pal+caal(s)",  
+             "LEc:pal/pal", "LEc:pal/paa(r)", "LEc:pal/paa(s)", "LEc:pal/pal+caal(r)", "LEc:pal/pal+caal(s)")
 
 # -------------------------------------------------------------------------
 # Read output files -------------------------------------------------------
 
 # TS data:
-ts_df1 = readRDS(file = 'outputs/ts_results_1.RDS')
-ts_df2 = readRDS(file = 'outputs/ts_results_2.RDS')
-ts_df = rbind(ts_df1, ts_df2)
+ts_df1 = readRDS(file = 'outputs/ts_results.RDS')
+#ts_df2 = readRDS(file = 'outputs/ts_results_2.RDS')
+ts_df = rbind(ts_df1)
 
 # par data:
-par_df1 = readRDS(file = 'outputs/par_results_1.RDS')
-par_df2 = readRDS(file = 'outputs/par_results_2.RDS')
-par_df = rbind(par_df1, par_df2)
+par_df1 = readRDS(file = 'outputs/par_results.RDS')
+#par_df2 = readRDS(file = 'outputs/par_results_2.RDS')
+par_df = rbind(par_df1)
 
 # LAA data:
-laa_df1 = readRDS(file = 'outputs/laa_results_1.RDS')
-laa_df2 = readRDS(file = 'outputs/laa_results_2.RDS')
-laa_df = rbind(laa_df1, laa_df2)
+laa_df1 = readRDS(file = 'outputs/laa_results.RDS')
+#laa_df2 = readRDS(file = 'outputs/laa_results_2.RDS')
+laa_df = rbind(laa_df1)
 
 # WAA data:
-waa_df1 = readRDS(file = 'outputs/waa_results_1.RDS')
-waa_df2 = readRDS(file = 'outputs/waa_results_2.RDS')
-waa_df = rbind(waa_df1, waa_df2)
-
+waa_df1 = readRDS(file = 'outputs/waa_results.RDS')
+#waa_df2 = readRDS(file = 'outputs/waa_results_2.RDS')
+waa_df = rbind(waa_df1)
 
 # -------------------------------------------------------------------------
 # PAR plot (for ALL scenarios):
 temp = par_df %>% filter(par %in% c('log_F1', 'log_N1_pars', 'logit_q', 'mean_rec_pars'))
-temp = temp %>% filter(maxgrad < 1)
-temp = temp %>% mutate(method = factor(method, levels = c('EWAA', 'WAA', 'growth', 'Ecov'),
-                                     labels = c('WEm', 'WNP', 'LP', 'LEc')))
-temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
-temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
-temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
-                                                true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
-                                                false = paste(method,catch_data,index_data, sep = '-')))
-temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
+# Set EM and OM labels:
+temp = set_labels(temp)
+# Set par labels:
 temp = temp %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_N1_pars', 'log_F1'),
                                      labels = c(expression(bar(R)), 'Q', expression(N["1,1"]), 'F[1]')))
-temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                     labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
 
-# Make plot:
-p1 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+# Make plot (stationary):
+this_ecov = 'stationary' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
+
+p1 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
         geom_violin(position=position_dodge(0.6), alpha = 0.75) +
         theme_bw() +
         coord_cartesian(ylim = c(-0.5, 0.5)) +
@@ -78,31 +70,42 @@ p1 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
         scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
         xlab(NULL) + ylab('Relative error') +
         facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, 'par.jpg'), plot = p1, 
+ggsave(filename = file.path(save_folder, paste0('par_', this_ecov,'.jpg')), plot = p1, 
        width = 190 , height = 220, units = 'mm', dpi = 500)
 
+# Make plot (trend):
+this_ecov = 'trend' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
+
+p1 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
+  theme_bw() +
+  coord_cartesian(ylim = c(-0.5, 0.5)) +
+  geom_hline(yintercept=0, color=1, linetype='dashed') +
+  theme(legend.position = 'none',
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.text = element_text(size = 10)) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
+  xlab(NULL) + ylab('Relative error') +
+  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
+ggsave(filename = file.path(save_folder, paste0('par_', this_ecov,'.jpg')), plot = p1, 
+       width = 190 , height = 220, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
 # TS plot (median over years, for ALL scenarios):
-temp = ts_df %>% filter(maxgrad < 1)
-temp = temp %>% dplyr::group_by(par, data_scen, catch_data, index_data, caal_samp, method, growth_par, im) %>% 
-            dplyr::summarise(rel_error = median(rel_error))
-temp = temp %>% mutate(method = factor(method, levels = c('EWAA', 'WAA', 'growth', 'Ecov'),
-                                       labels = c('WEm', 'WNP', 'LP', 'LEc')))
-temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
-temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
-temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
-                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
-                                          false = paste(method,catch_data,index_data, sep = '-')))
-temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
+temp = ts_df %>% dplyr::group_by(par, data_scen, catch_data, index_data, caal_samp, method, Ecov_sim, growth_par, im) %>% 
+            dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+# Set EM and OM labels:
+temp = set_labels(temp)
+# Set par labels:
 temp = temp %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
                                      labels = c('SSB', 'R', 'F')))
-temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
 
-# Make plot:
-p2 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+# Make plot (stationary):
+this_ecov = 'stationary' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
+
+p2 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
   geom_violin(position=position_dodge(0.6), alpha = 0.75) +
   theme_bw() +
   coord_cartesian(ylim = c(-0.5, 0.5)) +
@@ -113,7 +116,25 @@ p2 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
   scale_y_continuous(breaks=c(-0.3, 0, 0.3)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, 'ts.jpg'), plot = p2, 
+ggsave(filename = file.path(save_folder, paste0('ts_', this_ecov,'.jpg')), plot = p2, 
+       width = 190 , height = 180, units = 'mm', dpi = 500)
+
+# Make plot (trend):
+this_ecov = 'trend' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
+
+p2 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
+  theme_bw() +
+  coord_cartesian(ylim = c(-0.5, 0.5)) +
+  geom_hline(yintercept=0, color=1, linetype='dashed') +
+  theme(legend.position = 'none',
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.text = element_text(size = 10)) +
+  scale_y_continuous(breaks=c(-0.3, 0, 0.3)) +
+  xlab(NULL) + ylab('Relative error') +
+  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
+ggsave(filename = file.path(save_folder, paste0('ts_', this_ecov,'.jpg')), plot = p2, 
        width = 190 , height = 180, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
@@ -125,23 +146,19 @@ ggsave(filename = file.path(save_folder, 'ts.jpg'), plot = p2,
 # -------------------------------------------------------------------------
 # Growth parameters (only for growth, Ecov, and SemiP scenarios):
 temp = par_df %>% filter(par %in% c('k', 'Linf', 'L1', 'SD1', 'SDA'))
-temp = temp %>% filter(maxgrad < 1, scenario %in% c(9:40, 49:80)) # select only relevant scenarios
-temp = temp %>% mutate(method = factor(method, levels = c('growth', 'Ecov'),
-                                       labels = c('LP', 'LEc')))
-temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
-temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
-temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
-                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
-                                          false = paste(method,catch_data,index_data, sep = '-')))
-temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
+# Set EM and OM labels:
+temp = set_labels(temp)
+# Set par labels:
 temp = temp %>% mutate(par2 = factor(par, levels = c('k', 'Linf', 'L1', 'SD1', 'SDA'),
                                      labels = c('k', expression(L[infinity]), expression(L[1]), expression(SD[1]), expression(SD[A]))))
-temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
+# Select relevant scenarios:
+temp = temp %>% filter(method %in% c('LP', 'LEc'))
 
-# Make plot:
-p4 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+# Make plot (stationary):
+this_ecov = 'stationary' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
+
+p4 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
   geom_violin(position=position_dodge(0.6), alpha = 0.75) +
   theme_bw() +
   coord_cartesian(ylim = c(-0.5, 0.5)) +
@@ -152,29 +169,44 @@ p4 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
   scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, 'growth.jpg'), plot = p4, 
+ggsave(filename = file.path(save_folder, paste0('growth_', this_ecov,'.jpg')), plot = p4, 
+       width = 190 , height = 240, units = 'mm', dpi = 500)
+
+# Make plot (trend):
+this_ecov = 'trend' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
+
+p4 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
+  theme_bw() +
+  coord_cartesian(ylim = c(-0.5, 0.5)) +
+  geom_hline(yintercept=0, color=1, linetype='dashed') +
+  theme(legend.position = 'none',
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.text = element_text(size = 10)) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
+  xlab(NULL) + ylab('Relative error') +
+  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
+ggsave(filename = file.path(save_folder, paste0('growth_', this_ecov,'.jpg')), plot = p4, 
        width = 190 , height = 240, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
 # Ecov parameters (only for Ecov scenarios):
 temp = par_df %>% filter(par %in% c('sigma', 'rho', 'EcovBeta')) # meanEcov too? 
-temp = temp %>% filter(maxgrad < 1, scenario %in% c(25:40, 65:80)) # select only relevant scenarios
-temp = temp %>% mutate(method = factor(method, levels = c('Ecov'),
-                                       labels = c('LEc')))
-temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
-temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
-temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
-                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
-                                          false = paste(method,catch_data,index_data, sep = '-')))
-temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
+# Set EM and OM labels:
+temp = set_labels(temp)
+# Set par labels:
 temp = temp %>% mutate(par2 = factor(par, levels = c('sigma', 'rho', 'EcovBeta'),
                                      labels = c(expression(sigma[X]^2), expression(rho[X]), expression(beta))))
-temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
+# Select relevant scenarios:
+temp = temp %>% filter(method %in% c('LEc'))
+
+# Make plot (stationary):
+this_ecov = 'stationary' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
 
 # Make plot:
-p5 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+p5 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
   geom_violin(position=position_dodge(0.6), alpha = 0.75) +
   theme_bw() +
   coord_cartesian(ylim = c(-1, 1)) +
@@ -185,80 +217,75 @@ p5 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen
   scale_y_continuous(breaks=c(-1, -0.5, 0, 0.5, 1)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, 'ecov.jpg'), plot = p5, 
+ggsave(filename = file.path(save_folder, paste0('ecov_', this_ecov,'.jpg')), plot = p5, 
        width = 190 , height = 220, units = 'mm', dpi = 500)
+
+# Make plot (trend):
+this_ecov = 'trend' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
+
+# Make plot:
+p5 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
+  theme_bw() +
+  coord_cartesian(ylim = c(-1, 1)) +
+  geom_hline(yintercept=0, color=1, linetype='dashed') +
+  theme(legend.position = 'none',
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        strip.text = element_text(size = 10)) +
+  scale_y_continuous(breaks=c(-1, -0.5, 0, 0.5, 1)) +
+  xlab(NULL) + ylab('Relative error') +
+  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
+ggsave(filename = file.path(save_folder, paste0('ecov_', this_ecov,'.jpg')), plot = p5, 
+       width = 190 , height = 220, units = 'mm', dpi = 500)
+
 
 # -------------------------------------------------------------------------
 # WAA info (median over years, only for WAA and Ewaa scenarios):
-temp = waa_df
-temp = temp %>% filter(maxgrad < 1, scenario %in% c(1:8, 41:48)) # select only relevant scenarios
-temp = temp %>% dplyr::group_by(age, data_scen, catch_data, index_data, caal_samp, method, growth_par, im) %>% 
-            dplyr::summarise(rel_error = median(rel_error))
-temp = temp %>% mutate(method = factor(method, levels = c('EWAA', 'WAA'),
-                                       labels = c('WEm', 'WNP')))
-temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
-temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
-temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
-                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
-                                          false = paste(method,catch_data,index_data, sep = '-')))
-temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
-temp = temp %>% mutate(par2 = factor(age, levels = 1:10,
-                                     labels = 1:10))
-temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
+temp = waa_df %>% dplyr::group_by(age, data_scen, catch_data, index_data, caal_samp, method, Ecov_sim, growth_par, im) %>% 
+            dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+# Set EM and OM labels:
+temp = set_labels(temp)
+# Set par labels:
+temp = temp %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
+# Select relevant scenarios:
+temp = temp %>% filter(method %in% c('WEm', 'WNP'))
 
-# Make plot:
-p6 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+# Make plot (stationary):
+this_ecov = 'stationary' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
+
+p6 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
   geom_violin(position=position_dodge(0.6), alpha = 0.75) +
   theme_bw() +
-  coord_cartesian(ylim = c(-0.2, 0.2)) +
+  coord_cartesian(ylim = c(-0.5, 0.5)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=c(-0.1, 0, 0.1)) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, 'waa.jpg'), plot = p6, 
+ggsave(filename = file.path(save_folder, paste0('waa_', this_ecov,'.jpg')), plot = p6, 
        width = 190 , height = 240, units = 'mm', dpi = 500)
 
+# Make plot (trend):
+this_ecov = 'trend' # select the Ecov scenario
+df_plot = temp %>% filter(Ecov_sim == this_ecov)
 
-# -------------------------------------------------------------------------
-# LAA info (median over years, only for growth Ecov SemiG and LAA scenarios):
-temp = laa_df
-temp = temp %>% filter(maxgrad < 1, scenario %in% c(9:40, 49:80)) # select only relevant scenarios
-temp = temp %>% dplyr::group_by(age, data_scen, catch_data, index_data, caal_samp, method, growth_par, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error))
-temp = temp %>% mutate(method = factor(method, levels = c('growth', 'Ecov'),
-                                       labels = c('LP', 'LEc')))
-temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
-temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
-temp$index_data[temp$index_data == 'caal'] = 'pal/caal'
-temp = temp %>% mutate(em_label = if_else(condition = index_data == 'pal/caal', 
-                                          true = paste0(method,'-',catch_data,'-',index_data,caal_samp),
-                                          false = paste(method,catch_data,index_data, sep = '-')))
-temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
-temp = temp %>% mutate(par2 = factor(age, levels = 1:10,
-                                     labels = 1:10))
-temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
-
-# Make plot:
-p7 = ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
+p6 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
   geom_violin(position=position_dodge(0.6), alpha = 0.75) +
   theme_bw() +
-  coord_cartesian(ylim = c(-0.2, 0.2)) +
+  coord_cartesian(ylim = c(-0.5, 0.5)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=c(-0.1, 0, 0.1)) +
+  scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
   xlab(NULL) + ylab('Relative error') +
   facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, 'laa.jpg'), plot = p7, 
+ggsave(filename = file.path(save_folder, paste0('waa_', this_ecov,'.jpg')), plot = p6, 
        width = 190 , height = 240, units = 'mm', dpi = 500)
-
 
 # -------------------------------------------------------------------------
 # -------------------------------------------------------------------------
