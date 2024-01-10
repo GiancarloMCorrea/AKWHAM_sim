@@ -5,7 +5,7 @@ scenj = as.integer(args[2])
 
 # CHANGE THIS IF REQUIRED!
 # Main directory:
-main_dir = 'C:/Use/GitHub/AKWHAM_sim'
+main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
 
 # Load required libraries:
 library(wham)
@@ -34,7 +34,7 @@ cat(paste0("START Scenario: ", scenj, " Sim: ", simi, "\n"))
 # -------------------------------------------------------------------------
 # Simulate environmental time series:
 
-if(df.scenario$Ecov_sim[i] == 'stationary') {
+if(df.scenario$Ecov_sim[scenj] == 'stationary') {
   
   set.seed(seeds[simi])
   ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
@@ -47,7 +47,7 @@ if(df.scenario$Ecov_sim[i] == 'stationary') {
 
 }
 
-if(df.scenario$Ecov_sim[i] == 'trend') {
+if(df.scenario$Ecov_sim[scenj] == 'trend') {
   
   set.seed(seeds[simi])
   ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))

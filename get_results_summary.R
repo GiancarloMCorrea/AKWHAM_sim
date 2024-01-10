@@ -82,18 +82,18 @@ for(k in seq_along(scenario_names)) {
         grw2 <- data.frame(par = c('SD1', 'SDA'),
                          est = rep_i$fit$rep$SD_len,
                          truth = rep_i$truth$SD_len)
-        # Ecov parameters:
-        ecov1 <- data.frame(par = c('meanEcov', 'sigma', 'rho'),
-                            est = rep_i$fit$rep$Ecov_process_pars[,1],
-                            truth = rep_i$truth$Ecov_process_pars[,1])
-        # Exp sigma parameter:
-        ecov1 = ecov1 %>% mutate(est = if_else(grepl(x = par, "sigma"),  exp(est), est),
-                                 truth = if_else(grepl(x = par, "sigma"), exp(truth), truth))
+        # # Ecov parameters:
+        # ecov1 <- data.frame(par = c('meanEcov', 'sigma', 'rho'),
+        #                     est = rep_i$fit$rep$Ecov_process_pars[,1],
+        #                     truth = rep_i$truth$Ecov_process_pars[,1])
+        # # Exp sigma parameter:
+        # ecov1 = ecov1 %>% mutate(est = if_else(grepl(x = par, "sigma"),  exp(est), est),
+        #                          truth = if_else(grepl(x = par, "sigma"), exp(truth), truth))
         ecov2 <- data.frame(par = c('EcovBeta'),
                            est = rep_i$fit$rep$Ecov_beta[4,1,1,1],
                            truth = rep_i$truth$Ecov_beta[4,1,1,1])
         # Merge all parameters:
-        par_df <- bind_rows(pars, grw1, grw2, ecov1, ecov2) %>% bind_cols(rep_i$model) %>%
+        par_df <- bind_rows(pars, grw1, grw2, ecov2) %>% bind_cols(rep_i$model) %>%
                       mutate(rel_error = (est-truth)/truth, abs_error = est-truth,
                               sim = as.factor(im),  maxgrad = get_maxgrad(rep_i))
         # LAA TIME SERIES
@@ -158,8 +158,9 @@ waa_results = dplyr::bind_rows(waa_results)
 sel_results = dplyr::bind_rows(sel_results)
 
 # Save results
-saveRDS(ts_results, 'results/ts_results.RDS')
-saveRDS(par_results, 'results/par_results.RDS')
-saveRDS(laa_results, 'results/laa_results.RDS')
-saveRDS(waa_results, 'results/waa_results.RDS')
-saveRDS(sel_results, 'results/sel_results.RDS')
+dir.create('outputs')
+saveRDS(ts_results, 'outputs/ts_results.RDS')
+saveRDS(par_results, 'outputs/par_results.RDS')
+saveRDS(laa_results, 'outputs/laa_results.RDS')
+saveRDS(waa_results, 'outputs/waa_results.RDS')
+saveRDS(sel_results, 'outputs/sel_results.RDS')

@@ -19,8 +19,9 @@ save_folder = 'plots'
 df.scenario = readRDS('inputs/df.scenarios.RDS')
 
 # Order EM labels:
-EM_order = c("WEm-paa-paa", "WNP-paa-paa", "LP-pal-pal", "LP-pal-paa", "LP-pal-pal/caal(r)", "LP-pal-pal/caal(s)",  
-             "LEc-pal-pal", "LEc-pal-paa", "LEc-pal-pal/caal(r)", "LEc-pal-pal/caal(s)")
+EM_order = c("WEm:paa/paa(r)", "WEm:paa/paa(s)", "WNP:paa/paa(r)", "WNP:paa/paa(s)", 
+             "LP:pal/pal", "LP:pal/paa", "LP:pal/pal+caal(r)", "LP:pal/pal+caal(s)",  
+             "LEc:pal/pal", "LEc:pal/paa", "LEc:pal/pal+caal(r)", "LEc:pal/pal+caal(s)")
 
 
 # -------------------------------------------------------------------------

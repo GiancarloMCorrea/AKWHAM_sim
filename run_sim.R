@@ -1,5 +1,5 @@
 # Make sure you update the WHAM package:
-# remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='growth', INSTALL_opts = c("--no-docs", "--no-multiarch", "--no-demo"))
+# remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='growth')
 
 # Clear workspace
 rm(list=ls())
@@ -13,7 +13,7 @@ require(doParallel)
 require(foreach)
 
 # Set working directory:
-main_dir = 'C:/Use/GitHub/AKWHAM_sim'
+main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
 setwd(main_dir)
 
 # Create Scenario DF:
@@ -60,12 +60,12 @@ run_iter <- function(sim, scen){
 # sfStop()
 
 # Run in parallel several simulations for all scenarios
-these_scenarios = c(63,64,72)
-snowfall::sfInit(parallel=TRUE, cpus=15) # modify this
+these_scenarios = c(1:16, 57:72, 113:128, 169:184)
+snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
     snowfall::sfExportAll()
-    trash <- snowfall::sfLapply(11:120, function(sim) run_iter(sim, sc))
+    trash <- snowfall::sfLapply(1:50, function(sim) run_iter(sim, sc))
 }
 snowfall::sfStop()
 
@@ -75,21 +75,21 @@ snowfall::sfStop()
 # Specify scenarios and replicates to be run:
 # scenj = 75:80
 # simi = 1:120
-# 
+#
 # # Combine in DF:
 # iter_df = tidyr::crossing(scenj, simi)
 # nSim = nrow(iter_df)
-# 
+#
 # # Specify number of cores:
 # nCores = 15
 # cl = parallel::makeCluster(nCores)
 # doParallel::registerDoParallel(cl)
-# 
+#
 # # Run in parallel:
 # foreach::foreach(ix = 1:nSim) %dopar% {
 #   source(file.path('code', 'sim_core.R'))
 #   sim_core(iter_df = iter_df[ix,])
 # }
-# 
+#
 # # Stop cluster:
 # parallel::stopCluster(cl)
