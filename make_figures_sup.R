@@ -4,6 +4,7 @@ library(ggplot2)
 library(dplyr)
 library(plyr)
 library(tidyr)
+library(reshape2)
 theme_set(theme_bw())
 
 # Clean workspace
@@ -11,6 +12,8 @@ rm(list = ls())
 
 # Call aux functions
 source('aux_functions.R')
+source(file.path('code', 'config_params.R'))
+seeds = readRDS(file.path("inputs","seeds.RDS"))
 
 # Save folder:
 save_folder = 'plots'
@@ -51,35 +54,103 @@ text(x = 0.04, y = 1, labels = "D", xpd = NA, cex = 1.5)
 box()
 dev.off()
 
+# -------------------------------------------------------------------------
+# Supp figure: simulated environmental time series:
+
+n_sim = 100 # number of replicates to plot
+n_years = 45
+
+save_stationary = matrix(0, ncol= n_sim, nrow = n_years)
+save_trend = save_stationary
+# Stationary time series:
+for(iter in 1:n_sim) {
+  
+  set.seed(seeds[iter])
+  ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
+  alpha = 1
+  beta = Ecov_trend[1] # trend
+  theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
+  sim_ecov = 0
+  for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+  sim_ecov = scale(sim_ecov)
+  save_stationary[,iter] = sim_ecov[,1]
+  
+  # Nonstationary time series:
+  set.seed(seeds[iter])
+  ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
+  alpha = 1
+  beta = Ecov_trend[2] # trend
+  theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
+  sim_ecov = 0
+  for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+  sim_ecov = scale(sim_ecov)
+  save_trend[,iter] = sim_ecov[,1]
+  
+}
+
+df1 = melt(save_stationary, varnames = c('year', 'iter'))
+df1 = df1 %>% mutate(type = 'Stationary')
+df2 = melt(save_trend, varnames = c('year', 'iter'))
+df2 = df2 %>% mutate(type = 'Trend')
+
+df_plot = rbind(df1, df2)
+
+figs2 = ggplot(df_plot, aes(x=year, y=value, group = factor(iter))) +
+  geom_line(color = 'gray70') +
+  xlab('Simulated year') +
+  ylab('Simulated environmental covariate') +
+  facet_wrap(. ~ factor(type)) 
+ggsave(filename = 'plots/Figure_S2.jpg', plot = figs2, 
+       width = 190 , height = 90, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
-# Supp figure: mean length-at-age variability by 
-om_sim1 = readRDS(file = 'inputs/om_sample_1.RDS')
-om_sim2 = readRDS(file = 'inputs/om_sample_2.RDS')
-om_sim3 = readRDS(file = 'inputs/om_sample_3.RDS')
-om_sim4 = readRDS(file = 'inputs/om_sample_4.RDS')
+# Supp figure: simulated variability in LAA:
+# WARNING: you need to run the previous plot (Ecov sim)
 
-laa_1 = om_sim1$rep$LAA
-laa_2 = om_sim2$rep$LAA
-laa_3 = om_sim3$rep$LAA
-laa_4 = om_sim4$rep$LAA
+# TODO: do it using the 100 replicates from the first 4 scenarios.
 
-# Merge:
-plot_df = rbind(reshape2::melt(laa_1) %>% mutate(type = '1'), reshape2::melt(laa_2) %>% mutate(type = '2'), 
-                reshape2::melt(laa_3) %>% mutate(type = '3'), reshape2::melt(laa_4) %>% mutate(type = '4'))
-plot_df = plot_df %>% mutate(Var2 = factor(Var2, levels = 1:10),
-                              type = factor(type, levels = 1:4,
-                                         labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
+# -------------------------------------------------------------------------
+# Sup figure: Impact of length-based selectivity and sampling
 
-figs2 = ggplot(plot_df, aes(x=Var1, y=value, color = Var2)) +
+year = 1 #select year to plot
+om_sim = readRDS(file = 'inputs/om_sample_1.RDS')
+
+fish_lengths = om_sim$input$data$lengths
+n_years = om_sim$input$data$n_years_model
+n_ages = om_sim$input$data$n_ages
+
+this_dist = t(om_sim$rep$NAA[year,] * t(om_sim$rep$jan1_phi_mat[,,year]))
+rownames(this_dist) = fish_lengths
+colnames(this_dist) = 1:n_ages
+df1 = melt(this_dist, varnames = c('len', 'age'))
+df1 = df1 %>% mutate(type = 'Population')
+
+this_dist = om_sim$rep$pred_CAAL[year, 1, ,]
+rownames(this_dist) = fish_lengths
+colnames(this_dist) = 1:n_ages
+df2 = melt(this_dist, varnames = c('len', 'age'))
+df2 = df2 %>% mutate(type = 'Fishery')
+
+this_dist = om_sim$rep$pred_IAAL[year, 1, ,]
+rownames(this_dist) = fish_lengths
+colnames(this_dist) = 1:n_ages
+df3 = melt(this_dist, varnames = c('len', 'age'))
+df3 = df3 %>% mutate(type = 'Survey')
+
+df_plot = rbind(df1, df2, df3)
+df_plot$type = factor(df_plot$type, levels = c('Population', 'Fishery', 'Survey'))
+mean_plot = df_plot %>% 
+  dplyr::group_by(age, type) %>%
+  dplyr::summarise(mean_len = weighted.mean(x = len, w = value))
+
+figs4 = ggplot(df_plot, aes(x=len, y=value)) +
   geom_line() +
-  theme_bw() +
-  coord_cartesian(ylim = c(0, 120)) +
-  theme(legend.position = 'bottom',
-        strip.text = element_text(size = 12)) +
-  xlab('Simulated years') + ylab('Population mean length (cm)') +
-  guides(color = guide_legend(title='Ages')) +
-  scale_color_viridis_d() +
-  facet_wrap(. ~ type, labeller = my_label_parsed) 
-ggsave(filename = 'plots/Figure_S2.jpg', plot = figs2, 
-       width = 190 , height = 180, units = 'mm', dpi = 500)
+  xlab('Length (cm)') +
+  ylab('Abundance') +
+  geom_vline(data = mean_plot, aes(xintercept = mean_len), color = 'red') +
+  facet_grid(type ~ factor(age), scales = 'free_y') +
+  theme(legend.position = 'none',
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+ggsave(filename = 'plots/Figure_S4.jpg', plot = figs4, 
+       width = 190 , height = 90, units = 'mm', dpi = 500)
