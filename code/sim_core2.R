@@ -81,8 +81,8 @@ EM_input <- em_inputs[[scenj]]
 #  Fishery:
 if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'paa') {
   
-  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 125 # Nsamp size for CAAL
-  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 500 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 60 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 250 # Nsamp size for CAAL
   
   # Also pass caal_Neff
   if(df.scenario$catch_data[scenj] == 'caal') obs_names = c(obs_names, 'catch_caal_Neff', 'use_catch_caal')
@@ -233,8 +233,8 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
 #  Survey:
 if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'paa') {
   
-  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 250 # Nsamp size for CAAL
-  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 1000 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 125 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 500 # Nsamp size for CAAL
   
   # Also pass caal_Neff
   if(df.scenario$index_data[scenj] == 'caal') obs_names = c(obs_names, 'index_caal_Neff', 'use_index_caal')

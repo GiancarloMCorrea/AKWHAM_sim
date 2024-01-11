@@ -20,6 +20,69 @@ save_folder = 'plots'
 
 
 # -------------------------------------------------------------------------
+# Make diagram sampling process:
+
+require(DiagrammeR)
+require(DiagrammeRsvg)
+require(rsvg)
+
+diag1 = DiagrammeR::grViz("digraph {
+
+graph [layout = dot, rankdir = TB];
+
+# define the global styles of the nodes. We can override these in box if we wish
+node [shape = rectangle, style = filled, fontsize=25];
+
+POP1 [label = 'Predicted marginal \n  length structure', fillcolor = Pink];
+POP2 [label = 'Predicted \n age-length structure', fillcolor = Pink];
+POP3 [label = 'Weight-at-length', fillcolor = Pink];
+SAMP1 [label =  'Length sample', fillcolor = lightskyblue2];
+SAMP2 [label =  'Age subsample', fillcolor = lightskyblue2];
+DAT1 [label =  'Marginal length \n composition', fillcolor = Beige, style = rounded];
+DAT2 [label =  'Conditional \n age-at-length', fillcolor = Beige, style = rounded];
+DAT3 [label =  'Marginal age \n composition', fillcolor = Beige, style = rounded];
+DAT4 [label =  'Mean weight-at-age', fillcolor = Beige, style = rounded];
+
+{rank = min; POP1};
+{rank = same; SAMP1 SAMP2};
+{rank = same; DAT1 DAT2 POP3};
+{rank = max; DAT3 DAT4};
+
+# edge definitions with the node IDs
+d1 [shape=point,width=0.01,height=0.01];
+d2 [shape=point,width=0.01,height=0.01];
+d3 [shape=point,width=0.01,height=0.01];
+POP1 -> {SAMP1}[label='random \n sample'];
+SAMP1 -> {DAT1};
+SAMP1 -> {SAMP2}[label='sample (either random \n or length-stratified)'];
+SAMP2 -> d1[dir=none];
+subgraph {
+    rank=same;
+    d1; POP2;
+}
+d1->POP2[dir=none];
+d1 -> DAT2;
+{DAT1 DAT2}->d2[dir=none];
+d2->DAT3;
+{DAT2 POP3}->d3[dir=none];
+d3->DAT4;
+
+}")
+
+
+# Save:
+DPI = 500
+WidthCM = 17
+HeightCM = 13
+
+diag1 %>% export_svg %>% charToRaw %>% 
+  rsvg(width = WidthCM *(DPI/2.54), height = HeightCM *(DPI/2.54)) %>% 
+  jpeg::writeJPEG("plots/Figure-1.jpg", quality = 1)
+
+# Now you have to modify the DPI using GIMP. Load the jpg file just created and go to
+# Image > Scale Image, and change resolution (px/in) to 500
+
+# -------------------------------------------------------------------------
 # Supp figure: selectivity, phi matrix, F trajectory
 
 fish_lengths = seq(from = 2, to = 130, by = 2)

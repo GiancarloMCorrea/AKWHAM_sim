@@ -85,12 +85,12 @@ for(i in 1:NROW(df.scenario)){
     # Neff values in OM:
     catch_Neff = matrix(200, ncol = n_fisheries, nrow = length(years_base)) # This will not be used, will be replaced later
     index_Neff = matrix(400, ncol = n_indices, nrow = length(years_base)) # This will not be used, will be replaced later
-    catch_NeffL = matrix(8000, ncol = n_fisheries, nrow = length(years_base))
-    index_NeffL = matrix(16000, ncol = n_indices, nrow = length(years_base))
+    catch_NeffL = matrix(1800, ncol = n_fisheries, nrow = length(years_base))
+    index_NeffL = matrix(3600, ncol = n_indices, nrow = length(years_base))
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
     ecov_i$logsigma = cbind(rep(log(0.4), length(years_base))) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-    waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
+    waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base))) # This will not be used, will be replaced later
   }
 
   if(df.scenario$data_scen[i] == 'poor') {
@@ -99,12 +99,12 @@ for(i in 1:NROW(df.scenario)){
     # Neff values in OM:
     catch_Neff = matrix(50, ncol = n_fisheries, nrow = length(years_base)) # This will not be used, will be replaced later
     index_Neff = matrix(100, ncol = n_indices, nrow = length(years_base)) # This will not be used, will be replaced later
-    catch_NeffL = matrix(2000, ncol = n_fisheries, nrow = length(years_base))
-    index_NeffL = matrix(4000, ncol = n_indices, nrow = length(years_base))
+    catch_NeffL = matrix(450, ncol = n_fisheries, nrow = length(years_base))
+    index_NeffL = matrix(900, ncol = n_indices, nrow = length(years_base))
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
     ecov_i$logsigma = cbind(rep(log(0.8), length(years_base))) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-    waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
+    waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base))) # This will not be used, will be replaced later
   }
 
   # ---------------------
