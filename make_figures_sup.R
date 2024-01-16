@@ -5,6 +5,7 @@ library(dplyr)
 library(plyr)
 library(tidyr)
 library(reshape2)
+require(ggh4x)
 theme_set(theme_bw())
 
 # Clean workspace
@@ -88,7 +89,7 @@ diag1 %>% export_svg %>% charToRaw %>%
 fish_lengths = seq(from = 2, to = 130, by = 2)
 om_sim = readRDS(file = 'inputs/om_sample_1.RDS')
 
-jpeg(filename = 'plots/Figure_S1.jpg', width = 190, height = 160, units = 'mm', res = 500)
+jpeg(filename = 'plots/Figure_1.jpg', width = 190, height = 160, units = 'mm', res = 500)
 par(mfrow = c(2,2))
 # Selectivity:
 fish_sel = om_sim$rep$selAL[[1]][1,]
@@ -158,25 +159,51 @@ df2 = df2 %>% mutate(type = 'Trend')
 
 df_plot = rbind(df1, df2)
 
-figs2 = ggplot(df_plot, aes(x=year, y=value, group = factor(iter))) +
-  geom_line(color = 'gray70') +
+figs1 = ggplot(df_plot, aes(x=year, y=value, group = factor(iter))) +
+  geom_line(aes(color = factor(type))) +
   xlab('Simulated year') +
   ylab('Simulated environmental covariate') +
+  theme(legend.position = 'none') +
   facet_wrap(. ~ factor(type)) 
-ggsave(filename = 'plots/Figure_S2.jpg', plot = figs2, 
+ggsave(filename = 'plots/Figure_S1.jpg', plot = figs1, 
        width = 190 , height = 90, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
 # Supp figure: simulated variability in LAA:
 # WARNING: you need to run the previous plot (Ecov sim)
 
-# TODO: do it using the 100 replicates from the first 4 scenarios.
+all_files = list.files(path = 'inputs/LAA_var')
+
+all_df = list()
+for(k in seq_along(all_files)) {
+  all_df[[k]] = readRDS(file = file.path('inputs/LAA_var', all_files[k]))
+}
+
+all_df = dplyr::bind_rows(all_df)
+
+#scenj = 114, simi = 89
+#scenj = 114, simi = 6
+
+all_df = all_df %>% mutate(om_label = factor(growth_par, levels = 0:3,
+                                           labels = c('Time~invariant', Variability~"in"~k, 
+                                                      expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
+all_df = all_df %>% mutate(ecov = factor(ecov, levels = c('stationary', 'trend'),
+                                         labels = c('Stationary', 'Trend')))
+  
+figs2 = ggplot(all_df, aes(x=year, y=value, group = factor(sim))) +
+  geom_line(aes(color = factor(ecov)), alpha = 0.2) +
+  xlab('Simulated year') +
+  ylab('Mean length (cm)') +
+  theme(legend.position = 'none') +
+  facet_nested(age ~ om_label+ecov, scales = 'free_y', labeller = 'label_parsed')
+ggsave(filename = 'plots/Figure_S2.jpg', plot = figs2,
+       width = 190 , height = 230, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
 # Sup figure: Impact of length-based selectivity and sampling
 
 year = 1 #select year to plot
-om_sim = readRDS(file = 'inputs/om_sample_1.RDS')
+om_sim = readRDS(file = 'inputs/om_sample/om_sample_1.RDS')
 
 fish_lengths = om_sim$input$data$lengths
 n_years = om_sim$input$data$n_years_model
@@ -206,7 +233,7 @@ mean_plot = df_plot %>%
   dplyr::group_by(age, type) %>%
   dplyr::summarise(mean_len = weighted.mean(x = len, w = value))
 
-figs4 = ggplot(df_plot, aes(x=len, y=value)) +
+figs3 = ggplot(df_plot, aes(x=len, y=value)) +
   geom_line() +
   xlab('Length (cm)') +
   ylab('Abundance') +
@@ -215,5 +242,5 @@ figs4 = ggplot(df_plot, aes(x=len, y=value)) +
   theme(legend.position = 'none',
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())
-ggsave(filename = 'plots/Figure_S4.jpg', plot = figs4, 
+ggsave(filename = 'plots/Figure_S3.jpg', plot = figs3, 
        width = 190 , height = 90, units = 'mm', dpi = 500)

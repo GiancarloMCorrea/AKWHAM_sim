@@ -13,7 +13,7 @@ require(doParallel)
 require(foreach)
 
 # Set working directory:
-main_dir = 'C:/USE/GitHub/AKWHAM_sim'
+main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
 setwd(main_dir)
 
 # Create Scenario DF:
@@ -38,6 +38,10 @@ for(k in 1:nrow(df.scenario)) {
 	dir.create(write.dir, recursive = T, showWarnings = FALSE)
 }
 
+# Create folders to save example simulated data:
+dir.create('inputs/om_sample')
+dir.create('inputs/LAA_var')
+
 # -------------------------------------------------------------
 # Function to run sim:
 # WARNING: before running this change main_dir in sim_core2.R
@@ -60,12 +64,13 @@ run_iter <- function(sim, scen){
 # sfStop()
 
 # Run in parallel several simulations for all scenarios
-these_scenarios = c(1:16, 57:72, 113:128, 169:184)
+# these_scenarios = c(1:16, 57:72, 113:128, 169:184) # scenarios only using age data
+these_scenarios = c(1:4, 113:116)
 snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
     snowfall::sfExportAll()
-    trash <- snowfall::sfLapply(1:50, function(sim) run_iter(sim, sc))
+    trash <- snowfall::sfLapply(1:100, function(sim) run_iter(sim, sc))
 }
 snowfall::sfStop()
 

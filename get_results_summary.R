@@ -161,6 +161,7 @@ sel_results = dplyr::bind_rows(sel_results)
 dir.create('outputs')
 saveRDS(ts_results, 'outputs/ts_results.RDS')
 saveRDS(par_results, 'outputs/par_results.RDS')
-saveRDS(laa_results, 'outputs/laa_results.RDS')
+#saveRDS(laa_results, 'outputs/laa_results.RDS')
 saveRDS(waa_results, 'outputs/waa_results.RDS')
 saveRDS(sel_results, 'outputs/sel_results.RDS')
+

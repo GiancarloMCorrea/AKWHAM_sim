@@ -35,7 +35,7 @@ lensel_based = list(model = c("len-double-normal", "len-logistic"),
 
 Ecov_re_sig = c(0) # Ecov process error SD (this will be exp() in WHAM)
 Ecov_re_cor <- c(0.3) # Ecov process error autocorrelation: in WHAM: -1 + 2/(1 + exp(-phi))
-Ecov_effect <- c(0, 0.25, 0.15, 0.3) # Effect on growth parameter (Beta, parameter-specific: none, k, Linf, L1)
+Ecov_effect <- c(0, 0.2, 0.15, 0.25) # Effect on growth parameter (Beta, parameter-specific: none, k, Linf, L1)
 Ecov_trend = c(0, 0.03)
 
 # Obs error information ------------------------------------------------------

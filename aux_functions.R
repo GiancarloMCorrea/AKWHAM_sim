@@ -201,7 +201,9 @@ set_labels = function(df) {
   temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
   temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
                                            labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
-  
+  temp = temp %>% mutate(Ecov_sim = factor(Ecov_sim, levels = c('stationary', 'trend'),
+                                         labels = c('Stationary', 'Trend')))
+
   return(temp)
   
 }

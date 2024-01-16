@@ -5,7 +5,7 @@ scenj = as.integer(args[2])
 
 # CHANGE THIS IF REQUIRED!
 # Main directory:
-main_dir = 'C:/USE/GitHub/AKWHAM_sim'
+main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
 
 # Load required libraries:
 library(wham)
@@ -70,7 +70,17 @@ om <- fit_wham(om_inputs[[scenj]], do.fit = FALSE, MakeADFun.silent = TRUE)
 set.seed(seeds[simi])
 sim_data <- om$simulate(complete=TRUE)
 if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
-if(simi == 1 & scenj <= 4) saveRDS(object = om, file = paste0('inputs/om_sample_', scenj,'.RDS')) # Save OM data to make plots later
+if(simi == 1 & scenj <= 4) saveRDS(object = om, file = paste0('inputs/om_sample/om_sample_', scenj,'.RDS')) # Save OM data to make plots later
+if(scenj %in% c(1:4, 113:116)) {
+  this_laa = sim_data$LAA
+  colnames(this_laa) = 1:sim_data$n_ages
+  rownames(this_laa) = 1:sim_data$n_years_model
+  this_df = reshape2::melt(this_laa, varnames = c('year', 'age'))
+  this_df$growth_par = df.scenario$growth_par[scenj]
+  this_df$sim = simi
+  this_df$ecov = df.scenario$Ecov_sim[scenj]
+  saveRDS(object = this_df, file = paste0('inputs/LAA_var/sample_', scenj, '-', simi, '.RDS')) # Save sim LAA to make plots later
+}
 
 # Read EM input data:
 EM_input <- em_inputs[[scenj]] 

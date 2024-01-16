@@ -4,6 +4,8 @@ library(ggplot2)
 library(dplyr)
 library(plyr)
 library(tidyr)
+library(ggh4x)
+library(viridis)
 theme_set(theme_bw())
 
 # Clean workspace
@@ -37,9 +39,9 @@ par_df1 = readRDS(file = 'outputs/par_results.RDS')
 par_df = rbind(par_df1)
 
 # LAA data:
-laa_df1 = readRDS(file = 'outputs/laa_results.RDS')
-#laa_df2 = readRDS(file = 'outputs/laa_results_2.RDS')
-laa_df = rbind(laa_df1)
+# laa_df1 = readRDS(file = 'outputs/laa_results.RDS')
+# #laa_df2 = readRDS(file = 'outputs/laa_results_2.RDS')
+# laa_df = rbind(laa_df1)
 
 # WAA data:
 waa_df1 = readRDS(file = 'outputs/waa_results.RDS')
@@ -48,47 +50,26 @@ waa_df = rbind(waa_df1)
 
 # -------------------------------------------------------------------------
 # PAR plot (for ALL scenarios):
-temp = par_df %>% filter(par %in% c('log_F1', 'log_N1_pars', 'logit_q', 'mean_rec_pars'))
+temp = par_df %>% filter(par %in% c('logit_q', 'mean_rec_pars')) # 'log_F1', 'log_N1_pars'
 # Set EM and OM labels:
 temp = set_labels(temp)
 # Set par labels:
-temp = temp %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_N1_pars', 'log_F1'),
-                                     labels = c(expression(bar(R)), 'Q', expression(N["1,1"]), 'F[1]')))
+temp = temp %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q'),
+                                     labels = c(expression(bar(R)), 'Q'))) # expression(N["1,1"]), 'F[1]'
 
-# Make plot (stationary):
-this_ecov = 'stationary' # select the Ecov scenario
-df_plot = temp %>% filter(Ecov_sim == this_ecov)
-
-p1 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
-        geom_violin(position=position_dodge(0.6), alpha = 0.75) +
-        theme_bw() +
-        coord_cartesian(ylim = c(-0.5, 0.5)) +
-        geom_hline(yintercept=0, color=1, linetype='dashed') +
-        theme(legend.position = 'none',
-              axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-              strip.text = element_text(size = 10)) +
-        scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
-        xlab(NULL) + ylab('Relative error') +
-        facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, paste0('par_', this_ecov,'.jpg')), plot = p1, 
-       width = 190 , height = 220, units = 'mm', dpi = 500)
-
-# Make plot (trend):
-this_ecov = 'trend' # select the Ecov scenario
-df_plot = temp %>% filter(Ecov_sim == this_ecov)
-
-p1 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
-  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
+ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen)) +
+  geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
+  scale_fill_viridis(discrete = TRUE) + 
   theme_bw() +
-  coord_cartesian(ylim = c(-0.5, 0.5)) +
+  coord_cartesian(ylim = 0.3*c(-1, 1)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
+  scale_y_continuous(breaks=0.3*c(-1, 0, 1)) +
   xlab(NULL) + ylab('Relative error') +
-  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, paste0('par_', this_ecov,'.jpg')), plot = p1, 
+  facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
+ggsave(filename = file.path(save_folder, 'par_.jpg'), 
        width = 190 , height = 220, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
@@ -101,41 +82,20 @@ temp = set_labels(temp)
 temp = temp %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
                                      labels = c('SSB', 'R', 'F')))
 
-# Make plot (stationary):
-this_ecov = 'stationary' # select the Ecov scenario
-df_plot = temp %>% filter(Ecov_sim == this_ecov)
-
-p2 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
-  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
+ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen)) +
+  geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
+  scale_fill_viridis(discrete = TRUE) + 
   theme_bw() +
-  coord_cartesian(ylim = c(-0.5, 0.5)) +
+  coord_cartesian(ylim = 0.2*c(-1, 1)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=c(-0.3, 0, 0.3)) +
+  scale_y_continuous(breaks=0.2*c(-1, 0, 1)) +
   xlab(NULL) + ylab('Relative error') +
-  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, paste0('ts_', this_ecov,'.jpg')), plot = p2, 
-       width = 190 , height = 180, units = 'mm', dpi = 500)
-
-# Make plot (trend):
-this_ecov = 'trend' # select the Ecov scenario
-df_plot = temp %>% filter(Ecov_sim == this_ecov)
-
-p2 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
-  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
-  theme_bw() +
-  coord_cartesian(ylim = c(-0.5, 0.5)) +
-  geom_hline(yintercept=0, color=1, linetype='dashed') +
-  theme(legend.position = 'none',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=c(-0.3, 0, 0.3)) +
-  xlab(NULL) + ylab('Relative error') +
-  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, paste0('ts_', this_ecov,'.jpg')), plot = p2, 
-       width = 190 , height = 180, units = 'mm', dpi = 500)
+  facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
+ggsave(filename = file.path(save_folder, 'ts_.jpg'),  
+       width = 190 , height = 230, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
 # TS plot (by year, for ALL scenarios):
@@ -144,101 +104,59 @@ ggsave(filename = file.path(save_folder, paste0('ts_', this_ecov,'.jpg')), plot 
 
 
 # -------------------------------------------------------------------------
-# Growth parameters (only for growth, Ecov, and SemiP scenarios):
-temp = par_df %>% filter(par %in% c('k', 'Linf', 'L1', 'SD1', 'SDA'))
+# Main growth parameters (only for growth, Ecov scenarios):
+temp = par_df %>% filter(par %in% c('k', 'Linf', 'L1')) # 'SD1', 'SDA'
 # Set EM and OM labels:
 temp = set_labels(temp)
 # Set par labels:
-temp = temp %>% mutate(par2 = factor(par, levels = c('k', 'Linf', 'L1', 'SD1', 'SDA'),
-                                     labels = c('k', expression(L[infinity]), expression(L[1]), expression(SD[1]), expression(SD[A]))))
+temp = temp %>% mutate(par2 = factor(par, levels = c('k', 'Linf', 'L1'),
+                                     labels = c('k', expression(L[infinity]), expression(L[1])))) # expression(SD[1]), expression(SD[A])
 # Select relevant scenarios:
 temp = temp %>% filter(method %in% c('LP', 'LEc'))
 
-# Make plot (stationary):
-this_ecov = 'stationary' # select the Ecov scenario
-df_plot = temp %>% filter(Ecov_sim == this_ecov)
-
-p4 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
-  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
+ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen)) +
+  geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
+  scale_fill_viridis(discrete = TRUE) +
   theme_bw() +
-  coord_cartesian(ylim = c(-0.5, 0.5)) +
+  #coord_cartesian(ylim = 0.5*c(-1, 0, 1)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
+  #scale_y_continuous(breaks=0.5*c(-1, 0, 1)) +
   xlab(NULL) + ylab('Relative error') +
-  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, paste0('growth_', this_ecov,'.jpg')), plot = p4, 
-       width = 190 , height = 240, units = 'mm', dpi = 500)
+  facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
 
-# Make plot (trend):
-this_ecov = 'trend' # select the Ecov scenario
-df_plot = temp %>% filter(Ecov_sim == this_ecov)
-
-p4 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
-  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
-  theme_bw() +
-  coord_cartesian(ylim = c(-0.5, 0.5)) +
-  geom_hline(yintercept=0, color=1, linetype='dashed') +
-  theme(legend.position = 'none',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=c(-0.5, 0, 0.5)) +
-  xlab(NULL) + ylab('Relative error') +
-  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, paste0('growth_', this_ecov,'.jpg')), plot = p4, 
-       width = 190 , height = 240, units = 'mm', dpi = 500)
+ggsave(filename = file.path(save_folder, 'growth_.jpg'),  
+       width = 190 , height = 230, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
 # Ecov parameters (only for Ecov scenarios):
-temp = par_df %>% filter(par %in% c('sigma', 'rho', 'EcovBeta')) # meanEcov too? 
+temp = par_df %>% filter(par %in% c('EcovBeta')) # 'sigma', 'rho',  
 # Set EM and OM labels:
 temp = set_labels(temp)
 # Set par labels:
-temp = temp %>% mutate(par2 = factor(par, levels = c('sigma', 'rho', 'EcovBeta'),
-                                     labels = c(expression(sigma[X]^2), expression(rho[X]), expression(beta))))
+temp = temp %>% mutate(par2 = factor(par, levels = c('EcovBeta'),
+                                     labels = c(expression(beta)))) # expression(sigma[X]^2), expression(rho[X]), 
 # Select relevant scenarios:
 temp = temp %>% filter(method %in% c('LEc'))
 
-# Make plot (stationary):
-this_ecov = 'stationary' # select the Ecov scenario
-df_plot = temp %>% filter(Ecov_sim == this_ecov)
-
 # Make plot:
-p5 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
-  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
+ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen)) +
+  geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
+  scale_fill_viridis(discrete = TRUE) +
   theme_bw() +
-  coord_cartesian(ylim = c(-1, 1)) +
+  #coord_cartesian(ylim = 0.5*c(-1, 0, 1)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=c(-1, -0.5, 0, 0.5, 1)) +
+  #scale_y_continuous(breaks=0.5*c(-1, 0, 1)) +
   xlab(NULL) + ylab('Relative error') +
-  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, paste0('ecov_', this_ecov,'.jpg')), plot = p5, 
-       width = 190 , height = 220, units = 'mm', dpi = 500)
+  facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
 
-# Make plot (trend):
-this_ecov = 'trend' # select the Ecov scenario
-df_plot = temp %>% filter(Ecov_sim == this_ecov)
-
-# Make plot:
-p5 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
-  geom_violin(position=position_dodge(0.6), alpha = 0.75) +
-  theme_bw() +
-  coord_cartesian(ylim = c(-1, 1)) +
-  geom_hline(yintercept=0, color=1, linetype='dashed') +
-  theme(legend.position = 'none',
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=c(-1, -0.5, 0, 0.5, 1)) +
-  xlab(NULL) + ylab('Relative error') +
-  facet_grid(par2 ~ om_label, labeller = my_label_parsed) 
-ggsave(filename = file.path(save_folder, paste0('ecov_', this_ecov,'.jpg')), plot = p5, 
-       width = 190 , height = 220, units = 'mm', dpi = 500)
-
+ggsave(filename = file.path(save_folder, 'ecov_.jpg'),  
+       width = 190 , height = 140, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
 # WAA info (median over years, only for WAA and Ewaa scenarios):
