@@ -18,12 +18,14 @@ df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
 gf_selectivity_age = list(
   model = agesel_based$model,
   initial_pars = agesel_based$initial_pars,
-  fix_pars = rep(list(NULL), times = n_fisheries + n_indices)) # fix parameters?
+  fix_pars = list(c(2,5), NULL), # fix par2 and 5
+  n_selblocks = n_fisheries + n_indices) 
 # Selectivity configuration (len-based)
 gf_selectivity_len = list(
   model = lensel_based$model,
   initial_pars = lensel_based$initial_pars,
-  fix_pars = rep(list(NULL), times = n_fisheries + n_indices)) # fix parameters?
+  fix_pars = list(c(2,5), NULL), # fix par2 and 5
+  n_selblocks = n_fisheries + n_indices)
 
 
 # Natural mortality (fixed)
@@ -57,18 +59,17 @@ a_LW <- LW_base[1]
 b_LW <- LW_base[2]
 L_a <- Linf + (L1 - Linf)*exp(-k_par*(ages_base - 1))
 W_a <- a_LW*L_a^b_LW
-CV_a <- .1
 
 # Growth configuration:
 gf_growth <- list(model='vB_classic', init_vals=c(k_par, Linf, L1),
-                  SD_vals=c(CV_a*L_a[1], CV_a*L_a[10]),
+                  SD_vals=c(G_base[4], G_base[5]),
                   SD_est = 1:2) # Always estimate SD parameters
 gf_LW <- list(init_vals=c(a_LW, b_LW)) # fixed
 
 # LAA configuration:
 gf_LAA = list(LAA_vals = L_a,
               re = c('none'),
-              SD_vals=c(CV_a*L_a[1], CV_a*L_a[10]),
+              SD_vals=c(G_base[4], G_base[5]),
               SD_est = 1:2)# Always estimate SD parameters
 # WAA configuration:
 gf_WAA = list(WAA_vals = W_a,

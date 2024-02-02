@@ -16,7 +16,7 @@ F_max = 0.35
 Q_base = 1
 
 # Growth ------------------------------------------------------------------
-G_base = c(0.2, 90, 10) # K, Linf, L1
+G_base = c(0.2, 90, 10, 2, 8) # K, Linf, L1, SD1, SDA
 
 # LW relationship ---------------------------------------------------------
 LW_base = c(exp(-12.1), 3.2) # a and b parameters LW
@@ -27,9 +27,9 @@ sigma_R = 0.6 # sigma R recruitment
 
 # Selectivity ------------------------------------------------------
 agesel_based = list(model = c("double-normal", "logistic"),
-                    initial_pars = list(c(4, -2, 0, 0, -5, -3), c(1.5, 0.3)))
+                    initial_pars = list(c(4, -1, 0, 0, -5, 0.5), c(1.5, 0.3)))
 lensel_based = list(model = c("len-double-normal", "len-logistic"),
-                    initial_pars = list(c(50,-1,4,4,-5,-2), c(15, 3)))
+                    initial_pars = list(c(50, -1, 4, 4, -5, 0.5), c(15, 3)))
 
 # Ecov information ------------------------------------------------------
 

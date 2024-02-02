@@ -89,32 +89,31 @@ diag1 %>% export_svg %>% charToRaw %>%
 fish_lengths = seq(from = 2, to = 130, by = 2)
 om_sim = readRDS(file = 'inputs/om_sample_1.RDS')
 
-jpeg(filename = 'plots/Figure_1.jpg', width = 190, height = 160, units = 'mm', res = 500)
-par(mfrow = c(2,2))
+jpeg(filename = 'plots/Figure_1.jpg', width = 190, height = 60, units = 'mm', res = 500)
+par(mfrow = c(1,3))
 # Selectivity:
 fish_sel = om_sim$rep$selAL[[1]][1,]
 surv_sel = om_sim$rep$selAL[[2]][1,]
 par(mar = c(4,4,1,1))
-plot(fish_lengths, fish_sel, type = 'l', xlab = 'Length (cm)', ylab = 'Fishery selectivity', ylim = c(0,1))
+plot(fish_lengths, fish_sel, type = 'l', xlab = 'Length (cm)', ylab = 'Selectivity', ylim = c(0,1))
+lines(fish_lengths, surv_sel, col = 2)
 text(x = 2, y = 1, labels = "A", xpd = NA, cex = 1.5)
-par(mar = c(4,4,1,1))
-plot(fish_lengths, surv_sel, type = 'l', xlab = 'Length (cm)', ylab = 'Survey selectivity', ylim = c(0,1)) 
-text(x = 2, y = 1, labels = "B", xpd = NA, cex = 1.5)
+legend('bottomright', legend = c('Fishery', 'Survey'), col = c(1,2), lwd = 1)
 # Fishery mortality
 f_vector = om_sim$rep$F[,1]
 par(mar = c(4,4,1,1))
 plot(1:length(f_vector), f_vector, type = 'l', xlab = 'Simulated years', ylab = 'Fishing mortality (F)')
-text(x = 1, y = 0.35, labels = "C", xpd = NA, cex = 1.5)
+text(x = 1, y = 0.35, labels = "B", xpd = NA, cex = 1.5)
 # Phi matrix
-phi_matrix = om_sim$rep$phi_mat[1,,]
+phi_matrix = om_sim$rep$jan1_phi_mat[,,1]
 par(mar = c(4,4,1,5))
 image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = 'Length (cm)', 
       main = NULL)
 axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
 axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths)), labels = fish_lengths)
-mtext(text = 'Age', side = 1, line = 3)
+mtext(text = 'Age', side = 1, line = 3, cex = 0.8)
 fields::image.plot(t(phi_matrix), add=T, legend.mar = 6, col = rev(viridis::viridis(100)))
-text(x = 0.04, y = 1, labels = "D", xpd = NA, cex = 1.5)
+text(x = 0.04, y = 1, labels = "C", xpd = NA, cex = 1.5)
 box()
 dev.off()
 
@@ -131,7 +130,7 @@ for(iter in 1:n_sim) {
   
   set.seed(seeds[iter])
   ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
-  alpha = 1
+  alpha = 0
   beta = Ecov_trend[1] # trend
   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
   sim_ecov = 0
@@ -142,7 +141,7 @@ for(iter in 1:n_sim) {
   # Nonstationary time series:
   set.seed(seeds[iter])
   ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
-  alpha = 1
+  alpha = 0
   beta = Ecov_trend[2] # trend
   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
   sim_ecov = 0

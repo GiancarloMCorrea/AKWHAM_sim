@@ -38,7 +38,7 @@ if(df.scenario$Ecov_sim[scenj] == 'stationary') {
   
   set.seed(seeds[simi])
   ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
-  alpha = 1
+  alpha = 0
   beta = Ecov_trend[1] # trend
   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
   sim_ecov = 0
@@ -51,7 +51,7 @@ if(df.scenario$Ecov_sim[scenj] == 'trend') {
   
   set.seed(seeds[simi])
   ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
-  alpha = 1
+  alpha = 0
   beta = Ecov_trend[2] # trend
   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
   sim_ecov = 0
@@ -91,8 +91,8 @@ EM_input <- em_inputs[[scenj]]
 #  Fishery:
 if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'paa') {
   
-  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 60 # Nsamp size for CAAL
-  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 250 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 13 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 25 # Nsamp size for CAAL
   
   # Also pass caal_Neff
   if(df.scenario$catch_data[scenj] == 'caal') obs_names = c(obs_names, 'catch_caal_Neff', 'use_catch_caal')
@@ -243,8 +243,8 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
 #  Survey:
 if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'paa') {
   
-  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 125 # Nsamp size for CAAL
-  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 500 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 50 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
   
   # Also pass caal_Neff
   if(df.scenario$index_data[scenj] == 'caal') obs_names = c(obs_names, 'index_caal_Neff', 'use_index_caal')
