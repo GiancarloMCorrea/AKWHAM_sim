@@ -85,3 +85,13 @@ df.scenario <- df.scenario %>% select(Scenario, everything())
 # df.scenario$re_method[df.scenario$method %in% c('WAA', 'growth', 'LAA', 'SemiG') & df.scenario$growth_par == 0] = 'none'
 df.scenario$re_method[df.scenario$method %in% c('WAA', 'growth') & df.scenario$growth_par == 0] = 'none'
 saveRDS(df.scenario, file.path(write.dir, "df.scenarios.RDS"))
+
+
+# -------------------------------------------------------------------------
+# Define seeds:
+# These seeds will be the same across scenarios
+set.seed(8675309)
+seeds = sample(x = (-1e9):(1e9), size = 1000, replace = FALSE) # max number of replicates per scenario: 1000, but will only use 100 or 150
+saveRDS(seeds, file.path(write.dir,"seeds.RDS"))
+seeds = readRDS(file.path(write.dir,"seeds.RDS"))
+

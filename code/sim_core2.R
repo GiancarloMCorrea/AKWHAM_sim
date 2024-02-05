@@ -134,7 +134,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
       
       # Continue code:
       for(k in 1:sim_data$n_lengths) {
-        sim_data$catch_caal_Neff[j,i,k] = len_subsam[k]*0.1 # multiplied by 0.1 to mimic GOA pcod
+        sim_data$catch_caal_Neff[j,i,k] = len_subsam[k]
         if(sum(sim_data$pred_CAAL[j,i,k,]) == 0) tmp_caal_sim = matrix(0, ncol = 1, nrow = sim_data$n_ages)
         else tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_CAAL[j,i,k,])
         # Save sim sampling:
@@ -157,7 +157,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
   for(i in 1:sim_data$n_fleets) {
     out_alk = matrix(0, ncol = sim_data$n_ages, nrow = sim_data$n_lengths)
     for(j in 1:sim_data$n_years_model) {
-      tmp_alk = sim_data$catch_caal[i,j,,] * sim_data$catch_caal_Neff[j,i,]*10
+      tmp_alk = sim_data$catch_caal[i,j,,] * sim_data$catch_caal_Neff[j,i,]
       out_alk = out_alk + tmp_alk
     }
     avg_alk[[i]] = t(apply(t(out_alk), 2, function(i) i/sum(i)))
@@ -179,6 +179,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
           }
         } # obs_len conditional
       } # len loop
+      tmp_paa = tmp_paa/sum(tmp_paa) # in case there no len info in CAAL
       sim_data$catch_paa[i,j,] = tmp_paa
       to_obsvec_paa = c(to_obsvec_paa, tmp_paa*EM_input$data$catch_Neff[j,i]) # Neff of EM
     } # fleet loop
@@ -192,7 +193,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
     to_obsvec = NULL
     for(j in 1:sim_data$n_years_model) {
       for(i in 1:sim_data$n_fleets) {
-        caal_obs = (sim_data$catch_caal_Neff[j,i,]*10) * sim_data$catch_caal[i,j,,] # multiply by 10 to come back to real Neff
+        caal_obs = (sim_data$catch_caal_Neff[j,i,]) * sim_data$catch_caal[i,j,,] 
         for(a in 1:sim_data$n_ages) {
           ind_wt = rep(x = sim_data$watl[j,], times = caal_obs[,a])
           if(length(ind_wt) == 0) {
@@ -201,7 +202,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
           }
           if(length(ind_wt) == 1) {
             mean_wt = mean(ind_wt)
-            cv_wt = 0.3 # when there is only one observation
+            cv_wt = 0.25 # when there is only one observation
           }
           if(length(ind_wt) > 1 & length(unique(ind_wt)) == 1) {
             mean_wt = mean(ind_wt)
@@ -209,7 +210,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
           }
           if(length(ind_wt) > 1 & length(unique(ind_wt)) > 1) {
             mean_wt = mean(ind_wt)
-            cv_wt = sd(ind_wt)/mean_wt # when there is 2+ observations
+            cv_wt = sd(ind_wt)/(sqrt(length(ind_wt))*mean_wt) # when there is 2+ observations
           }
           sim_data$waa[sim_data$waa_pointer_fleets[i],j,a] = mean_wt
           sim_data$waa_cv[sim_data$waa_pointer_fleets[i],j,a] = cv_wt
@@ -287,7 +288,7 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
       
       # Continue code:
       for(k in 1:sim_data$n_lengths) {
-        sim_data$index_caal_Neff[j,i,k] = len_subsam[k]*0.1 # multiplied by 0.1 to mimic GOA pcod
+        sim_data$index_caal_Neff[j,i,k] = len_subsam[k]
         if(sum(sim_data$pred_IAAL[j,i,k,]) == 0) tmp_caal_sim = matrix(0, ncol = 1, nrow = sim_data$n_ages)
         else tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_IAAL[j,i,k,])
         # Save sim sampling:
@@ -310,7 +311,7 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
   for(i in 1:sim_data$n_indices) {
     out_alk = matrix(0, ncol = sim_data$n_ages, nrow = sim_data$n_lengths)
     for(j in 1:sim_data$n_years_model) {
-      tmp_alk = sim_data$index_caal[i,j,,] * sim_data$index_caal_Neff[j,i,]*10
+      tmp_alk = sim_data$index_caal[i,j,,] * sim_data$index_caal_Neff[j,i,]
       out_alk = out_alk + tmp_alk
     }
     avg_alk[[i]] = t(apply(t(out_alk), 2, function(i) i/sum(i)))
@@ -332,6 +333,7 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
           }
         } # obs_len conditional
       } # len loop
+      tmp_paa = tmp_paa/sum(tmp_paa) # in case there no len info in CAAL
       sim_data$index_paa[i,j,] = tmp_paa
       to_obsvec_paa = c(to_obsvec_paa, tmp_paa*EM_input$data$index_Neff[j,i]) # Neff of EM
     } # fleet loop
@@ -346,7 +348,7 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
     to_obsvec = NULL
     for(j in 1:sim_data$n_years_model) {
       for(i in 1:sim_data$n_indices) {
-        caal_obs = (sim_data$index_caal_Neff[j,i,]*10) * sim_data$index_caal[i,j,,] # multiply by 10 to come back to real Neff
+        caal_obs = (sim_data$index_caal_Neff[j,i,]) * sim_data$index_caal[i,j,,] # multiply by 10 to come back to real Neff
         for(a in 1:sim_data$n_ages) {
           ind_wt = rep(x = sim_data$watl[j,], times = caal_obs[,a])
           if(length(ind_wt) == 0) {
@@ -363,7 +365,7 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
           }
           if(length(ind_wt) > 1 & length(unique(ind_wt)) > 1) {
             mean_wt = mean(ind_wt)
-            cv_wt = sd(ind_wt)/mean_wt # when there is 2+ observations
+            cv_wt = sd(ind_wt)/(sqrt(length(ind_wt))*mean_wt) # when there is 2+ observations
           }
           sim_data$waa[sim_data$waa_pointer_indices[i],j,a] = mean_wt
           sim_data$waa_cv[sim_data$waa_pointer_indices[i],j,a] = cv_wt
@@ -377,7 +379,7 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
         avg_waa = mean(sim_data$waa[sim_data$waa_pointer_indices[i],,a], na.rm = TRUE)
         these_na = which(is.na(sim_data$waa[sim_data$waa_pointer_indices[i],,a]))
         sim_data$waa[sim_data$waa_pointer_indices[i],these_na,a] = avg_waa
-        if(is.na(avg_waa)) { # this only useful for EWAA. maybe not realistic but whatever. also, this will probably never be used.
+        if(is.na(avg_waa)) { # this only useful for EWAA. maybe not realistic. also, this will probably never be used.
           this_mean = log(sim_data$pred_waa[sim_data$waa_pointer_indices[i],these_na,a])
           this_sd = sqrt(log(0.2^2 + 1.0)) # CV = 0.2
           this_mean = this_mean - (this_sd^2)*0.5 # corrected mean

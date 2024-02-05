@@ -34,7 +34,7 @@ graph [layout = dot, rankdir = TB];
 # define the global styles of the nodes. We can override these in box if we wish
 node [shape = rectangle, style = filled, fontsize=25];
 
-POP1 [label = 'Predicted marginal \n  length structure', fillcolor = Pink];
+POP1 [label = 'Abundance-at-age \n -at-length', fillcolor = Pink];
 POP2 [label = 'Predicted \n age-length structure', fillcolor = Pink];
 POP3 [label = 'Weight-at-length', fillcolor = Pink];
 SAMP1 [label =  'Length sample', fillcolor = lightskyblue2];
@@ -78,7 +78,7 @@ HeightCM = 13
 
 diag1 %>% export_svg %>% charToRaw %>% 
   rsvg(width = WidthCM *(DPI/2.54), height = HeightCM *(DPI/2.54)) %>% 
-  jpeg::writeJPEG("plots/Figure-1.jpg", quality = 1)
+  jpeg::writeJPEG("plots/Figure_2.jpg", quality = 1)
 
 # Now you have to modify the DPI using GIMP. Load the jpg file just created and go to
 # Image > Scale Image, and change resolution (px/in) to 500
@@ -87,7 +87,7 @@ diag1 %>% export_svg %>% charToRaw %>%
 # Supp figure: selectivity, phi matrix, F trajectory
 
 fish_lengths = seq(from = 2, to = 130, by = 2)
-om_sim = readRDS(file = 'inputs/om_sample_1.RDS')
+om_sim = readRDS(file = 'inputs/om_sample/om_sample_1.RDS')
 
 jpeg(filename = 'plots/Figure_1.jpg', width = 190, height = 60, units = 'mm', res = 500)
 par(mfrow = c(1,3))
@@ -120,7 +120,7 @@ dev.off()
 # -------------------------------------------------------------------------
 # Supp figure: simulated environmental time series:
 
-n_sim = 100 # number of replicates to plot
+n_sim = 10 # number of replicates to plot
 n_years = 45
 
 save_stationary = matrix(0, ncol= n_sim, nrow = n_years)
@@ -159,7 +159,7 @@ df2 = df2 %>% mutate(type = 'Trend')
 df_plot = rbind(df1, df2)
 
 figs1 = ggplot(df_plot, aes(x=year, y=value, group = factor(iter))) +
-  geom_line(aes(color = factor(type))) +
+  geom_line(aes(color = factor(type)), alpha = 0.5) +
   xlab('Simulated year') +
   ylab('Simulated environmental covariate') +
   theme(legend.position = 'none') +

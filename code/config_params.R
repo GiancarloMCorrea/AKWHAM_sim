@@ -27,7 +27,7 @@ sigma_R = 0.6 # sigma R recruitment
 
 # Selectivity ------------------------------------------------------
 agesel_based = list(model = c("double-normal", "logistic"),
-                    initial_pars = list(c(4, -1, 0, 0, -5, 0.5), c(1.5, 0.3)))
+                    initial_pars = list(c(4.8, 0.5, 0, 0, -5, 1), c(1.5, 0.2)))
 lensel_based = list(model = c("len-double-normal", "len-logistic"),
                     initial_pars = list(c(50, -1, 4, 4, -5, 0.5), c(15, 3)))
 
