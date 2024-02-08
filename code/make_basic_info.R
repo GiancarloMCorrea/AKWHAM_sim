@@ -2,27 +2,25 @@
 # IMPORTANT !!!
 # This function is used by the OM and EM setup.
 
-make_basic_info <- function(base_years = 1970:2021, ages = 1:10, fish_len = 1:100,
-                        n_fisheries = 1, n_indices = 1,
+make_basic_info <- function(n_years_base = 45, ages = 1:10, fish_len = 1:100,
+                        n_fisheries = 1, n_indices = 1, n_years_burnin = 10,
                         catch_sigma = NULL, agg_index_cv = NULL,
                         catch_Neff = NULL, index_Neff = NULL, catch_NeffL = NULL,
                         index_NeffL = NULL, catch_Neff_caal = NULL, 
-                        index_Neff_caal = NULL, waa_cv = NULL) { 
+                        index_Neff_caal = NULL, waa_cv = NULL, type = 'om') { 
         
     info <- list()
     info$ages <- ages
-    info$years <- as.integer(base_years[1] - 1 + 1:length(base_years))
+    if(type == 'em') info$years <- as.integer((n_years_burnin+1):(n_years_base+n_years_burnin))
+    if(type == 'om') info$years <- as.integer(1:(n_years_base+n_years_burnin))
     info$n_fleets <- n_fisheries
     info$n_indices <- n_indices
-	ny <- length(info$years)
-	info$lengths <- fish_len
-	nlbins <- length(info$lengths)
-	info$n_lengths <- nlbins
+	  ny <- length(info$years)
+	  info$lengths <- fish_len
+	  nlbins <- length(info$lengths)
+	  info$n_lengths <- nlbins
     na <- length(info$ages)
-    ny <- length(info$years)
-    nby <- length(base_years)
-    mid <- floor(nby/2)
-    
+
 	# Define obs error: 
     info$catch_cv <- catch_sigma
     info$index_cv <- agg_index_cv

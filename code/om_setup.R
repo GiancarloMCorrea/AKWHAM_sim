@@ -11,6 +11,7 @@ source(file.path('code', "set_simulation_options.R"))
 
 # Read Config Scenarios DF:
 df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
+n_tot_years = n_years_base + n_years_burnin
 
 # --------------------------------------------------------
 # Parameter information:
@@ -39,10 +40,10 @@ gf_ecov <- list(
   label = "Ecov",
   process_model = 'ar1',
   lag = 0,
-  mean = cbind(rep(0, length(years_base))),
-  year = years_base,
+  mean = cbind(rep(0, n_tot_years)),
+  year = 1:(n_tot_years),
   ages = list(ages_base),
-  use_obs = cbind(rep(1, length(years_base))),
+  use_obs = cbind(rep(1, n_tot_years)),
   how = 0
 )
 
@@ -71,31 +72,31 @@ for(i in 1:NROW(df.scenario)){
   # ---------------------
   # Define obs error scenarios (data rich vs data poor):
   if(df.scenario$data_scen[i] == 'rich') {
-    catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = length(years_base))
-    agg_index_cv = matrix(0.1, ncol = n_indices, nrow = length(years_base))
+    catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = n_tot_years)
+    agg_index_cv = matrix(0.1, ncol = n_indices, nrow = n_tot_years)
     # Neff values in OM:
-    catch_Neff = matrix(100, ncol = n_fisheries, nrow = length(years_base)) # This will not be used, will be replaced later
-    index_Neff = matrix(200, ncol = n_indices, nrow = length(years_base)) # This will not be used, will be replaced later
-    catch_NeffL = matrix(100, ncol = n_fisheries, nrow = length(years_base))
-    index_NeffL = matrix(200, ncol = n_indices, nrow = length(years_base))
+    catch_Neff = matrix(100, ncol = n_fisheries, nrow = n_tot_years) # This will not be used, will be replaced later
+    index_Neff = matrix(200, ncol = n_indices, nrow = n_tot_years) # This will not be used, will be replaced later
+    catch_NeffL = matrix(100, ncol = n_fisheries, nrow = n_tot_years)
+    index_NeffL = matrix(200, ncol = n_indices, nrow = n_tot_years)
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    ecov_i$logsigma = cbind(rep(log(0.4), length(years_base))) # logsigma Ecov
+    ecov_i$logsigma = cbind(rep(log(0.4), n_tot_years)) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-    waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base))) # This will not be used, will be replaced later
+    waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base))) # This will not be used, will be replaced later
   }
 
   if(df.scenario$data_scen[i] == 'poor') {
-    catch_sigma = matrix(0.1, ncol = n_fisheries, nrow = length(years_base))
-    agg_index_cv = matrix(0.4, ncol = n_indices, nrow = length(years_base))
+    catch_sigma = matrix(0.1, ncol = n_fisheries, nrow = n_tot_years)
+    agg_index_cv = matrix(0.4, ncol = n_indices, nrow = n_tot_years)
     # Neff values in OM:
-    catch_Neff = matrix(25, ncol = n_fisheries, nrow = length(years_base)) # This will not be used, will be replaced later
-    index_Neff = matrix(50, ncol = n_indices, nrow = length(years_base)) # This will not be used, will be replaced later
-    catch_NeffL = matrix(25, ncol = n_fisheries, nrow = length(years_base))
-    index_NeffL = matrix(50, ncol = n_indices, nrow = length(years_base))
+    catch_Neff = matrix(25, ncol = n_fisheries, nrow = n_tot_years) # This will not be used, will be replaced later
+    index_Neff = matrix(50, ncol = n_indices, nrow = n_tot_years) # This will not be used, will be replaced later
+    catch_NeffL = matrix(25, ncol = n_fisheries, nrow = n_tot_years)
+    index_NeffL = matrix(50, ncol = n_indices, nrow = n_tot_years)
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    ecov_i$logsigma = cbind(rep(log(0.8), length(years_base))) # logsigma Ecov
+    ecov_i$logsigma = cbind(rep(log(0.8), n_tot_years)) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-    waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base))) # This will not be used, will be replaced later
+    waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base))) # This will not be used, will be replaced later
   }
 
   # ---------------------
@@ -107,9 +108,10 @@ for(i in 1:NROW(df.scenario)){
     ecov_i$where_subindex = df.scenario$growth_par[i] # select growth parameter
   }
   om_inputs[[i]] <- make_om(Fmax = F_max, 
-                            years_base = years_base, ages_base = ages_base, lengths_base = lengths_base,
+                            n_years_base = n_years_base, n_years_burnin = n_years_burnin,
+                            ages_base = ages_base, lengths_base = lengths_base,
                             F_change_time = 0.8,
-							               sigma_R = sigma_R,
+							              sigma_R = sigma_R,
                             selectivity = gf_selectivity,
                             M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
                             growth = gf_growth, LW = gf_LW,
@@ -119,10 +121,12 @@ for(i in 1:NROW(df.scenario)){
                             catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
                             index_NeffL = index_NeffL, catch_Neff_caal = catch_Neff_caal, 
                             index_Neff_caal = index_Neff_caal, waa_cv = waa_cv,
-                            Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, Ecov_effect = Ecov_effect[df.scenario$growth_par[i]+1],
+                            Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, 
+							              Ecov_effect = Ecov_effect[df.scenario$growth_par[i]+1],
                             df.scenario = df.scenario[i,]) 
-  om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
-    bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?
+  om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, 
+                                          simulate_process = TRUE, simulate_projection = FALSE,
+                                          bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?
   om_inputs[[i]]$data$simulate_state[4] = 0 # DO NOT simulate Ecov process in WHAM
   
 }

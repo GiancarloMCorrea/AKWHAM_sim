@@ -1,5 +1,6 @@
 make_om <- function(Fmax = 0.8, Fmin = 0.05,
-					           years_base = NULL, ages_base = NULL, lengths_base = NULL,
+                    n_years_base = NULL, n_years_burnin = NULL,
+                    ages_base = NULL, lengths_base = NULL,
                     selectivity = NULL, M = NULL, NAA_re = NULL, sigma_R = NULL,
                     catchability = NULL, growth = NULL, LW = NULL,
 					           WAA = NULL, LAA = NULL,
@@ -15,7 +16,8 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
                     df.scenario = NULL) {
   
   # Create basic WHAM input:
-  basic_info = make_basic_info(base_years = years_base, ages = ages_base, fish_len = lengths_base,
+  basic_info = make_basic_info(n_years_base = n_years_base, n_years_burnin = n_years_burnin, type = 'om',
+                               ages = ages_base, fish_len = lengths_base,
                             n_fisheries = n_fisheries, n_indices = n_indices,
                             catch_sigma = catch_sigma, agg_index_cv = agg_index_cv,
                             catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
@@ -63,14 +65,15 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
   }
 
   # F trajectory:
-	year_change <- floor(ny * F_change_time)
-	F_vals = numeric(ny)
+	year_change <- floor(n_years_base * F_change_time)
+	F_vals = numeric(n_years_base)
 	Slope = (Fmax - Fmin)/year_change
 	F_vals[1] = Fmin
 	F_vals[2:year_change] = Fmin + Slope*(2:year_change)
-	F_vals[(year_change+1):ny] = Fmax + Slope*(year_change - (year_change+1):ny)
+	F_vals[(year_change+1):n_years_base] = Fmax + Slope*(year_change - (year_change+1):n_years_base)
+	F_vals = c(rep(0, times = n_years_burnin), F_vals) # F = 0 for burnin period
 	basic_info$F = matrix(0, ncol = basic_info$n_fleets, nrow = ny)
-	basic_info$F[,1] = F_vals # only one fishery
+	basic_info$F[,1] = F_vals # only one fishery, make this more flexible in the future
 
   input <- wham::prepare_wham_input(basic_info = basic_info, growth = growth,
 									LW = LW, len_comp = len_comp,

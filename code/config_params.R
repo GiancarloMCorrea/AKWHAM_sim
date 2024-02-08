@@ -2,7 +2,8 @@
 # These values are also used in EM as starting values
 
 # Years, Ages and lengths --------------------------------------------------------
-years_base = 1976:2020 # 45 years
+n_years_base = 45 # for EM and OM
+n_years_burnin = 10 # only for OM
 ages_base = 1:10
 lengths_base = seq(from = 2, to = 130, by = 2)
 n_fisheries = 1

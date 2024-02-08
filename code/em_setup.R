@@ -45,10 +45,10 @@ gf_NAA_re = list(N1_pars = c(N1_base, 0),
 gf_ecov <- list(
   label = "Ecov_sim",
   lag = 0,
-  mean = cbind(rep(0, length(years_base))), # replace by sim data
-  year = years_base,
+  mean = cbind(rep(0, n_years_base)), # replace by sim data
+  year = (n_years_burnin+1):(n_years_base+n_burnin_years),
   ages = list(ages_base),
-  use_obs = cbind(rep(1, length(years_base))),
+  use_obs = cbind(rep(1, n_years_base)),
   how = 0) 
 
 # True parameter values:
@@ -94,29 +94,29 @@ for(i in 1:NROW(df.scenario)){
   # ---------------------
   # Define obs error scenarios (data rich vs data poor):
   if(df.scenario$data_scen[i] == 'rich') {
-    catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = length(years_base))
-    agg_index_cv = matrix(0.1, ncol = n_indices, nrow = length(years_base))
-    catch_Neff = matrix(100, ncol = n_fisheries, nrow = length(years_base))
-    index_Neff = matrix(200, ncol = n_indices, nrow = length(years_base))
-    catch_NeffL = matrix(100, ncol = n_fisheries, nrow = length(years_base))
-    index_NeffL = matrix(200, ncol = n_indices, nrow = length(years_base))
+    catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = n_years_base)
+    agg_index_cv = matrix(0.1, ncol = n_indices, nrow = n_years_base)
+    catch_Neff = matrix(100, ncol = n_fisheries, nrow = n_years_base)
+    index_Neff = matrix(200, ncol = n_indices, nrow = n_years_base)
+    catch_NeffL = matrix(100, ncol = n_fisheries, nrow = n_years_base)
+    index_NeffL = matrix(200, ncol = n_indices, nrow = n_years_base)
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    Ecov_i$logsigma = cbind(rep(log(0.4), length(years_base))) # logsigma Ecov
+    Ecov_i$logsigma = cbind(rep(log(0.4), n_years_base)) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-    waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
+    waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, n_years_base, length(ages_base)))
   }
 
   if(df.scenario$data_scen[i] == 'poor') {
-    catch_sigma = matrix(0.1, ncol = n_fisheries, nrow = length(years_base))
-    agg_index_cv = matrix(0.4, ncol = n_indices, nrow = length(years_base))
-    catch_Neff = matrix(25, ncol = n_fisheries, nrow = length(years_base))
-    index_Neff = matrix(50, ncol = n_indices, nrow = length(years_base))
-    catch_NeffL = matrix(25, ncol = n_fisheries, nrow = length(years_base))
-    index_NeffL = matrix(50, ncol = n_indices, nrow = length(years_base))
+    catch_sigma = matrix(0.1, ncol = n_fisheries, nrow = n_years_base)
+    agg_index_cv = matrix(0.4, ncol = n_indices, nrow = n_years_base)
+    catch_Neff = matrix(25, ncol = n_fisheries, nrow = n_years_base)
+    index_Neff = matrix(50, ncol = n_indices, nrow = n_years_base)
+    catch_NeffL = matrix(25, ncol = n_fisheries, nrow = n_years_base)
+    index_NeffL = matrix(50, ncol = n_indices, nrow = n_years_base)
     # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    Ecov_i$logsigma = cbind(rep(log(0.8), length(years_base))) # logsigma Ecov
+    Ecov_i$logsigma = cbind(rep(log(0.8), n_years_base)) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-    waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, length(years_base), length(ages_base)))
+    waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, n_years_base, length(ages_base)))
   }
 
   # Change input parameters information -------------------------------
@@ -179,7 +179,8 @@ for(i in 1:NROW(df.scenario)){
   }  
 
   # Make basic inputs (defined above)
-  gf_info = make_basic_info(base_years = years_base, ages = ages_base, fish_len = lengths_base,
+  gf_info = make_basic_info(n_years_base = n_years_base, n_years_burnin = n_years_burnin, type = 'em',
+                              ages = ages_base, fish_len = lengths_base,
                               n_fisheries = n_fisheries, n_indices = n_indices,
                               catch_sigma = catch_sigma, agg_index_cv = agg_index_cv,
                               catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
@@ -246,7 +247,8 @@ for(i in 1:NROW(df.scenario)){
                                       len_comp = 'multinomial')
   
   #turn on bias correction?
-  em_inputs[[i]] = set_simulation_options(em_inputs[[i]], simulate_data = TRUE, simulate_process = TRUE, simulate_projection = FALSE,
+  em_inputs[[i]] = set_simulation_options(em_inputs[[i]], simulate_data = TRUE, 
+                                          simulate_process = TRUE, simulate_projection = FALSE,
                                           bias_correct_pe = TRUE, bias_correct_oe = TRUE)
   # Fix some parameters:
   em_inputs[[i]]$par$log_NAA_sigma = log(sigma_R)
