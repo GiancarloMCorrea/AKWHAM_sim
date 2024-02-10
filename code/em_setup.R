@@ -17,13 +17,13 @@ df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
 gf_selectivity_age = list(
   model = agesel_based$model,
   initial_pars = agesel_based$initial_pars,
-  fix_pars = list(c(2,5), NULL), # fix par2 and 5
+  fix_pars = list(c(2,4:5), NULL), # fix par2, 4 and 5
   n_selblocks = n_fisheries + n_indices) 
 # Selectivity configuration (len-based)
 gf_selectivity_len = list(
   model = lensel_based$model,
   initial_pars = lensel_based$initial_pars,
-  fix_pars = list(c(2,5), NULL), # fix par2 and 5
+  fix_pars = list(c(2,4:5), NULL), # fix par2, 4 and 5
   n_selblocks = n_fisheries + n_indices)
 
 
