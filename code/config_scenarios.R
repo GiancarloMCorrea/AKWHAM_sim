@@ -16,10 +16,10 @@ Ecov_sim = c('stationary', 'trend')
 method1 = c('EWAA', 'EWAA', 'WAA', 'WAA',
            'growth', 'growth', 'growth', 'growth', 'growth',
            'Ecov', 'Ecov', 'Ecov', 'Ecov', 'Ecov')
-re_method1 = c(NA, NA, '2dar1', '2dar1', 
+re_method1 = c(NA, NA, '2dar1', '2dar1',
               'ar1_y', 'ar1_y', 'ar1_y', 'ar1_y', 'ar1_y',
               'ar1', 'ar1', 'ar1', 'ar1', 'ar1')
-est_fixed1 = c(NA, NA, TRUE, TRUE, 
+est_fixed1 = c(NA, NA, TRUE, TRUE,
               TRUE, TRUE, TRUE, TRUE, TRUE, 
               TRUE, TRUE, TRUE, TRUE, TRUE)
 catch_data1 = c('paa', 'paa', 'paa', 'paa',
@@ -29,8 +29,8 @@ index_data1 = c('paa', 'paa',  'paa', 'paa',
                'pal', 'paa', 'paa', 'caal', 'caal', 
                'pal', 'paa', 'paa', 'caal', 'caal')
 caal_samp1 = c(samp_scheme, samp_scheme,
-              NA,samp_scheme, samp_scheme,
-              NA, samp_scheme, samp_scheme)
+               NA,samp_scheme, samp_scheme,
+               NA, samp_scheme, samp_scheme)
 
 # Make scenario DF1:
 tmp.scenario1 = data.frame(growth_par = rep(growth_par, times = length(method1)),
@@ -76,6 +76,7 @@ df.scenario1 = tmp.scenario1 %>% slice(rep(1:n(), times = length(data_scen))) %>
 #df.scenario = rbind(df.scenario1, df.scenario2)
 df.scenario = df.scenario1 %>% slice(rep(1:n(), times = length(Ecov_sim))) %>% 
   mutate(Ecov_sim = rep(Ecov_sim, each = nrow(df.scenario1)))
+# df.scenario = df.scenario[c(1:2,9:10,29:30,41:42), ]
 
 # Save scenario DF:
 n.mods = dim(df.scenario)[1] 

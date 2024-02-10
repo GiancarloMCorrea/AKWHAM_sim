@@ -19,10 +19,6 @@ df.scenario <- readRDS(file.path(main_dir, "inputs", "df.scenarios.RDS"))
 # Make data.frame summarizing scenario:
 this_scenario <- data.frame(df.scenario[scenj, ])
 model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, this_scenario)
-# Select observations to pass to EM from sim_data:
-# DO NOT PASS either 'use_xxx_xxx' or Neff (except for caal, see below)
-obs_names <- c("agg_catch", "agg_indices", "catch_paa", "index_paa", "catch_pal", "index_pal", 
-               'catch_caal', 'index_caal', 'waa', 'waa_cv', 'Ecov_obs', "obsvec", "agesvec")
 
 #######################################################
 # Read seed:
@@ -37,7 +33,7 @@ cat(paste0("START Scenario: ", scenj, " Sim: ", simi, "\n"))
 if(df.scenario$Ecov_sim[scenj] == 'stationary') {
   
   set.seed(seeds[simi])
-  ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
+  ecov_error = rnorm(n_years_base+n_years_burnin, mean = 0, sd = exp(Ecov_re_sig))
   alpha = 0
   beta = Ecov_trend[1] # trend
   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
@@ -50,7 +46,7 @@ if(df.scenario$Ecov_sim[scenj] == 'stationary') {
 if(df.scenario$Ecov_sim[scenj] == 'trend') {
   
   set.seed(seeds[simi])
-  ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
+  ecov_error = rnorm(n_years_base+n_years_burnin, mean = 0, sd = exp(Ecov_re_sig))
   alpha = 0
   beta = Ecov_trend[2] # trend
   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
@@ -69,9 +65,12 @@ om <- fit_wham(om_inputs[[scenj]], do.fit = FALSE, MakeADFun.silent = TRUE)
 # Define seed and simulate WHAM data:
 set.seed(seeds[simi])
 sim_data <- om$simulate(complete=TRUE)
-if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
-if(simi == 1 & scenj <= 4) saveRDS(object = om, file = paste0('inputs/om_sample/om_sample_', scenj,'.RDS')) # Save OM data to make plots later
-if(scenj %in% c(1:4, 113:116)) {
+# if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
+if(simi == 1 & scenj <= 4) {
+  saveRDS(object = om, file = paste0('inputs/om_sample/om_sample_', scenj,'.RDS')) # Save OM data to make plots later
+  make_plot_om(sim_data, scenj, main_dir) # Make plot 
+}
+if(simi <= 10 & scenj %in% c(1:4, 113:116)) { # LAA variability by Ecov_sim. Only 10 iterations
   this_laa = sim_data$LAA
   colnames(this_laa) = 1:sim_data$n_ages
   rownames(this_laa) = 1:sim_data$n_years_model
@@ -82,9 +81,6 @@ if(scenj %in% c(1:4, 113:116)) {
   saveRDS(object = this_df, file = paste0('inputs/LAA_var/sample_', scenj, '-', simi, '.RDS')) # Save sim LAA to make plots later
 }
 
-# Read EM input data:
-EM_input <- em_inputs[[scenj]] 
-
 # CAAL sampling: ----------------------------------------------
 # Only works for multinomial 
 
@@ -93,10 +89,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
   
   if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 13 # Nsamp size for CAAL
   if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 25 # Nsamp size for CAAL
-  
-  # Also pass caal_Neff
-  if(df.scenario$catch_data[scenj] == 'caal') obs_names = c(obs_names, 'catch_caal_Neff', 'use_catch_caal')
-  
+
   # Order to sort: year, fleet, len bin, age
   to_obsvec = NULL
   for(j in 1:sim_data$n_years_model) {
@@ -181,7 +174,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
       } # len loop
       tmp_paa = tmp_paa/sum(tmp_paa) # in case there no len info in CAAL
       sim_data$catch_paa[i,j,] = tmp_paa
-      to_obsvec_paa = c(to_obsvec_paa, tmp_paa*EM_input$data$catch_Neff[j,i]) # Neff of EM
+      to_obsvec_paa = c(to_obsvec_paa, tmp_paa*sim_data$catch_Neff[j,i]) # Neff of EM
     } # fleet loop
   } # year loop
   
@@ -246,9 +239,6 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
   
   if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 50 # Nsamp size for CAAL
   if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
-  
-  # Also pass caal_Neff
-  if(df.scenario$index_data[scenj] == 'caal') obs_names = c(obs_names, 'index_caal_Neff', 'use_index_caal')
   
   # Order to sort: year, fleet, len bin, age
   to_obsvec = NULL
@@ -335,7 +325,7 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
       } # len loop
       tmp_paa = tmp_paa/sum(tmp_paa) # in case there no len info in CAAL
       sim_data$index_paa[i,j,] = tmp_paa
-      to_obsvec_paa = c(to_obsvec_paa, tmp_paa*EM_input$data$index_Neff[j,i]) # Neff of EM
+      to_obsvec_paa = c(to_obsvec_paa, tmp_paa*sim_data$index_Neff[j,i]) # Neff of EM
     } # fleet loop
   } # year loop
   
@@ -395,17 +385,57 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
     
 } # index_caal conditional
 
+
+# Read EM input data:
+EM_input <- em_inputs[[scenj]] 
+
+# -------------------------------------------------------------------------
+# Now prepare new sim_data$obs$val, sim_data$obsvec and sim_data$agesvec for matching with EM_input
+filter_year = sim_data$obs$year %in% (n_years_burnin + 1):(n_years_base + n_years_burnin)
+obsvec_new = sim_data$obsvec[filter_year]
+agesvec_new = sim_data$agesvec[filter_year]
+obs_new = data.frame(year = sim_data$obs$year[filter_year] - n_years_burnin, # to match year values in EM
+                     bin = sim_data$obs$bin[filter_year],
+                     fleet = sim_data$obs$fleet[filter_year],
+                     type = sim_data$obs$type[filter_year])
+obs_new = obs_new %>% mutate(ind_match = paste(year, bin, fleet, type, sep = '-'))
+# EM ind match:
+EM_ind_match = paste(EM_input$data$obs$year, EM_input$data$obs$bin, 
+                     EM_input$data$obs$fleet, EM_input$data$obs$type, sep = '-')
+# Find matching and replace values in EM from sim_data:
+match_rows = obs_new$ind_match %in% EM_ind_match
+EM_input$data$obsvec = obsvec_new[match_rows]
+EM_input$data$agesvec = agesvec_new[match_rows]
+EM_input$data$obs$val = EM_input$data$obsvec # not needed but whatever
+
+# -------------------------------------------------------------------------
+# Pass new caal_Neff and use_caal to EM_input:
+if(df.scenario$catch_data[scenj] %in% c('caal')) {
+  for(i in 1:n_fisheries) {
+    EM_input$data$catch_caal_Neff[,i,] = sim_data$catch_caal_Neff[(n_years_burnin+1):(n_years_burnin+n_years_base),i,]
+    EM_input$data$use_catch_caal[,i,] = sim_data$use_catch_caal[(n_years_burnin+1):(n_years_burnin+n_years_base),i,]
+  }
+}
+if(df.scenario$index_data[scenj] %in% c('caal')) {
+  for(i in 1:n_indices) {
+    EM_input$data$index_caal_Neff[,i,] = sim_data$index_caal_Neff[(n_years_burnin+1):(n_years_burnin+n_years_base),i,]
+    EM_input$data$use_index_caal[,i,] = sim_data$use_index_caal[(n_years_burnin+1):(n_years_burnin+n_years_base),i,]
+  }
+}
+
+# -------------------------------------------------------------------------
+# Pass waa and waa_cv data since it is not in obs data.frame:
+if(df.scenario$method[scenj] %in% c('EWAA', 'WAA')) {
+    EM_input$data$waa = sim_data$waa[,(n_years_burnin+1):(n_years_burnin+n_years_base),]
+    EM_input$data$waa_cv = sim_data$waa_cv[,(n_years_burnin+1):(n_years_burnin+n_years_base),]
+}
+
 # -------------------------------------------------------------------------
 
 # Continue code:
-truth <- sim_data
+truth = sim_data
 # Save the version for reproducibility
 truth$wham_version = om$wham_version
-# Put simulated data into EM input:
-# it is important to pass keep names since 'obsvec' is being passed and OM simulates data for all categories:
-keep_names = names(sim_data)[grep(pattern = 'keep', x = names(sim_data))] 
-# Pass names:
-EM_input$data[c(obs_names, keep_names)] = sim_data[c(obs_names, keep_names)]
 # Create data.frame saving parameter names:
 ompars <- data.frame(par=names(om$par), value=om$par) |> dplyr::filter(par!='F_devs')
 ompars$par2 <- sapply(unique(ompars$par), function(x) {
@@ -420,10 +450,7 @@ res$fit <- list()
 # Modify initial values for nonparametric approach:
 # This is important. Convergence problems might appear if this is not done
 if(df.scenario$method[scenj] == 'WAA') {
-  EM_input$par$WAA_a = log(colMeans(sim_data$waa[2,,]))
-}
-if(df.scenario$method[scenj] == 'LAA') {
-  EM_input$par$LAA_a = log(colMeans(sim_data$LAA))
+  EM_input$par$WAA_a = log(colMeans(EM_input$data$waa[2,,]))
 }
 
 #######################################################

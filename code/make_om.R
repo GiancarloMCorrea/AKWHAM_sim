@@ -71,7 +71,7 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
 	F_vals[1] = Fmin
 	F_vals[2:year_change] = Fmin + Slope*(2:year_change)
 	F_vals[(year_change+1):n_years_base] = Fmax + Slope*(year_change - (year_change+1):n_years_base)
-	F_vals = c(rep(0, times = n_years_burnin), F_vals) # F = 0 for burnin period
+	F_vals = c(rep(0.005, times = n_years_burnin), F_vals) # F = 0.005 for burnin period. DO NOT PUT ZERO since log(0) = ERROR
 	basic_info$F = matrix(0, ncol = basic_info$n_fleets, nrow = ny)
 	basic_info$F[,1] = F_vals # only one fishery, make this more flexible in the future
 

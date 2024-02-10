@@ -10,7 +10,6 @@ source(file.path('code', "set_simulation_options.R"))
 # Read Config Scenarios DF:
 df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
 
-
 # --------------------------------------------------------
 # Parameter information:
 
@@ -46,7 +45,7 @@ gf_ecov <- list(
   label = "Ecov_sim",
   lag = 0,
   mean = cbind(rep(0, n_years_base)), # replace by sim data
-  year = (n_years_burnin+1):(n_years_base+n_burnin_years),
+  year = (n_years_burnin+1):(n_years_base+n_years_burnin),
   ages = list(ages_base),
   use_obs = cbind(rep(1, n_years_base)),
   how = 0) 
@@ -179,7 +178,7 @@ for(i in 1:NROW(df.scenario)){
   }  
 
   # Make basic inputs (defined above)
-  gf_info = make_basic_info(n_years_base = n_years_base, n_years_burnin = n_years_burnin, type = 'em',
+  basic_info = make_basic_info(n_years_base = n_years_base, n_years_burnin = n_years_burnin, type = 'em',
                               ages = ages_base, fish_len = lengths_base,
                               n_fisheries = n_fisheries, n_indices = n_indices,
                               catch_sigma = catch_sigma, agg_index_cv = agg_index_cv,
@@ -187,7 +186,6 @@ for(i in 1:NROW(df.scenario)){
                               index_NeffL = index_NeffL, catch_Neff_caal = catch_Neff_caal, 
                               index_Neff_caal = index_Neff_caal, waa_cv = waa_cv)
 
-  basic_info <- gf_info
   # Add length information:
   ny <- length(basic_info$years)
   nlbins <- length(basic_info$lengths)
@@ -234,9 +232,9 @@ for(i in 1:NROW(df.scenario)){
 	  selectivity_i$model[2] = lensel_based$model[2] # use len-based selectivity when len data for fishery or survey
 	  selectivity_i$initial_pars[[2]] = lensel_based$initial_pars[[2]]
   }
-  # Turn on use of EWAA as obs (only use survey data):
+  # Turn on use of waa as obs (only use survey data):
   if(df.scenario$method[i] == 'WAA') basic_info$use_index_waa = matrix(1, ncol = basic_info$n_indices, nrow = ny)
-  
+
   # Continue....
   em_inputs[[i]] = prepare_wham_input(basic_info = basic_info,
                                       selectivity = selectivity_i, NAA_re = NAA_re_i, 
