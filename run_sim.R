@@ -12,35 +12,37 @@ library(wham)
 require(doParallel)
 require(foreach)
 
-# Set working directory:
+# Define WD:
+# IMPORTANT: change also this in sim_core2.R
 main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
+out_dir = 'C:/Users/moroncog/Documents/AKWHAM_sim-simulations' # folder where all simulations will be saved. preferably out of GitHub folder
+
+# Set working directory:
 setwd(main_dir)
 
-# Create Scenario DF:
-source(file.path("code", "config_scenarios.R"))
-
+# Create Scenario and seeds DF (only do it once):
+# source(file.path("code", "config_scenarios.R"))
 # Make OM and EM WHAM inputs
 # source(file.path("code", "om_setup.R"))
 # source(file.path("code", "em_setup.R"))
-
 # Clear workspace
-rm(list=ls())
-
+# rm(list=ls())
 # Read main dir again
-main_dir = getwd()
+# main_dir = getwd()
 
-# Read OM and EM data frames
+# Read objects to be used in sim_core2.R
 df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
+
+# Create folder to save sample data:
+dir.create('sample_data')
+dir.create(file.path('sample_data', 'om_sample'))
+dir.create(file.path('sample_data', 'LAA_sample'))
 
 # Create folder to save results:
 for(k in 1:nrow(df.scenario)) {
-	write.dir <- file.path(main_dir, "results", paste0("scenario", k))
+	write.dir <- file.path(out_dir, paste0("scenario", k))
 	dir.create(write.dir, recursive = T, showWarnings = FALSE)
 }
-
-# Create folders to save example simulated data:
-dir.create('inputs/om_sample')
-dir.create('inputs/LAA_var')
 
 # -------------------------------------------------------------
 # Function to run sim:
@@ -64,7 +66,7 @@ run_iter <- function(sim, scen){
 # sfStop()
 
 # Run in parallel several simulations for all scenarios
-these_scenarios = c(1:16, 57:72, 113:128, 169:184) # scenarios only using age data
+these_scenarios = c(1:4, 9:10, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 113:118)
 # these_scenarios = c(1:4, 113:116)
 snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()

@@ -3,9 +3,9 @@ args = commandArgs(trailingOnly=TRUE)
 simi = as.integer(args[1])
 scenj = as.integer(args[2])
 
-# CHANGE THIS IF REQUIRED!
-# Main directory:
+# Make sure that these are correct!
 main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
+out_dir = 'C:/Users/moroncog/Documents/AKWHAM_sim-simulations'
 
 # Load required libraries:
 library(wham)
@@ -15,15 +15,13 @@ source(file.path(main_dir, "code", "config_params.R"))
 om_inputs <- readRDS(file.path(main_dir, "inputs", "om_inputs.RDS"))
 em_inputs <- readRDS(file.path(main_dir, "inputs", "em_inputs.RDS"))
 df.scenario <- readRDS(file.path(main_dir, "inputs", "df.scenarios.RDS"))
+seeds <- readRDS(file.path(main_dir, "inputs","seeds.RDS"))
 
 # Make data.frame summarizing scenario:
 this_scenario <- data.frame(df.scenario[scenj, ])
 model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, this_scenario)
 
 #######################################################
-# Read seed:
-# I don't think we want to use the same (e.g. 1000) seeds for everything.
-seeds <- readRDS(file.path(main_dir, "inputs","seeds.RDS"))
 # Print scenario name:
 cat(paste0("START Scenario: ", scenj, " Sim: ", simi, "\n"))
 
@@ -67,10 +65,10 @@ set.seed(seeds[simi])
 sim_data <- om$simulate(complete=TRUE)
 # if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
 if(simi == 1 & scenj <= 4) {
-  saveRDS(object = om, file = paste0('inputs/om_sample/om_sample_', scenj,'.RDS')) # Save OM data to make plots later
+  saveRDS(object = om, file = file.path(main_dir, "sample_data", 'om_sample', paste0("om_sample_", scenj, ".RDS"))) # Save OM data to make plots later
   make_plot_om(sim_data, scenj, main_dir) # Make plot 
 }
-if(simi <= 10 & scenj %in% c(1:4, 113:116)) { # LAA variability by Ecov_sim. Only 10 iterations
+if(simi <= 10 & scenj %in% c(1:4, 113:116)) { # LAA variability by Ecov type. Only 10 iterations
   this_laa = sim_data$LAA
   colnames(this_laa) = 1:sim_data$n_ages
   rownames(this_laa) = 1:sim_data$n_years_model
@@ -78,7 +76,7 @@ if(simi <= 10 & scenj %in% c(1:4, 113:116)) { # LAA variability by Ecov_sim. Onl
   this_df$growth_par = df.scenario$growth_par[scenj]
   this_df$sim = simi
   this_df$ecov = df.scenario$Ecov_sim[scenj]
-  saveRDS(object = this_df, file = paste0('inputs/LAA_var/sample_', scenj, '-', simi, '.RDS')) # Save sim LAA to make plots later
+  saveRDS(object = this_df, file = file.path(main_dir, "sample_data", 'LAA_sample', paste0("sample_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
 }
 
 # CAAL sampling: ----------------------------------------------
@@ -476,6 +474,6 @@ if(!'err' %in% names(fit) & class(fit) != "character"){
 }
 
 # Save EM results:
-rds.fn = file.path(main_dir, "results", paste0("scenario", scenj), paste0("sim", simi, ".RDS"))
+rds.fn = file.path(out_dir, paste0("scenario", scenj), paste0("sim", simi, ".RDS"))
 saveRDS(res, file = rds.fn)
 cat(paste0("END Scenario: ", scenj, " Sim: ", simi, "\n"))
