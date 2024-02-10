@@ -1,5 +1,4 @@
 # Code to make figures
-
 library(ggplot2)
 library(dplyr)
 library(plyr)
@@ -170,7 +169,7 @@ temp = temp %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
 temp = temp %>% filter(method %in% c('WEm', 'WNP'))
 
 # Make plot (stationary):
-this_ecov = 'stationary' # select the Ecov scenario
+this_ecov = 'Stationary' # select the Ecov scenario
 df_plot = temp %>% filter(Ecov_sim == this_ecov)
 
 p6 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
@@ -188,7 +187,7 @@ ggsave(filename = file.path(save_folder, paste0('waa_', this_ecov,'.jpg')), plot
        width = 190 , height = 240, units = 'mm', dpi = 500)
 
 # Make plot (trend):
-this_ecov = 'trend' # select the Ecov scenario
+this_ecov = 'Trend' # select the Ecov scenario
 df_plot = temp %>% filter(Ecov_sim == this_ecov)
 
 p6 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +

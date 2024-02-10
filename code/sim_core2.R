@@ -9,6 +9,7 @@ out_dir = 'C:/Users/moroncog/Documents/AKWHAM_sim-simulations'
 
 # Load required libraries:
 library(wham)
+library(dplyr)
 source(file.path(main_dir, "code", "make_om_plots.R"))
 source(file.path(main_dir, "code", "config_params.R"))
 # Read inputs:
@@ -396,7 +397,7 @@ obs_new = data.frame(year = sim_data$obs$year[filter_year] - n_years_burnin, # t
                      bin = sim_data$obs$bin[filter_year],
                      fleet = sim_data$obs$fleet[filter_year],
                      type = sim_data$obs$type[filter_year])
-obs_new = obs_new %>% mutate(ind_match = paste(year, bin, fleet, type, sep = '-'))
+obs_new = obs_new %>% dplyr::mutate(ind_match = paste(year, bin, fleet, type, sep = '-'))
 # EM ind match:
 EM_ind_match = paste(EM_input$data$obs$year, EM_input$data$obs$bin, 
                      EM_input$data$obs$fleet, EM_input$data$obs$type, sep = '-')

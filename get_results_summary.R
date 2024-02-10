@@ -1,5 +1,4 @@
 # Code to summarise results
-
 library(ggplot2)
 library(dplyr)
 library(tidyr)
@@ -9,54 +8,53 @@ theme_set(theme_bw())
 rm(list = ls())
 
 # Aux function ------------------------------------------------------------
-get_maxgrad <- function(fit){
-  if(!fit$model$optimized){
-    return(NULL)
-  }
-  maxgrad <- max(abs(fit$fit$final_gradient))
-  return(maxgrad)
-}
-# -------------------------------------------------------------------------
-
+source('aux_functions.R')
+source(file.path('code', 'config_params.R'))
 
 # Read RDS files and save them:
-scenario_names = list.files(path = 'results')
+out_dir = 'C:/Users/moroncog/Documents/AKWHAM_sim-simulations'
+
+# Some important parameters:
+waapos = 2 # Only survey waa
+output_folder = 'outputs'
+dir.create(output_folder)
+
+# Create objects
+scenario_names = list.files(path = out_dir)
 ts_results = list()
 par_results = list()
-#laa_results = list()
 waa_results = list()
 sel_results = list()
 countList = 1
 for(k in seq_along(scenario_names)) {
   
-  replicates = list.files(path = file.path('results', scenario_names[k]))
+  replicates = list.files(path = file.path(out_dir, scenario_names[k]))
   # Only run loop for scenarios with RDS
   if(length(replicates) > 0) { 
     
     for(j in seq_along(replicates)) { # loop over replicates
-      rep_i = readRDS(file = file.path('results', scenario_names[k], replicates[j]))
+      rep_i = readRDS(file = file.path(out_dir, scenario_names[k], replicates[j]))
       
 	    ts_df = NULL
       par_df = NULL
-      #laa_df = NULL
       waa_df = NULL
       sel_df = NULL
       if(rep_i$model$optimized) {
-        nyears = rep_i$truth$n_years_model
+        nyears = rep_i$truth$n_years_model - n_years_burnin # Only main years (exclude burnin)
         nages = rep_i$truth$n_ages
         # TIME SERIES -------------------------------
         ssb <- data.frame(par = 'SSB',
                           year = 1:nyears,
                           est = rep_i$fit$rep$SSB,
-                          truth = rep_i$truth$SSB)
+                          truth = tail(rep_i$truth$SSB, n = n_years_base))
         recruits <- data.frame(par = 'Rec',
                                year = 1:nyears,
                                est = rep_i$fit$rep$NAA[,1],
-                               truth = rep_i$truth$NAA[,1])
+                               truth = rep_i$truth$NAA[(n_years_burnin+1):(n_years_base+n_years_burnin),1])
         f <- data.frame(par = 'F',
                         year = 1:nyears,
                         est = rep_i$fit$rep$Fbar,
-                        truth = rep_i$truth$Fbar)
+                        truth = tail(rep_i$truth$Fbar, n = n_years_base))
         ts_df <- bind_rows(ssb, f, recruits) %>% bind_cols(rep_i$model) %>%
                           mutate(rel_error = (est-truth)/truth, abs_error = est-truth,
                           sim = as.factor(im), maxgrad = get_maxgrad(rep_i))
@@ -96,25 +94,13 @@ for(k in seq_along(scenario_names)) {
         par_df <- bind_rows(pars, grw1, grw2, ecov2) %>% bind_cols(rep_i$model) %>%
                       mutate(rel_error = (est-truth)/truth, abs_error = est-truth,
                               sim = as.factor(im),  maxgrad = get_maxgrad(rep_i))
-        # LAA TIME SERIES
-        # laa <- list()
-        # for(year in 1:nyears){
-        #   laa[[year]] <- data.frame(par='LAA', age=1:nages, year=year,
-        #                             est=rep_i$fit$rep$LAA[year,],
-        #                             truth=rep_i$truth$LAA[year,]) %>%
-        #     bind_cols(rep_i$model)
-        # }
-        # laa_df <- laa %>% bind_rows() %>%
-        #   mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
-        #          sim=as.factor(im),  maxgrad=get_maxgrad(rep_i))
-        
+
         # WAA TIME SERIES
         waa <- list()
-        waapos = 2 # Only survey waa
         for(year in 1:nyears) { 
           waa[[year]] <- data.frame(par='WAA', age=1:nages, year=year,
                                     est=rep_i$fit$rep$pred_waa[waapos,year,],
-                                    truth=rep_i$truth$pred_waa[waapos,year,]) %>%
+                                    truth=rep_i$truth$pred_waa[waapos,n_years_burnin+year,]) %>%
             bind_cols(rep_i$model)
         }
         waa_df <- waa %>% bind_rows() %>%
@@ -138,7 +124,6 @@ for(k in seq_along(scenario_names)) {
       
       ts_results[[countList]] = ts_df
       par_results[[countList]] = par_df
-      #laa_results[[countList]] = laa_df
       waa_results[[countList]] = waa_df
       sel_results[[countList]] = sel_df
       countList = countList + 1
@@ -153,15 +138,11 @@ for(k in seq_along(scenario_names)) {
 
 ts_results = dplyr::bind_rows(ts_results)
 par_results = dplyr::bind_rows(par_results)
-#laa_results = dplyr::bind_rows(laa_results)
 waa_results = dplyr::bind_rows(waa_results)
 sel_results = dplyr::bind_rows(sel_results)
 
 # Save results
-dir.create('outputs')
-saveRDS(ts_results, 'outputs/ts_results.RDS')
-saveRDS(par_results, 'outputs/par_results.RDS')
-#saveRDS(laa_results, 'outputs/laa_results.RDS')
-saveRDS(waa_results, 'outputs/waa_results.RDS')
-saveRDS(sel_results, 'outputs/sel_results.RDS')
-
+saveRDS(ts_results, file.path(output_folder, 'ts_results.RDS'))
+saveRDS(par_results, file.path(output_folder, 'par_results.RDS'))
+saveRDS(waa_results, file.path(output_folder, 'waa_results.RDS'))
+saveRDS(sel_results, file.path(output_folder, 'sel_results.RDS'))
