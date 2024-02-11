@@ -11,7 +11,7 @@ rm(list = ls())
 source('aux_functions.R')
 source(file.path('code', 'config_params.R'))
 
-# Read RDS files and save them:
+# Folder where simulations are saved:
 out_dir = 'C:/Users/moroncog/Documents/AKWHAM_sim-simulations'
 
 # Some important parameters:
@@ -68,11 +68,12 @@ for(k in seq_along(scenario_names)) {
                                value.y = if_else(grepl(x = par.y, "mean_rec_pars|log_F1|log_N1_pars"), 
                                                  exp(value.y), value.y))
         # Now for Q:
-        pars = pars %>% mutate(value.x = if_else(grepl(x = par.x, "logit_q"), 
+        pars = pars %>% dplyr::mutate(value.x = if_else(grepl(x = par.x, "logit_q"), 
                                                  10*exp(value.x)/(1+exp(value.x)), value.x),
                                value.y = if_else(grepl(x = par.y, "logit_q"), 
                                                  10*exp(value.y)/(1+exp(value.y)), value.y))
-        pars = pars %>% select('par2', 'value.y', 'value.x') %>% rename('par' = 'par2', 'est' = 'value.y', 'truth' = 'value.x')
+        pars = pars %>% dplyr::select('par2', 'value.y', 'value.x') %>% 
+          dplyr::rename('par' = 'par2', 'est' = 'value.y', 'truth' = 'value.x')
         # Growth parameters:
         grw1 <- data.frame(par = c('k', 'Linf', 'L1'),
                          est = exp(rep_i$fit$rep$growth_a[1:3,1]),
@@ -120,7 +121,7 @@ for(k in seq_along(scenario_names)) {
                   mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
                          sim=as.factor(im),  maxgrad=get_maxgrad(rep_i))
         
-      } # conditional if optimized
+      } # conditional if optimized 
       
       ts_results[[countList]] = ts_df
       par_results[[countList]] = par_df

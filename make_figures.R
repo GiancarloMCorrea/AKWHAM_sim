@@ -47,25 +47,35 @@ waa_df1 = readRDS(file = 'outputs/waa_results.RDS')
 #waa_df2 = readRDS(file = 'outputs/waa_results_2.RDS')
 waa_df = rbind(waa_df1)
 
+
+# -------------------------------------------------------------------------
+# Convergence rates:
+n_sim = 50 # number of iterations run per scenario.
+
+conv_df = par_df %>% group_by(Scenario) %>% 
+            dplyr::summarise(n_conv = length(unique(maxgrad) < 1)) %>%
+            dplyr::mutate(n_tot = n_sim) %>%
+            dplyr::mutate(conv_rate = n_conv/n_tot)
+
 # -------------------------------------------------------------------------
 # PAR plot (for ALL scenarios):
-temp = par_df %>% filter(par %in% c('logit_q', 'mean_rec_pars')) # 'log_F1', 'log_N1_pars'
+temp = par_df %>% filter(par %in% c('logit_q', 'mean_rec_pars', 'log_N1_pars')) # 'log_F1'
 # Set EM and OM labels:
 temp = set_labels(temp)
 # Set par labels:
-temp = temp %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q'),
-                                     labels = c(expression(bar(R)), 'Q'))) # expression(N["1,1"]), 'F[1]'
+temp = temp %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_N1_pars'),
+                                     labels = c(expression(bar(R)), 'Q', expression(N["1,1"])))) # 'F[1]'
 
 ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen)) +
   geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
-  scale_fill_viridis(discrete = TRUE) + 
+  scale_fill_brewer(palette = "Set1") +
   theme_bw() +
-  coord_cartesian(ylim = 0.3*c(-1, 1)) +
+  coord_cartesian(ylim = 0.4*c(-1, 1)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         strip.text = element_text(size = 10)) +
-  scale_y_continuous(breaks=0.3*c(-1, 0, 1)) +
+  scale_y_continuous(breaks=0.4*c(-1, 0, 1)) +
   xlab(NULL) + ylab('Relative error') +
   facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
 ggsave(filename = file.path(save_folder, 'par_.jpg'), 
@@ -83,7 +93,7 @@ temp = temp %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
 
 ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen)) +
   geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
-  scale_fill_viridis(discrete = TRUE) + 
+  scale_fill_brewer(palette = "Set1") +
   theme_bw() +
   coord_cartesian(ylim = 0.2*c(-1, 1)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
@@ -115,17 +125,16 @@ temp = temp %>% filter(method %in% c('LP', 'LEc'))
 
 ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen)) +
   geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
-  scale_fill_viridis(discrete = TRUE) +
+  scale_fill_brewer(palette = "Set1") +
   theme_bw() +
-  #coord_cartesian(ylim = 0.5*c(-1, 0, 1)) +
+  coord_cartesian(ylim = 0.2*c(-1, 1)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         strip.text = element_text(size = 10)) +
-  #scale_y_continuous(breaks=0.5*c(-1, 0, 1)) +
+  scale_y_continuous(breaks=0.2*c(-1, 0, 1)) +
   xlab(NULL) + ylab('Relative error') +
   facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
-
 ggsave(filename = file.path(save_folder, 'growth_.jpg'),  
        width = 190 , height = 230, units = 'mm', dpi = 500)
 
@@ -143,14 +152,14 @@ temp = temp %>% filter(method %in% c('LEc'))
 # Make plot:
 ggplot(temp, aes(x=em_label, y=rel_error, fill=data_scen)) +
   geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
-  scale_fill_viridis(discrete = TRUE) +
+  scale_fill_brewer(palette = "Set1") +
   theme_bw() +
-  #coord_cartesian(ylim = 0.5*c(-1, 0, 1)) +
+  coord_cartesian(ylim = 0.5*c(-1, 1)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         strip.text = element_text(size = 10)) +
-  #scale_y_continuous(breaks=0.5*c(-1, 0, 1)) +
+  scale_y_continuous(breaks=0.5*c(-1, 0, 1)) +
   xlab(NULL) + ylab('Relative error') +
   facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
 
@@ -175,6 +184,7 @@ df_plot = temp %>% filter(Ecov_sim == this_ecov)
 p6 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
   geom_violin(position=position_dodge(0.6), alpha = 0.75) +
   theme_bw() +
+  scale_fill_brewer(palette = "Set1") +
   coord_cartesian(ylim = c(-0.5, 0.5)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
@@ -193,6 +203,7 @@ df_plot = temp %>% filter(Ecov_sim == this_ecov)
 p6 = ggplot(df_plot, aes(x=em_label, y=rel_error, fill=data_scen, color = data_scen)) +
   geom_violin(position=position_dodge(0.6), alpha = 0.75) +
   theme_bw() +
+  scale_fill_brewer(palette = "Set1") +
   coord_cartesian(ylim = c(-0.5, 0.5)) +
   geom_hline(yintercept=0, color=1, linetype='dashed') +
   theme(legend.position = 'none',
