@@ -53,18 +53,7 @@ run_iter <- function(sim, scen){
   system(cmd)
 }
 
-# -------------------------------------------------------------
-# Run Simulation
-
-# Only run 1 replicate for 1 scenarios:
-# run_iter(1, 1)
-
-# Run in parallel several simulations only for one scenarios
-# sfInit(parallel=TRUE, cpus=10)
-# sfExportAll()
-# trash <- sfLapply(1:50, function(sim) run_iter(sim, 1))
-# sfStop()
-
+# -------------------------------------------------------------------------
 # Run in parallel several simulations for all scenarios
 these_scenarios = c(1:16, seq(from = 17, by = 4, length.out = 10), 57:72, seq(from = 73, by = 4, length.out = 10),
                     113:128, seq(from = 129, by = 4, length.out = 10), 169:184, seq(from = 185, by = 4, length.out = 10))

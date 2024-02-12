@@ -34,8 +34,7 @@ graph [layout = dot, rankdir = TB];
 # define the global styles of the nodes. We can override these in box if we wish
 node [shape = rectangle, style = filled, fontsize=25];
 
-POP1 [label = 'Abundance-at-age \n -at-length', fillcolor = Pink];
-POP2 [label = 'Predicted \n age-length structure', fillcolor = Pink];
+POP1 [label = 'Predicted \n age-length structure', fillcolor = Pink];
 POP3 [label = 'Weight-at-length', fillcolor = Pink];
 SAMP1 [label =  'Length sample', fillcolor = lightskyblue2];
 SAMP2 [label =  'Age subsample', fillcolor = lightskyblue2];
@@ -56,13 +55,7 @@ d3 [shape=point,width=0.01,height=0.01];
 POP1 -> {SAMP1}[label='random \n sample'];
 SAMP1 -> {DAT1};
 SAMP1 -> {SAMP2}[label='sample (either random \n or length-stratified)'];
-SAMP2 -> d1[dir=none];
-subgraph {
-    rank=same;
-    d1; POP2;
-}
-d1->POP2[dir=none];
-d1 -> DAT2;
+SAMP2 -> DAT2;
 {DAT1 DAT2}->d2[dir=none];
 d2->DAT3;
 {DAT2 POP3}->d3[dir=none];
@@ -74,7 +67,7 @@ d3->DAT4;
 # Save:
 DPI = 500
 WidthCM = 17
-HeightCM = 13
+HeightCM = 10
 
 diag1 %>% export_svg %>% charToRaw %>% 
   rsvg(width = WidthCM *(DPI/2.54), height = HeightCM *(DPI/2.54)) %>% 
@@ -121,7 +114,7 @@ dev.off()
 # Supp figure: simulated environmental time series:
 
 n_sim = 10 # number of replicates to plot
-n_years = 45
+n_years = 55
 
 save_stationary = matrix(0, ncol= n_sim, nrow = n_years)
 save_trend = save_stationary
@@ -129,7 +122,7 @@ save_trend = save_stationary
 for(iter in 1:n_sim) {
   
   set.seed(seeds[iter])
-  ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
+  ecov_error = rnorm(n_years, mean = 0, sd = exp(Ecov_re_sig))
   alpha = 0
   beta = Ecov_trend[1] # trend
   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
@@ -140,7 +133,7 @@ for(iter in 1:n_sim) {
   
   # Nonstationary time series:
   set.seed(seeds[iter])
-  ecov_error = rnorm(length(years_base), mean = 0, sd = exp(Ecov_re_sig))
+  ecov_error = rnorm(n_years, mean = 0, sd = exp(Ecov_re_sig))
   alpha = 0
   beta = Ecov_trend[2] # trend
   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
@@ -159,6 +152,7 @@ df2 = df2 %>% mutate(type = 'Trend')
 df_plot = rbind(df1, df2)
 
 figs1 = ggplot(df_plot, aes(x=year, y=value, group = factor(iter))) +
+  geom_vline( xintercept = 10, linetype = 'dashed') +
   geom_line(aes(color = factor(type)), alpha = 0.5) +
   xlab('Simulated year') +
   ylab('Simulated environmental covariate') +
@@ -171,11 +165,11 @@ ggsave(filename = 'plots/Figure_S1.jpg', plot = figs1,
 # Supp figure: simulated variability in LAA:
 # WARNING: you need to run the previous plot (Ecov sim)
 
-all_files = list.files(path = 'inputs/LAA_var')
+all_files = list.files(path = 'sample_data/LAA_sample')
 
 all_df = list()
 for(k in seq_along(all_files)) {
-  all_df[[k]] = readRDS(file = file.path('inputs/LAA_var', all_files[k]))
+  all_df[[k]] = readRDS(file = file.path('sample_data/LAA_sample', all_files[k]))
 }
 
 all_df = dplyr::bind_rows(all_df)
@@ -190,6 +184,7 @@ all_df = all_df %>% mutate(ecov = factor(ecov, levels = c('stationary', 'trend')
                                          labels = c('Stationary', 'Trend')))
   
 figs2 = ggplot(all_df, aes(x=year, y=value, group = factor(sim))) +
+  geom_vline( xintercept = 10, linetype = 'dashed') +
   geom_line(aes(color = factor(ecov)), alpha = 0.2) +
   xlab('Simulated year') +
   ylab('Mean length (cm)') +
