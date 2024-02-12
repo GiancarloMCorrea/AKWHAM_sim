@@ -55,9 +55,9 @@ run_iter <- function(sim, scen){
 
 # -------------------------------------------------------------------------
 # Run in parallel several simulations for all scenarios
-these_scenarios = c(1:16, seq(from = 17, by = 4, length.out = 10), 57:72, seq(from = 73, by = 4, length.out = 10),
-                    113:128, seq(from = 129, by = 4, length.out = 10), 169:184, seq(from = 185, by = 4, length.out = 10))
-# these_scenarios = c(1:4, 113:116)
+# these_scenarios = c(1:16, seq(from = 17, by = 4, length.out = 10), 57:72, seq(from = 73, by = 4, length.out = 10),
+#                    113:128, seq(from = 129, by = 4, length.out = 10), 169:184, seq(from = 185, by = 4, length.out = 10))
+these_scenarios = 129:224
 snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
