@@ -14,7 +14,7 @@ require(foreach)
 
 # Define WD:
 # IMPORTANT: change also this in sim_core2.R
-main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
+main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim' # local folder
 out_dir = 'C:/Users/moroncog/Documents/AKWHAM_sim-simulations' # folder where all simulations will be saved. preferably out of GitHub folder
 
 # Set working directory:
@@ -62,7 +62,7 @@ snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
     snowfall::sfExportAll()
-    trash <- snowfall::sfLapply(1:50, function(sim) run_iter(sim, sc))
+    trash <- snowfall::sfLapply(1:125, function(sim) run_iter(sim, sc))
 }
 snowfall::sfStop()
 
