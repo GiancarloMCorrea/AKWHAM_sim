@@ -143,7 +143,7 @@ waa_results = dplyr::bind_rows(waa_results)
 sel_results = dplyr::bind_rows(sel_results)
 
 # Save results
-saveRDS(ts_results, file.path(output_folder, 'ts_results.RDS'))
-saveRDS(par_results, file.path(output_folder, 'par_results.RDS'))
-saveRDS(waa_results, file.path(output_folder, 'waa_results.RDS'))
-saveRDS(sel_results, file.path(output_folder, 'sel_results.RDS'))
+saveRDS(ts_results, file.path(output_folder, 'ts_results1.RDS'))
+saveRDS(par_results, file.path(output_folder, 'par_results1.RDS'))
+saveRDS(waa_results, file.path(output_folder, 'waa_results1.RDS'))
+saveRDS(sel_results, file.path(output_folder, 'sel_results1.RDS'))

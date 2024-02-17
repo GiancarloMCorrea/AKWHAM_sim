@@ -198,6 +198,7 @@ set_labels = function(df) {
   temp = temp %>% mutate(fish_label = if_else(condition = catch_data != 'pal',  true = paste0(catch_data, caal_samp), false = catch_data))
   temp = temp %>% mutate(surv_label = if_else(condition = index_data != 'pal',  true = paste0(index_data, caal_samp), false = index_data))
   temp = temp %>% mutate(em_label = paste0(method,':', fish_label, '/', surv_label))
+  temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor')))
   temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
   temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
                                            labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
@@ -207,4 +208,64 @@ set_labels = function(df) {
   return(temp)
   
 }
+
+filter_iter = function(df) {
+  
+  filter1 = tapply(df$im, df$scenario, unique)
+  for(i in seq_along(filter1)) {
+    filter1[[i]] = sort(filter1[[i]])
+    filter1[[i]] = filter1[[i]][1:100] # first 100 replicates
+    filter1[[i]] = data.frame(scenario = names(filter1)[i], im = filter1[[i]])
+  }
+
+  sel_iter = do.call(rbind.data.frame, filter1)
+  sel_iter = sel_iter %>% mutate(scen_im = paste(scenario, im, sep = '-'))
+
+  df = df %>% mutate(scen_im = paste(scenario, im, sep = '-'))
+  df2 = df[df$scen_im %in% sel_iter$scen_im, ]
+
+  return(df2)
+
+}
+
+make_plot_1 = function(df, y_break = 0.4) {
+
+  my_plot =  ggplot(df, aes(x=em_label, y=rel_error, fill=data_scen)) +
+      geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
+      scale_fill_brewer(palette = "Set1") +
+      coord_cartesian(ylim = y_break*c(-1, 1)) +
+      geom_hline(yintercept=0, color=1, linetype='dashed') +
+      theme(legend.position = 'none',
+            axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+            strip.text = element_text(size = 10),
+            strip.background = element_rect(fill="white")) +
+      scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
+      xlab(NULL) + ylab('Relative error') +
+      facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
+
+  return(my_plot)
+
+}
+
+
+make_plot_2 = function(df, y_break = 0.4) {
+
+  my_plot =  ggplot(df, aes(x=em_label, y=rel_error, fill=data_scen)) +
+      geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
+      scale_fill_brewer(palette = "Set1") +
+      coord_cartesian(ylim = y_break*c(-1, 1)) +
+      geom_hline(yintercept=0, color=1, linetype='dashed') +
+      theme(legend.position = 'none',
+            axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+            strip.text = element_text(size = 10),
+            strip.background = element_rect(fill="white")) +
+      scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
+      xlab(NULL) + ylab('Relative error') +
+      facet_nested(par2 ~ om_label, labeller = 'label_parsed')
+
+  return(my_plot)
+
+}
+
+
 
