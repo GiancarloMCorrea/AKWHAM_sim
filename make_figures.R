@@ -29,30 +29,36 @@ EM_order = c("WEm:paa(r)/paa(r)", "WEm:paa(s)/paa(s)", "WNP:paa(r)/paa(r)", "WNP
 
 # TS data:
 ts_df1 = readRDS(file = 'outputs/ts_results1.RDS')
-#ts_df2 = readRDS(file = 'outputs/ts_results2.RDS')
-ts_df = rbind(ts_df1)
+ts_df2 = readRDS(file = 'outputs/ts_results2.RDS')
+ts_df3 = readRDS(file = 'outputs/ts_results3.RDS')
+ts_df = rbind(ts_df1,ts_df2,ts_df3)
 
 # par data:
 par_df1 = readRDS(file = 'outputs/par_results1.RDS')
-#par_df2 = readRDS(file = 'outputs/par_results2.RDS')
-par_df = rbind(par_df1)
+par_df2 = readRDS(file = 'outputs/par_results2.RDS')
+par_df3 = readRDS(file = 'outputs/par_results3.RDS')
+par_df = rbind(par_df1,par_df2,par_df3)
 
 # WAA data:
 waa_df1 = readRDS(file = 'outputs/waa_results1.RDS')
-#waa_df2 = readRDS(file = 'outputs/waa_results2.RDS')
-waa_df = rbind(waa_df1)
+waa_df2 = readRDS(file = 'outputs/waa_results2.RDS')
+waa_df3 = readRDS(file = 'outputs/waa_results3.RDS')
+waa_df = rbind(waa_df1,waa_df2,waa_df3)
 
 # Selex data:
-sel_df1 = readRDS(file = 'outputs/sel_results1.RDS')
+# sel_df1 = readRDS(file = 'outputs/sel_results1.RDS')
 #sel_df2 = readRDS(file = 'outputs/sel_results2.RDS')
-sel_df = rbind(sel_df1)
+# sel_df = rbind(sel_df1)
 
 
 # -------------------------------------------------------------------------
 # Convergence rates:
 n_sim = 125 # number of iterations run per scenario.
 
-conv_df = par_df %>% group_by(Scenario) %>% 
+# Set EM and OM labels:
+temp = set_labels(par_df)
+temp$data_scen = factor(temp$data_scen, labels = c('Data-rich', 'Data-poor'))
+conv_df = temp %>% group_by(em_label, om_label, Ecov_sim, data_scen) %>% 
             dplyr::summarise(n_conv = length(unique(maxgrad) < 1)) %>%
             dplyr::mutate(n_tot = n_sim) %>%
             dplyr::mutate(conv_rate = (n_conv/n_tot)*100)
