@@ -13,8 +13,11 @@ rm(list = ls())
 # Call aux functions
 source('aux_functions.R')
 
-# Save folder:
+# Save plot folder:
 save_folder = 'plots'
+
+# Output folder:
+output_folder = 'C:/Use/OneDrive - AZTI/Data/AKWHAM_sim'
 
 # Read scenarios df
 df.scenario = readRDS('inputs/df.scenarios.RDS')
@@ -27,22 +30,30 @@ EM_order = c("WEm:paa(r)/paa(r)", "WEm:paa(s)/paa(s)", "WNP:paa(r)/paa(r)", "WNP
 # -------------------------------------------------------------------------
 # Read output files -------------------------------------------------------
 
+# IMPORTANT:
+# Read this before processing data:
+# Three different PCs were used to get these outputs
+# clementina: has all the age-only scenarios, and the ones with no variability in growth
+# est_merino: has the scenarios with length data, time varying growth and no temporal trend
+# cole: has the scenarios with length data, time varying growth and temporal trend
+# All these scenarios have a max of 115 iterations
+
 # TS data:
-ts_df1 = readRDS(file = 'outputs/ts_results1.RDS')
-ts_df2 = readRDS(file = 'outputs/ts_results2.RDS')
-ts_df3 = readRDS(file = 'outputs/ts_results3.RDS')
-ts_df = rbind(ts_df1,ts_df2,ts_df3)
+ts_df1 = readRDS(file = file.path(output_folder, 'clementina/ts_results1.RDS'))
+ts_df2 = readRDS(file = file.path(output_folder, 'est_gmerino/ts_results1.RDS'))
+ts_df3 = readRDS(file = file.path(output_folder, 'cole/ts_results.RDS'))
+ts_df = rbind(ts_df1, ts_df2, ts_df3)
 
 # par data:
-par_df1 = readRDS(file = 'outputs/par_results1.RDS')
-par_df2 = readRDS(file = 'outputs/par_results2.RDS')
-par_df3 = readRDS(file = 'outputs/par_results3.RDS')
+par_df1 = readRDS(file = file.path(output_folder, 'clementina/par_results1.RDS'))
+par_df2 = readRDS(file = file.path(output_folder, 'est_gmerino/par_results1.RDS'))
+par_df3 = readRDS(file = file.path(output_folder, 'cole/par_results.RDS'))
 par_df = rbind(par_df1,par_df2,par_df3)
 
 # WAA data:
-waa_df1 = readRDS(file = 'outputs/waa_results1.RDS')
-waa_df2 = readRDS(file = 'outputs/waa_results2.RDS')
-waa_df3 = readRDS(file = 'outputs/waa_results3.RDS')
+waa_df1 = readRDS(file = file.path(output_folder, 'clementina/waa_results1.RDS'))
+waa_df2 = readRDS(file = file.path(output_folder, 'est_gmerino/waa_results1.RDS'))
+waa_df3 = readRDS(file = file.path(output_folder, 'cole/waa_results.RDS'))
 waa_df = rbind(waa_df1,waa_df2,waa_df3)
 
 # Selex data:
@@ -53,7 +64,7 @@ waa_df = rbind(waa_df1,waa_df2,waa_df3)
 
 # -------------------------------------------------------------------------
 # Convergence rates:
-n_sim = 125 # number of iterations run per scenario.
+n_sim = 115 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 temp = set_labels(par_df)
@@ -63,6 +74,7 @@ conv_df = temp %>% group_by(em_label, om_label, Ecov_sim, data_scen) %>%
             dplyr::mutate(n_tot = n_sim) %>%
             dplyr::mutate(conv_rate = (n_conv/n_tot)*100)
 # OUTPUT TABLE WITH SCENARIO LABELS
+# TODO: add missing scenarios due to 0 convergence rate
 
 # -------------------------------------------------------------------------
 # PAR plot (for ALL scenarios):

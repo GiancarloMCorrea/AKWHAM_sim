@@ -4,8 +4,8 @@ simi = as.integer(args[1])
 scenj = as.integer(args[2])
 
 # Make sure that these are correct!
-main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim'
-out_dir = 'C:/Users/moroncog/Documents/AKWHAM_sim-simulations'
+main_dir = 'C:/Use/GitHub/AKWHAM_sim' # local folder
+out_dir = 'C:/Use/GitHub/AKWHAM_sim/results' # folder where all simulations will be saved. preferably out of GitHub folder
 
 # Load required libraries:
 library(wham)
