@@ -4,87 +4,97 @@ library(dplyr)
 # folder to write scenarios df:
 write.dir = "inputs"
 
-# --------------------------------------------------------
-# Create OM configuration df:
-growth_par = 0:3 # none, k, Linf, and L1 separately
-data_scen = c('poor', 'rich')
-samp_scheme = c('random', 'strat')
-Ecov_sim = c('stationary', 'trend')
+# We will create the scenarios df by blocks:
+# growth_var:
+# 0: no growth variability
+# 1: variability on k and Linf
+# 2: variability on L1
 
 # -------------------------------------------------------------------------
-# Create EM configuration df (first set: EWAA, WAA, growth, Ecov)
-method1 = c('EWAA', 'EWAA', 'WAA', 'WAA',
-           'growth', 'growth', 'growth', 'growth', 'growth',
-           'Ecov', 'Ecov', 'Ecov', 'Ecov', 'Ecov')
-re_method1 = c(NA, NA, '2dar1', '2dar1',
-              'ar1_y', 'ar1_y', 'ar1_y', 'ar1_y', 'ar1_y',
-              'ar1', 'ar1', 'ar1', 'ar1', 'ar1')
-est_fixed1 = c(NA, NA, TRUE, TRUE,
-              TRUE, TRUE, TRUE, TRUE, TRUE, 
-              TRUE, TRUE, TRUE, TRUE, TRUE)
-catch_data1 = c('paa', 'paa', 'paa', 'paa',
-               'pal', 'pal', 'pal', 'pal', 'pal',
-               'pal', 'pal', 'pal', 'pal', 'pal')
-index_data1 = c('paa', 'paa',  'paa', 'paa',
-               'pal', 'paa', 'paa', 'caal', 'caal', 
-               'pal', 'paa', 'paa', 'caal', 'caal')
-caal_samp1 = c(samp_scheme, samp_scheme,
-               NA,samp_scheme, samp_scheme,
-               NA, samp_scheme, samp_scheme)
+# Age only scenarios:
+growth_var = 0:2 # none, k-Linf, or  L1
+samp_scheme = c('random', 'strat')
+Ecov_sim = c('stationary', 'trend')
+method = c('EWAA', 'WAA')
+age_selex = c('fixed', 'varying')
+catch_data = 'paa'
+index_data = 'paa'
 
-# Make scenario DF1:
-tmp.scenario1 = data.frame(growth_par = rep(growth_par, times = length(method1)),
-                          method = rep(method1, each = length(growth_par)),
-                          re_method = rep(re_method1, each = length(growth_par)), 
-                          est_fixed = rep(est_fixed1, each = length(growth_par)), 
-                          catch_data = rep(catch_data1, each = length(growth_par)), 
-                          index_data = rep(index_data1, each = length(growth_par)),
-                          caal_samp = rep(caal_samp1, each = length(growth_par)))
-df.scenario1 = tmp.scenario1 %>% slice(rep(1:n(), times = length(data_scen))) %>% 
-                  mutate(data_scen = rep(data_scen, each = nrow(tmp.scenario1)))
+age_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
+                     Ecov_sim = Ecov_sim, method = method, 
+                     age_selex = age_selex, catch_data = catch_data,
+                     index_data = index_data, stringsAsFactors = FALSE)
+age_df = age_df %>% mutate(re_method = if_else(method == 'EWAA', 'none', '2dar1'))
+# Only time varying selex when growth_var is zero:
+age_df$age_selex[age_df$growth_var == 0] = 'fixed'
+# No Ecov sim type when growth_var = 0
+age_df$Ecov_sim[age_df$growth_var == 0] = 'none'
 
-# 
-# # -------------------------------------------------------------------------
-# # Create EM configuration df (second set: LAA or SemiG)
-# method2 = c('SemiG', 'SemiG', 'SemiG', 'SemiG',
-#             'LAA', 'LAA', 'LAA', 'LAA')
-# re_method2 = c('2dar1', '2dar1', '2dar1', '2dar1', 
-#                '2dar1', '2dar1', '2dar1', '2dar1')
-# est_fixed2 = c(TRUE, TRUE, TRUE, TRUE,
-#                TRUE, TRUE, TRUE, TRUE)
-# catch_data2 = c('pal', 'pal', 'pal', 'pal', 
-#                 'pal', 'pal', 'pal', 'pal')
-# index_data2 = c('pal', 'paa', 'caal', 'caal',
-#                 'pal', 'paa', 'caal', 'caal')
-# caal_samp2 = c(NA, NA, 'random', 'strat',
-#                NA, NA, 'random', 'strat')
-# 
-# # Make scenario DF2:
-# tmp.scenario2 = data.frame(growth_par = rep(growth_par, times = length(method2)),
-#                            method = rep(method2, each = length(growth_par)),
-#                            re_method = rep(re_method2, each = length(growth_par)), 
-#                            est_fixed = rep(est_fixed2, each = length(growth_par)), 
-#                            catch_data = rep(catch_data2, each = length(growth_par)), 
-#                            index_data = rep(index_data2, each = length(growth_par)),
-#                            caal_samp = rep(caal_samp2, each = length(growth_par)))
-# df.scenario2 = tmp.scenario2 %>% slice(rep(1:n(), times = length(data_scen))) %>% 
-#   mutate(data_scen = rep(data_scen, each = nrow(tmp.scenario2)))
+# Delete repeating scenarios:
+age_df = age_df[!duplicated(age_df), ]
 
+# -------------------------------------------------------------------------
+# Length only scenarios:
+growth_var = 0:2 # none, k-Linf, or  L1
+samp_scheme = 'none'
+Ecov_sim = c('stationary', 'trend')
+method = c('growth', 'Ecov')
+age_selex = 'fixed'
+catch_data = 'pal'
+index_data = 'pal'
+
+len_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
+                     Ecov_sim = Ecov_sim, method = method, 
+                     age_selex = age_selex, catch_data = catch_data,
+                     index_data = index_data, stringsAsFactors = FALSE)
+len_df = len_df %>% mutate(re_method = 'none')
+# Change RE method depending on modelling approach
+len_df$re_method[len_df$method == 'growth' & len_df$growth_var > 0] = 'ar1_y'
+len_df$re_method[len_df$method == 'Ecov' & len_df$growth_var > 0] = 'ar1'
+# No Ecov sim type when growth_var = 0
+len_df$Ecov_sim[len_df$growth_var == 0] = 'none'
+# Growth and Ecov same approach when growth_var is 0
+len_df$method[len_df$growth_var == 0] = 'growth'
+
+# Delete repeating scenarios:
+len_df = len_df[!duplicated(len_df), ]
+
+# -------------------------------------------------------------------------
+# Age-length scenarios:
+growth_par = 0:2 # none, L1, or k-Linf
+samp_scheme = c('random', 'strat')
+Ecov_sim = c('stationary', 'trend')
+method = c('growth', 'Ecov')
+age_selex = 'fixed'
+catch_data = 'pal'
+index_data = c('caal', 'paa')
+
+agelen_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
+                     Ecov_sim = Ecov_sim, method = method, 
+                     age_selex = age_selex, catch_data = catch_data,
+                     index_data = index_data, stringsAsFactors = FALSE)
+agelen_df = agelen_df %>% mutate(re_method = 'none')
+agelen_df$re_method[agelen_df$method == 'growth' & agelen_df$growth_var > 0] = 'ar1_y'
+agelen_df$re_method[agelen_df$method == 'Ecov' & agelen_df$growth_var > 0] = 'ar1'
+# No Ecov sim type when growth_var = 0
+agelen_df$Ecov_sim[agelen_df$growth_var == 0] = 'none'
+# Growth and Ecov same approach when growth_var is 0
+agelen_df$method[agelen_df$growth_var == 0] = 'growth'
+
+# Delete repeating scenarios:
+agelen_df = agelen_df[!duplicated(agelen_df), ]
+
+# -------------------------------------------------------------------------
+# Make scenario DF:
+tmp_scenario = rbind(age_df, len_df, agelen_df)
 
 # -------------------------------------------------------------------------
 # Merge both data.frames:
-#df.scenario = rbind(df.scenario1, df.scenario2)
-df.scenario = df.scenario1 %>% slice(rep(1:n(), times = length(Ecov_sim))) %>% 
-  mutate(Ecov_sim = rep(Ecov_sim, each = nrow(df.scenario1)))
-# df.scenario = df.scenario[c(1:2,9:10,29:30,41:42), ]
+df.scenario = tmp_scenario
 
 # Save scenario DF:
 n.mods = dim(df.scenario)[1] 
-df.scenario$Scenario <- paste0("Scenario_",1:n.mods)
-df.scenario <- df.scenario %>% select(Scenario, everything()) 
-# Turn off RE structure when growth_par = 0 (except for Ecov)
-# df.scenario$re_method[df.scenario$method %in% c('WAA', 'growth', 'LAA', 'SemiG') & df.scenario$growth_par == 0] = 'none'
-df.scenario$re_method[df.scenario$method %in% c('WAA', 'growth') & df.scenario$growth_par == 0] = 'none'
+df.scenario$scenario <- 1:n.mods
 saveRDS(df.scenario, file.path(write.dir, "df.scenarios.RDS"))
 
 

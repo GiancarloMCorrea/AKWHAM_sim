@@ -40,9 +40,8 @@ make_basic_info <- function(n_years_base = 45, ages = 1:10, fish_len = 1:100,
     info$selblock_pointer_fleets <- t(matrix(1:info$n_fleets, info$n_fleets, ny))
     info$selblock_pointer_indices <- t(matrix(info$n_fleets + 1:info$n_indices, info$n_indices, ny))
 
-    # maturity of generic groundfish from IBMWG
-    #mat <- c(0.04, 0.25, 0.60, 0.77, 0.85, 0.92, 1, 1, 1, 1)
-    # params below get close to these values
+    # Maturity
+    # This will be replaced later
     m50 <- 3  # age at 50% maturity
     mslope <- 0.5 # how quickly maturity increases with age
     mat <- 1/(1+exp((m50 - 1:na)/mslope))

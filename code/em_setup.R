@@ -17,13 +17,15 @@ df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
 gf_selectivity_age = list(
   model = agesel_based$model,
   initial_pars = agesel_based$initial_pars,
-  fix_pars = list(c(2,4:5), NULL), # fix par2, 4 and 5
-  n_selblocks = n_fisheries + n_indices) 
+  # fix_pars = list(NULL, NULL), # estimate both parameters
+  fix_pars = list(2, 2), # fix second parameter
+  n_selblocks = n_fisheries + n_indices)
 # Selectivity configuration (len-based)
 gf_selectivity_len = list(
   model = lensel_based$model,
   initial_pars = lensel_based$initial_pars,
-  fix_pars = list(c(2,4:5), NULL), # fix par2, 4 and 5
+  # fix_pars = list(NULL, NULL), # estimate both parameters
+  fix_pars = list(2, 2), # fix second parameter
   n_selblocks = n_fisheries + n_indices)
 
 
@@ -59,20 +61,12 @@ b_LW <- LW_base[2]
 L_a <- Linf + (L1 - Linf)*exp(-k_par*(ages_base - 1))
 W_a <- a_LW*L_a^b_LW
 
-# Growth configuration:
-gf_growth <- list(model='vB_classic', init_vals=c(k_par, Linf, L1),
-                  SD_vals=c(G_base[4], G_base[5]),
+# Biological configuration:
+gf_LAA <- list(model='vB_classic', init_vals=G_base[1:3],
+                  SD_vals=G_base[4:5],
                   SD_est = 1:2) # Always estimate SD parameters
-gf_LW <- list(init_vals=c(a_LW, b_LW)) # fixed
-
-# LAA configuration:
-gf_LAA = list(LAA_vals = L_a,
-              re = c('none'),
-              SD_vals=c(G_base[4], G_base[5]),
-              SD_est = 1:2)# Always estimate SD parameters
-# WAA configuration:
-gf_WAA = list(WAA_vals = W_a,
-              re = c('none'))
+gf_WAA <- list(model = 'Allometric', init_vals = LW_base) # fixed
+gf_mat = list(model = 'len-logistic', init_vals = mat_base)
 
 #make inputs for estimating model (smaller objects to save, can overwrinte data elements with simulated data)
 em_inputs = list()
@@ -82,17 +76,15 @@ for(i in 1:NROW(df.scenario)){
   NAA_re_i = gf_NAA_re
   M_i = gf_M
   WAA_i = gf_WAA
-  growth_i = gf_growth
-  base_re_growth = c('none', 'none', 'none')
-  LW_i = gf_LW
   LAA_i = gf_LAA
+  mat_i = gf_mat
   Ecov_i = gf_ecov
   selectivity_i = gf_selectivity_age # will be replaced below
   Q_i = gf_Q
 
   # ---------------------
   # Define obs error scenarios (data rich vs data poor):
-  if(df.scenario$data_scen[i] == 'rich') {
+  # if(df.scenario$data_scen[i] == 'rich') {
     catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = n_years_base)
     agg_index_cv = matrix(0.1, ncol = n_indices, nrow = n_years_base)
     catch_Neff = matrix(100, ncol = n_fisheries, nrow = n_years_base)
@@ -103,78 +95,46 @@ for(i in 1:NROW(df.scenario)){
     Ecov_i$logsigma = cbind(rep(log(0.4), n_years_base)) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
     waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, n_years_base, length(ages_base)))
-  }
-
-  if(df.scenario$data_scen[i] == 'poor') {
-    catch_sigma = matrix(0.1, ncol = n_fisheries, nrow = n_years_base)
-    agg_index_cv = matrix(0.4, ncol = n_indices, nrow = n_years_base)
-    catch_Neff = matrix(25, ncol = n_fisheries, nrow = n_years_base)
-    index_Neff = matrix(50, ncol = n_indices, nrow = n_years_base)
-    catch_NeffL = matrix(25, ncol = n_fisheries, nrow = n_years_base)
-    index_NeffL = matrix(50, ncol = n_indices, nrow = n_years_base)
-    # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    Ecov_i$logsigma = cbind(rep(log(0.8), n_years_base)) # logsigma Ecov
-    # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-    waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, n_years_base, length(ages_base)))
-  }
+  # }
 
   # Change input parameters information -------------------------------
 
   # EWAA approach:
   if(df.scenario$method[i] == 'EWAA') { 
     WAA_i = NULL
-    growth_i = NULL
-    LW_i = NULL
+    mat_i = NULL
     LAA_i = NULL
-    Ecov_i = NULL # turn off ecov
+    Ecov_i = NULL 
   }
   # nonparametric WAA approach:
   if(df.scenario$method[i] == 'WAA') { 
+    WAA_i$model = 'Nonparametric'
+    WAA_i$init_vals = W_a
     WAA_i$re = df.scenario$re_method[i] # random effects structure
-    if(df.scenario$est_fixed[i]) WAA_i$est_pars = ages_base # estimate fixed effects?
-    growth_i = NULL # turn off parametric growth
-    LW_i = NULL # turn off LW
+    WAA_i$est_pars = ages_base # estimate fixed effects? Yes
     LAA_i = NULL # turn off LAA
+    mat_i = NULL
     Ecov_i = NULL # turn off ecov
   }
   # parametric approach:
   if(df.scenario$method[i] == 'growth') { 
-	base_re_growth[df.scenario$growth_par[i]] = df.scenario$re_method[i] 
-	growth_i$re = base_re_growth# random effects structure, only when temp variability
-    if(df.scenario$est_fixed[i]) growth_i$est_pars = 1:3 # estimate growth parameters
-    LAA_i = NULL # turn off LAA nonparametric approach
-    WAA_i = NULL # turn off WAA nonparametric approach
+	  if(df.scenario$growth_var[i] == 1) LAA_i$re = c(df.scenario$re_method[i], df.scenario$re_method[i], 'none')
+	  if(df.scenario$growth_var[i] == 2) LAA_i$re = c('none', 'none', df.scenario$re_method[i])
+	  LAA_i$est_pars = 1:3 # estimate growth parameters
     Ecov_i = NULL # turn off ecov
-  }
-  # nonparametric LAA approach:
-  if(df.scenario$method[i] == 'LAA') { 
-    LAA_i$re = df.scenario$re_method[i] # random effects structure
-    if(df.scenario$est_fixed[i]) LAA_i$est_pars = ages_base # estimate fixed effects?
-    growth_i = NULL # turn off parametric growth
-    WAA_i = NULL # turn off WAA
-    Ecov_i = NULL # Turn off Ecov
   }
   # Ecov approach:
   if(df.scenario$method[i] == 'Ecov') { 
-    Ecov_i$process_model = df.scenario$re_method[i] # random effects structure (always)
-    if(df.scenario$growth_par[i] == 0) {
+    Ecov_i$process_model = NA # random effects structure (always)
+    if(df.scenario$growth_var[i] == 0) {
       Ecov_i$where = 'none'
     } else {
-      Ecov_i$where = 'growth'
-      Ecov_i$where_subindex = df.scenario$growth_par[i] # growth par to link Ecov
+      Ecov_i$process_model = df.scenario$re_method[i]
+      Ecov_i$where = 'LAA'
+      if(df.scenario$growth_var[i] == 1) Ecov_i$parameter_i = list(c(1,2))
+      if(df.scenario$growth_var[i] == 2) Ecov_i$parameter_i = list(c(3))
     }
-    if(df.scenario$est_fixed[i]) growth_i$est_pars = 1:3 # estimate growth parameters
-    LAA_i = NULL # turn off LAA nonparametric 
-    WAA_i = NULL # turn off WAA nonparametric 
-  }  
-  # Semiparametric G approach:
-  if(df.scenario$method[i] == 'SemiG') { 
-    growth_i$re = base_re_growth# random effects structure = none 
-	LAA_i$re = df.scenario$re_method[i] # random effects structure
-    if(df.scenario$est_fixed[i]) growth_i$est_pars = 1:3 # estimate growth parameters
-	LAA_i$SD_est = NULL # turn off estimation SD LAA
-    WAA_i = NULL # turn off WAA nonparametric 
-	Ecov_i = NULL # Turn off Ecov
+    LAA_i$est_pars = 1:3 # estimate growth parameters
   }  
 
   # Make basic inputs (defined above)
@@ -234,12 +194,16 @@ for(i in 1:NROW(df.scenario)){
   }
   # Turn on use of waa as obs (only use survey data):
   if(df.scenario$method[i] == 'WAA') basic_info$use_index_waa = matrix(1, ncol = basic_info$n_indices, nrow = ny)
-
+  # Model time varying selectivity? (only for EWAA and WAA)
+  if(df.scenario$age_selex[i] == 'varying') {
+    selectivity_i$re = c('iid', 'iid') # for both fishery and survey
+  }
+  
   # Continue....
   em_inputs[[i]] = prepare_wham_input(basic_info = basic_info,
                                       selectivity = selectivity_i, NAA_re = NAA_re_i, 
                                       M= M_i, catchability = Q_i, WAA = WAA_i,
-                                      growth = growth_i, LW = LW_i, LAA = LAA_i,
+                                      LAA = LAA_i, maturity = mat_i,
                                       ecov = Ecov_i,
                                       age_comp = "multinomial",
                                       len_comp = 'multinomial')
@@ -254,12 +218,14 @@ for(i in 1:NROW(df.scenario)){
   em_inputs[[i]]$map$log_N1_pars <- factor(c(1, NA)) # Fix F1 initial
   # Define random variable:
   em_inputs[[i]]$random = NULL # default for EWAA
-  if(df.scenario$method[i] == 'WAA' & df.scenario$growth_par[i] > 0) em_inputs[[i]]$random = 'WAA_re'
-  if(df.scenario$method[i] == 'growth' & df.scenario$growth_par[i] > 0) em_inputs[[i]]$random = 'growth_re'
-  if(df.scenario$method[i] == 'LAA' & df.scenario$growth_par[i] > 0) em_inputs[[i]]$random = 'LAA_re'
+  if(df.scenario$method[i] == 'WAA') em_inputs[[i]]$random = 'WAA_re'
+  if(df.scenario$method[i] == 'growth' & df.scenario$growth_var[i] > 0) em_inputs[[i]]$random = 'LAA_re'
   if(df.scenario$method[i] == 'Ecov') em_inputs[[i]]$random = 'Ecov_re' # always activate random variable here
-  if(df.scenario$method[i] == 'SemiG' & df.scenario$growth_par[i] > 0) em_inputs[[i]]$random = 'LAA_re'
-    
+  if(df.scenario$age_selex[i] == 'varying') {
+    em_inputs[[i]]$map$sel_repars = factor(rep(NA, times = length(em_inputs[[i]]$map$sel_repars)))
+    em_inputs[[i]]$par$sel_repars[,1] = log(0.15) # fixed
+  }
+
 }
 
 saveRDS(em_inputs, file.path("inputs", "em_inputs.RDS")) 

@@ -22,22 +22,28 @@ G_base = c(0.2, 90, 10, 2, 8) # K, Linf, L1, SD1, SDA
 # LW relationship ---------------------------------------------------------
 LW_base = c(exp(-12.1), 3.2) # a and b parameters LW
 
+# Maturity relationship ---------------------------------------------------------
+mat_base = c(0.5, 45) # a and b parameters maturity
+
 # Initial abundance and sigmaR -------------------------------------------------------
 N1_base = 1e+05 # Initial Recruitment and mean recruitment over time period
 sigma_R = 0.6 # sigma R recruitment
 
 # Selectivity ------------------------------------------------------
-agesel_based = list(model = c("double-normal", "logistic"),
-                    initial_pars = list(c(4.8, 0.5, 0, 0, -5, 1), c(1.5, 0.2)))
-lensel_based = list(model = c("len-double-normal", "len-logistic"),
-                    initial_pars = list(c(50, -1, 4, 4, -5, 0.5), c(15, 3)))
+agesel_based = list(model = c("logistic", "logistic"),
+                    initial_pars = list(c(3.5, 0.2), c(1.5, 0.2)))
+lensel_based = list(model = c("len-logistic", "len-logistic"),
+                    initial_pars = list(c(45, 3), c(15, 3)))
 
 # Ecov information ------------------------------------------------------
 
 Ecov_re_sig = c(0) # Ecov process error SD (this will be exp() in WHAM)
 Ecov_re_cor <- c(0.3) # Ecov process error autocorrelation: in WHAM: -1 + 2/(1 + exp(-phi))
-Ecov_effect <- c(0, 0.2, 0.15, 0.25) # Effect on growth parameter (Beta, parameter-specific: none, k, Linf, L1)
+Ecov_effect <- c(0.2, -0.1, 0.25) # Effect on growth parameter (Beta, parameter-specific: k, Linf, L1)
+# K and Linf have negatively correlated variability
 Ecov_trend = c(0, 0.03)
+# When ecov trend positive, year when this trend will start to be simulated:
+Ecov_year_trend = 40
 
 # Obs error information ------------------------------------------------------
 # Defined in om_setup.R and em_setup.R depending on the data quality scenario

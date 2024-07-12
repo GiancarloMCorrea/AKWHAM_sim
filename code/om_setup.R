@@ -11,6 +11,7 @@ source(file.path('code', "set_simulation_options.R"))
 
 # Read Config Scenarios DF:
 df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
+growth_scenarios = sort(unique(df.scenario$growth_var)) # to save some time creating OM inputs
 n_tot_years = n_years_base + n_years_burnin
 
 # --------------------------------------------------------
@@ -37,7 +38,7 @@ gf_NAA_re = list(N1_pars = c(N1_base, 0),
                 N1_model = 1) #defined above from naa_om_inputs
 # Ecov pars:
 gf_ecov <- list(
-  label = "Ecov",
+  label = "Ecov_sim",
   process_model = 'ar1',
   lag = 0,
   mean = cbind(rep(0, n_tot_years)),
@@ -48,20 +49,14 @@ gf_ecov <- list(
 )
 
 #  Growth configuration:
-Linf <- G_base[2]
-k_par <- G_base[1]
-L1 <- G_base[3]
-a_LW <- LW_base[1]
-b_LW <- LW_base[2]
-L_a <- Linf + (L1 - Linf)*exp(-k_par*(ages_base - 1))
-W_a <- a_LW*L_a^b_LW
-gf_growth <- list(model='vB_classic', init_vals=c(k_par, Linf, L1),
-                  SD_vals=c(G_base[4], G_base[5]))
-gf_LW <- list(init_vals=c(a_LW, b_LW))
+gf_growth <- list(model='vB_classic', init_vals=G_base[1:3],
+                  SD_vals=G_base[4:5])
+gf_LW <- list(model = 'Allometric', init_vals=LW_base)
+gf_mat = list(model = 'len-logistic', init_vals = mat_base)
 
 # Make OMs --------------------------------------------------------------
 om_inputs = list()
-for(i in 1:NROW(df.scenario)){
+for(i in 1:length(growth_scenarios)){
   
   # Print model name:
   print(paste0("row ", i))
@@ -71,7 +66,7 @@ for(i in 1:NROW(df.scenario)){
 
   # ---------------------
   # Define obs error scenarios (data rich vs data poor):
-  if(df.scenario$data_scen[i] == 'rich') {
+  # if(df.scenario$data_scen[i] == 'rich') {
     catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = n_tot_years)
     agg_index_cv = matrix(0.1, ncol = n_indices, nrow = n_tot_years)
     # Neff values in OM:
@@ -83,29 +78,23 @@ for(i in 1:NROW(df.scenario)){
     ecov_i$logsigma = cbind(rep(log(0.4), n_tot_years)) # logsigma Ecov
     # Nsamp for WAA, this should change in the future (function of NAA), TODO:
     waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base))) # This will not be used, will be replaced later
-  }
-
-  if(df.scenario$data_scen[i] == 'poor') {
-    catch_sigma = matrix(0.1, ncol = n_fisheries, nrow = n_tot_years)
-    agg_index_cv = matrix(0.4, ncol = n_indices, nrow = n_tot_years)
-    # Neff values in OM:
-    catch_Neff = matrix(25, ncol = n_fisheries, nrow = n_tot_years) # This will not be used, will be replaced later
-    index_Neff = matrix(50, ncol = n_indices, nrow = n_tot_years) # This will not be used, will be replaced later
-    catch_NeffL = matrix(25, ncol = n_fisheries, nrow = n_tot_years)
-    index_NeffL = matrix(50, ncol = n_indices, nrow = n_tot_years)
-    # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    ecov_i$logsigma = cbind(rep(log(0.8), n_tot_years)) # logsigma Ecov
-    # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-    waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base))) # This will not be used, will be replaced later
-  }
+  # }
 
   # ---------------------
   # Add more information to Ecov:
-  if(df.scenario$growth_par[i] == 0){
+  if(growth_scenarios[i] == 0){
     ecov_i$where = "none" # none effect
+    Ecov_effect_i = c(0,0,0)
   } else {
-    ecov_i$where = "growth" # effect on growth parameter
-    ecov_i$where_subindex = df.scenario$growth_par[i] # select growth parameter
+    ecov_i$where = "LAA" # effect on growth parameter
+    if(growth_scenarios[i] == 1) {
+      ecov_i$parameter_i = list(c(1,2)) # select k and Linf parameter
+      Ecov_effect_i = c(Ecov_effect[1:2], 0)
+    }
+    if(growth_scenarios[i] == 2) {
+      ecov_i$parameter_i = list(3) # select L1 parameter
+      Ecov_effect_i = c(0, 0, Ecov_effect[3])
+    }
   }
   om_inputs[[i]] <- make_om(Fmax = F_max, 
                             n_years_base = n_years_base, n_years_burnin = n_years_burnin,
@@ -114,7 +103,8 @@ for(i in 1:NROW(df.scenario)){
 							              sigma_R = sigma_R,
                             selectivity = gf_selectivity,
                             M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
-                            growth = gf_growth, LW = gf_LW,
+                            LAA = gf_growth, WAA = gf_LW,
+							              maturity = gf_mat,
                             catchability = gf_Q, 
                             n_fisheries = n_fisheries, n_indices = n_indices,
                             catch_sigma = catch_sigma, agg_index_cv = agg_index_cv,
@@ -122,8 +112,7 @@ for(i in 1:NROW(df.scenario)){
                             index_NeffL = index_NeffL, catch_Neff_caal = catch_Neff_caal, 
                             index_Neff_caal = index_Neff_caal, waa_cv = waa_cv,
                             Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, 
-							              Ecov_effect = Ecov_effect[df.scenario$growth_par[i]+1],
-                            df.scenario = df.scenario[i,]) 
+							              Ecov_effect = Ecov_effect_i) 
   om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, 
                                           simulate_process = TRUE, simulate_projection = FALSE,
                                           bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?
@@ -133,4 +122,3 @@ for(i in 1:NROW(df.scenario)){
 
 # Save OM inputs:
 saveRDS(om_inputs, file.path(write.dir, "om_inputs.RDS"))
-

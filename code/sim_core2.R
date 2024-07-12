@@ -21,6 +21,7 @@ seeds <- readRDS(file.path(main_dir, "inputs","seeds.RDS"))
 # Make data.frame summarizing scenario:
 this_scenario <- data.frame(df.scenario[scenj, ])
 model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, this_scenario)
+this_om_input = om_inputs[[this_scenario$growth_var + 1]] # select the OM based on growth_var
 
 #######################################################
 # Print scenario name:
@@ -50,34 +51,50 @@ if(df.scenario$Ecov_sim[scenj] == 'trend') {
   beta = Ecov_trend[2] # trend
   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
   sim_ecov = 0
-  for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+  for(i in 2:length(ecov_error)) {
+    if(i < Ecov_year_trend) {
+      sim_ecov[i] = alpha+0*i+theta*sim_ecov[i-1] + ecov_error[i] # beta = 0
+    } else {
+      sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+    }
+  }
   sim_ecov = scale(sim_ecov)
-  
+  # plot(sim_ecov, type = 'l')
 }
 
 # Now replace the sim_ecov in the OM input:
-om_inputs[[scenj]]$par$Ecov_re = sim_ecov
+this_om_input$par$Ecov_re = sim_ecov
 
 #######################################################
 # Run OM:
-om <- fit_wham(om_inputs[[scenj]], do.fit = FALSE, MakeADFun.silent = TRUE)
+om <- fit_wham(this_om_input, do.fit = FALSE, MakeADFun.silent = TRUE)
 # Define seed and simulate WHAM data:
 set.seed(seeds[simi])
 sim_data <- om$simulate(complete=TRUE)
 # if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
-if(simi == 1 & scenj <= 4) {
+if(simi == 1 & scenj <= 3) {
   saveRDS(object = om, file = file.path(main_dir, "sample_data", 'om_sample', paste0("om_sample_", scenj, ".RDS"))) # Save OM data to make plots later
   make_plot_om(sim_data, scenj, main_dir) # Make plot 
 }
-if(simi <= 10 & scenj %in% c(1:4, 113:116)) { # LAA variability by Ecov type. Only 10 iterations
-  this_laa = sim_data$LAA
+if(simi <= 10 & scenj %in% c(1:3, 7:9)) { # LAA variability by Ecov type. Only 10 iterations
+  # Simulated LAA in jan 1:
+  this_laa = sim_data$jan1LAA
   colnames(this_laa) = 1:sim_data$n_ages
   rownames(this_laa) = 1:sim_data$n_years_model
   this_df = reshape2::melt(this_laa, varnames = c('year', 'age'))
-  this_df$growth_par = df.scenario$growth_par[scenj]
+  this_df$growth_var = df.scenario$growth_var[scenj]
   this_df$sim = simi
   this_df$ecov = df.scenario$Ecov_sim[scenj]
   saveRDS(object = this_df, file = file.path(main_dir, "sample_data", 'LAA_sample', paste0("sample_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+  # Simulate growth parameters:
+  this_par = sim_data$LAA_par[,1,]
+  colnames(this_par) = c('k', 'Linf', 'L1')
+  rownames(this_par) = 1:sim_data$n_years_model
+  this_df = reshape2::melt(this_par, varnames = c('year', 'par'))
+  this_df$growth_var = df.scenario$growth_var[scenj]
+  this_df$sim = simi
+  this_df$ecov = df.scenario$Ecov_sim[scenj]
+  saveRDS(object = this_df, file = file.path(main_dir, "sample_data", 'LAApar_sample', paste0("sample_", scenj, '-', simi, ".RDS"))) # Save sim parameters to make plots later
 }
 
 # CAAL sampling: ----------------------------------------------
@@ -86,8 +103,9 @@ if(simi <= 10 & scenj %in% c(1:4, 113:116)) { # LAA variability by Ecov type. On
 #  Fishery:
 if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'paa') {
   
-  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 13 # Nsamp size for CAAL
-  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 25 # Nsamp size for CAAL
+  # if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 13 # Nsamp size for CAAL
+  # if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 25 # Nsamp size for CAAL
+  Nsamp_CAAL = 25 # Nsamp size for CAAL
 
   # Order to sort: year, fleet, len bin, age
   to_obsvec = NULL
@@ -187,7 +205,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
       for(i in 1:sim_data$n_fleets) {
         caal_obs = (sim_data$catch_caal_Neff[j,i,]) * sim_data$catch_caal[i,j,,] 
         for(a in 1:sim_data$n_ages) {
-          ind_wt = rep(x = sim_data$watl[j,], times = caal_obs[,a])
+          ind_wt = rep(x = sim_data$wt_at_len[j,], times = caal_obs[,a])
           if(length(ind_wt) == 0) {
             mean_wt = NA
             cv_wt = 0 # when there is no information in ALK. WHAM will ignore this obs when using WAA approach
@@ -236,8 +254,9 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
 #  Survey:
 if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'paa') {
   
-  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 50 # Nsamp size for CAAL
-  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
+  #if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 50 # Nsamp size for CAAL
+  #if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
+  Nsamp_CAAL = 100 # Nsamp size for CAAL
   
   # Order to sort: year, fleet, len bin, age
   to_obsvec = NULL
@@ -339,7 +358,7 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
       for(i in 1:sim_data$n_indices) {
         caal_obs = (sim_data$index_caal_Neff[j,i,]) * sim_data$index_caal[i,j,,] # multiply by 10 to come back to real Neff
         for(a in 1:sim_data$n_ages) {
-          ind_wt = rep(x = sim_data$watl[j,], times = caal_obs[,a])
+          ind_wt = rep(x = sim_data$wt_at_len[j,], times = caal_obs[,a])
           if(length(ind_wt) == 0) {
             mean_wt = NA
             cv_wt = 0 # when there is no information in ALK. WHAM will ignore this obs when using WAA approach
@@ -430,6 +449,12 @@ if(df.scenario$method[scenj] %in% c('EWAA', 'WAA')) {
 }
 
 # -------------------------------------------------------------------------
+# Maturity
+if(df.scenario$method[scenj] %in% c('EWAA', 'WAA')) {
+  EM_input$data$mature = sim_data$mat_at_age
+}
+
+# -------------------------------------------------------------------------
 
 # Continue code:
 truth = sim_data
@@ -457,7 +482,7 @@ if(df.scenario$method[scenj] == 'WAA') {
 fit <- tryCatch(fit_wham(EM_input, do.sdrep=F, do.osa=F, do.retro=F, do.proj=F, MakeADFun.silent=TRUE),
                 error = function(e) conditionMessage(e))
 
-# fit$rep[grep('nll',names(fit$rep))] %>% lapply(sum) %>% unlist
+fit$rep[grep('nll',names(fit$rep))] %>% lapply(sum) %>% unlist
 # Deal with issues fitting EM to non-matching OM data
 # empty elements below can be used to summarize convergence information
 if(!'err' %in% names(fit) & class(fit) != "character"){
