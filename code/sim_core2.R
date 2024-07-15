@@ -30,7 +30,8 @@ cat(paste0("START Scenario: ", scenj, " Sim: ", simi, "\n"))
 # -------------------------------------------------------------------------
 # Simulate environmental time series:
 
-if(df.scenario$Ecov_sim[scenj] == 'stationary') {
+# none or stationary. when none, it wont affect any growth parameter
+if(df.scenario$Ecov_sim[scenj] %in% c('none', 'stationary')) {
   
   set.seed(seeds[simi])
   ecov_error = rnorm(n_years_base+n_years_burnin, mean = 0, sd = exp(Ecov_re_sig))
@@ -76,7 +77,7 @@ if(simi == 1 & scenj <= 3) {
   saveRDS(object = om, file = file.path(main_dir, "sample_data", 'om_sample', paste0("om_sample_", scenj, ".RDS"))) # Save OM data to make plots later
   make_plot_om(sim_data, scenj, main_dir) # Make plot 
 }
-if(simi <= 10 & scenj %in% c(1:3, 7:9)) { # LAA variability by Ecov type. Only 10 iterations
+if(simi <= 10 & scenj %in% c(2:3, 7:8)) { # LAA variability by Ecov type. Only 10 iterations
   # Simulated LAA in jan 1:
   this_laa = sim_data$jan1LAA
   colnames(this_laa) = 1:sim_data$n_ages
@@ -482,12 +483,12 @@ if(df.scenario$method[scenj] == 'WAA') {
 fit <- tryCatch(fit_wham(EM_input, do.sdrep=F, do.osa=F, do.retro=F, do.proj=F, MakeADFun.silent=TRUE),
                 error = function(e) conditionMessage(e))
 
-fit$rep[grep('nll',names(fit$rep))] %>% lapply(sum) %>% unlist
+# fit$rep[grep('nll',names(fit$rep))] %>% lapply(sum) %>% unlist
 # Deal with issues fitting EM to non-matching OM data
 # empty elements below can be used to summarize convergence information
 if(!'err' %in% names(fit) & class(fit) != "character"){
   res$model$optimized <- TRUE
-  res$fit <- fit[c("wham_version", "TMB_version", "opt", "final_gradient", "rep")]
+  res$fit <- fit[c("wham_version", "TMB_version", "opt", "final_gradient", "runtime", "rep")]
   empars <- data.frame(par=names(res$fit$opt$par), value=res$fit$opt$par)%>%
     dplyr::filter(!grepl(x=par,'F_devs|log_NAA'))
   empars$par2 <- sapply(unique(empars$par), function(x) {

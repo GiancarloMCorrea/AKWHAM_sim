@@ -127,7 +127,7 @@ for(i in 1:NROW(df.scenario)){
   if(df.scenario$method[i] == 'Ecov') { 
     Ecov_i$process_model = NA # random effects structure (always)
     if(df.scenario$growth_var[i] == 0) {
-      Ecov_i$where = 'none'
+      Ecov_i = NULL
     } else {
       Ecov_i$process_model = df.scenario$re_method[i]
       Ecov_i$where = 'LAA'
@@ -220,7 +220,7 @@ for(i in 1:NROW(df.scenario)){
   em_inputs[[i]]$random = NULL # default for EWAA
   if(df.scenario$method[i] == 'WAA') em_inputs[[i]]$random = 'WAA_re'
   if(df.scenario$method[i] == 'growth' & df.scenario$growth_var[i] > 0) em_inputs[[i]]$random = 'LAA_re'
-  if(df.scenario$method[i] == 'Ecov') em_inputs[[i]]$random = 'Ecov_re' # always activate random variable here
+  if(df.scenario$method[i] == 'Ecov' & df.scenario$growth_var[i] > 0) em_inputs[[i]]$random = 'Ecov_re' 
   if(df.scenario$age_selex[i] == 'varying') {
     em_inputs[[i]]$map$sel_repars = factor(rep(NA, times = length(em_inputs[[i]]$map$sel_repars)))
     em_inputs[[i]]$par$sel_repars[,1] = log(0.15) # fixed

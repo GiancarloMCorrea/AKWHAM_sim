@@ -12,23 +12,23 @@ library(wham)
 require(doParallel)
 require(foreach)
 
-# Define WD:
+# Define Working Directory:
 # IMPORTANT: change also this in sim_core2.R
-main_dir = 'C:/Users/moroncog/Documents/GitHub/AKWHAM_sim' # local folder
-out_dir = 'C:/Users/moroncog/Documents/AKWHAM_sim-simulations' # folder where all simulations will be saved. preferably out of GitHub folder
+main_dir = 'C:/Use/GitHub/AKWHAM_sim' # local folder
+out_dir = 'C:/Use/GitHub/AKWHAM_sim/results' # folder where all simulations will be saved. preferably out of GitHub folder
 
 # Set working directory:
 setwd(main_dir)
 
 # Create Scenario and seeds DF (only do it once):
-# source(file.path("code", "config_scenarios.R"))
+source(file.path("code", "config_scenarios.R"))
 # Make OM and EM WHAM inputs
-# source(file.path("code", "om_setup.R"))
-# source(file.path("code", "em_setup.R"))
+source(file.path("code", "om_setup.R"))
+source(file.path("code", "em_setup.R"))
 # Clear workspace
-# rm(list=ls())
+rm(list=ls())
 # Read main dir again
-# main_dir = getwd()
+main_dir = getwd()
 
 # Read objects to be used in sim_core2.R
 df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
@@ -37,6 +37,7 @@ df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
 dir.create('sample_data')
 dir.create(file.path('sample_data', 'om_sample'))
 dir.create(file.path('sample_data', 'LAA_sample'))
+dir.create(file.path('sample_data', 'LAApar_sample'))
 
 # Create folder to save results:
 for(k in 1:nrow(df.scenario)) {

@@ -95,6 +95,7 @@ df.scenario = tmp_scenario
 # Save scenario DF:
 n.mods = dim(df.scenario)[1] 
 df.scenario$scenario <- 1:n.mods
+rownames(df.scenario) = df.scenario$scenario
 saveRDS(df.scenario, file.path(write.dir, "df.scenarios.RDS"))
 
 
