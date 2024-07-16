@@ -17,76 +17,81 @@ samp_scheme = c('random', 'strat')
 Ecov_sim = c('stationary', 'trend')
 method = c('EWAA', 'WAA')
 age_selex = c('fixed', 'varying')
+re_method = c('iid', '2dar1', '3dgmrf')
 catch_data = 'paa'
 index_data = 'paa'
+data_scen = c('poor', 'rich')
 
 age_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
                      Ecov_sim = Ecov_sim, method = method, 
                      age_selex = age_selex, catch_data = catch_data,
-                     index_data = index_data, stringsAsFactors = FALSE)
-age_df = age_df %>% mutate(re_method = if_else(method == 'EWAA', 'none', '2dar1'))
+                     index_data = index_data, re_method = re_method,
+                     data_scen = data_scen,
+                     stringsAsFactors = FALSE)
+age_df = age_df %>% mutate(re_method = if_else(method == 'EWAA', 'none', re_method))
 # Only time varying selex when growth_var is zero:
 age_df$age_selex[age_df$growth_var == 0] = 'fixed'
 # No Ecov sim type when growth_var = 0
-age_df$Ecov_sim[age_df$growth_var == 0] = 'none'
+# age_df$Ecov_sim[age_df$growth_var == 0] = 'none'
 
 # Delete repeating scenarios:
 age_df = age_df[!duplicated(age_df), ]
 
-# -------------------------------------------------------------------------
-# Length only scenarios:
-growth_var = 0:2 # none, k-Linf, or  L1
-samp_scheme = 'none'
-Ecov_sim = c('stationary', 'trend')
-method = c('growth', 'Ecov')
-age_selex = 'fixed'
-catch_data = 'pal'
-index_data = 'pal'
-
-len_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
-                     Ecov_sim = Ecov_sim, method = method, 
-                     age_selex = age_selex, catch_data = catch_data,
-                     index_data = index_data, stringsAsFactors = FALSE)
-len_df = len_df %>% mutate(re_method = 'none')
-# Change RE method depending on modelling approach
-len_df$re_method[len_df$method == 'growth' & len_df$growth_var > 0] = 'ar1_y'
-len_df$re_method[len_df$method == 'Ecov' & len_df$growth_var > 0] = 'ar1'
-# No Ecov sim type when growth_var = 0
-len_df$Ecov_sim[len_df$growth_var == 0] = 'none'
-# Growth and Ecov same approach when growth_var is 0
-len_df$method[len_df$growth_var == 0] = 'growth'
-
-# Delete repeating scenarios:
-len_df = len_df[!duplicated(len_df), ]
-
-# -------------------------------------------------------------------------
-# Age-length scenarios:
-growth_par = 0:2 # none, L1, or k-Linf
-samp_scheme = c('random', 'strat')
-Ecov_sim = c('stationary', 'trend')
-method = c('growth', 'Ecov')
-age_selex = 'fixed'
-catch_data = 'pal'
-index_data = c('caal', 'paa')
-
-agelen_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
-                     Ecov_sim = Ecov_sim, method = method, 
-                     age_selex = age_selex, catch_data = catch_data,
-                     index_data = index_data, stringsAsFactors = FALSE)
-agelen_df = agelen_df %>% mutate(re_method = 'none')
-agelen_df$re_method[agelen_df$method == 'growth' & agelen_df$growth_var > 0] = 'ar1_y'
-agelen_df$re_method[agelen_df$method == 'Ecov' & agelen_df$growth_var > 0] = 'ar1'
-# No Ecov sim type when growth_var = 0
-agelen_df$Ecov_sim[agelen_df$growth_var == 0] = 'none'
-# Growth and Ecov same approach when growth_var is 0
-agelen_df$method[agelen_df$growth_var == 0] = 'growth'
-
-# Delete repeating scenarios:
-agelen_df = agelen_df[!duplicated(agelen_df), ]
-
+# # -------------------------------------------------------------------------
+# # Length only scenarios:
+# growth_var = 0:2 # none, k-Linf, or  L1
+# samp_scheme = 'none'
+# Ecov_sim = c('stationary', 'trend')
+# method = c('growth', 'Ecov')
+# age_selex = 'fixed'
+# catch_data = 'pal'
+# index_data = 'pal'
+# 
+# len_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
+#                      Ecov_sim = Ecov_sim, method = method, 
+#                      age_selex = age_selex, catch_data = catch_data,
+#                      index_data = index_data, stringsAsFactors = FALSE)
+# len_df = len_df %>% mutate(re_method = 'none')
+# # Change RE method depending on modelling approach
+# len_df$re_method[len_df$method == 'growth' & len_df$growth_var > 0] = 'ar1_y'
+# len_df$re_method[len_df$method == 'Ecov' & len_df$growth_var > 0] = 'ar1'
+# # No Ecov sim type when growth_var = 0
+# len_df$Ecov_sim[len_df$growth_var == 0] = 'none'
+# # Growth and Ecov same approach when growth_var is 0
+# len_df$method[len_df$growth_var == 0] = 'growth'
+# 
+# # Delete repeating scenarios:
+# len_df = len_df[!duplicated(len_df), ]
+# 
+# # -------------------------------------------------------------------------
+# # Age-length scenarios:
+# growth_par = 0:2 # none, L1, or k-Linf
+# samp_scheme = c('random', 'strat')
+# Ecov_sim = c('stationary', 'trend')
+# method = c('growth', 'Ecov')
+# age_selex = 'fixed'
+# catch_data = 'pal'
+# index_data = c('caal', 'paa')
+# 
+# agelen_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
+#                      Ecov_sim = Ecov_sim, method = method, 
+#                      age_selex = age_selex, catch_data = catch_data,
+#                      index_data = index_data, stringsAsFactors = FALSE)
+# agelen_df = agelen_df %>% mutate(re_method = 'none')
+# agelen_df$re_method[agelen_df$method == 'growth' & agelen_df$growth_var > 0] = 'ar1_y'
+# agelen_df$re_method[agelen_df$method == 'Ecov' & agelen_df$growth_var > 0] = 'ar1'
+# # No Ecov sim type when growth_var = 0
+# agelen_df$Ecov_sim[agelen_df$growth_var == 0] = 'none'
+# # Growth and Ecov same approach when growth_var is 0
+# agelen_df$method[agelen_df$growth_var == 0] = 'growth'
+# 
+# # Delete repeating scenarios:
+# agelen_df = agelen_df[!duplicated(agelen_df), ]
+# 
 # -------------------------------------------------------------------------
 # Make scenario DF:
-tmp_scenario = rbind(age_df, len_df, agelen_df)
+# tmp_scenario = rbind(age_df, len_df, agelen_df)
+tmp_scenario = age_df
 
 # -------------------------------------------------------------------------
 # Merge both data.frames:

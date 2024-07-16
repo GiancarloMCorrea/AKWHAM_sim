@@ -3,25 +3,26 @@ args = commandArgs(trailingOnly=TRUE)
 simi = as.integer(args[1])
 scenj = as.integer(args[2])
 
-# Make sure that these are correct!
-main_dir = 'C:/Use/GitHub/AKWHAM_sim' # local folder
-out_dir = 'C:/Use/GitHub/AKWHAM_sim/results' # folder where all simulations will be saved. preferably out of GitHub folder
+# Set WD
+main_dir = here::here() 
+out_dir = here::here('results') # folder where all simulations will be saved. preferably out of GitHub folder
 
 # Load required libraries:
 library(wham)
 library(dplyr)
-source(file.path(main_dir, "code", "make_om_plots.R"))
-source(file.path(main_dir, "code", "config_params.R"))
+source(here::here("code", "make_om_plots.R"))
+source(here::here("code", "config_params.R"))
 # Read inputs:
-om_inputs <- readRDS(file.path(main_dir, "inputs", "om_inputs.RDS"))
-em_inputs <- readRDS(file.path(main_dir, "inputs", "em_inputs.RDS"))
-df.scenario <- readRDS(file.path(main_dir, "inputs", "df.scenarios.RDS"))
-seeds <- readRDS(file.path(main_dir, "inputs","seeds.RDS"))
+om_inputs <- readRDS(here::here("inputs", "om_inputs.RDS"))
+em_inputs <- readRDS(here::here("inputs", "em_inputs.RDS"))
+df.scenario <- readRDS(here::here("inputs", "df.scenarios.RDS"))
+seeds <- readRDS(here::here("inputs","seeds.RDS"))
 
 # Make data.frame summarizing scenario:
 this_scenario <- data.frame(df.scenario[scenj, ])
 model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, this_scenario)
-this_om_input = om_inputs[[this_scenario$growth_var + 1]] # select the OM based on growth_var
+this_dat_scen = match(this_scenario$data_scen, c('poor', 'rich'))
+this_om_input = om_inputs[[this_scenario$growth_var + 1]][[this_dat_scen]] # select the OM based on growth_var
 
 #######################################################
 # Print scenario name:
@@ -104,9 +105,9 @@ if(simi <= 10 & scenj %in% c(2:3, 7:8)) { # LAA variability by Ecov type. Only 1
 #  Fishery:
 if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'paa') {
   
-  # if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 13 # Nsamp size for CAAL
-  # if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 25 # Nsamp size for CAAL
-  Nsamp_CAAL = 25 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 13 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 25 # Nsamp size for CAAL
+  # Nsamp_CAAL = 25 # Nsamp size for CAAL
 
   # Order to sort: year, fleet, len bin, age
   to_obsvec = NULL
@@ -255,9 +256,9 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
 #  Survey:
 if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'paa') {
   
-  #if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 50 # Nsamp size for CAAL
-  #if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
-  Nsamp_CAAL = 100 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 50 # Nsamp size for CAAL
+  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
+  # Nsamp_CAAL = 100 # Nsamp size for CAAL
   
   # Order to sort: year, fleet, len bin, age
   to_obsvec = NULL

@@ -12,6 +12,7 @@ source(file.path('code', "set_simulation_options.R"))
 # Read Config Scenarios DF:
 df.scenario = readRDS(file.path("inputs", "df.scenarios.RDS"))
 growth_scenarios = sort(unique(df.scenario$growth_var)) # to save some time creating OM inputs
+data_scenarios = c('poor', 'rich') # follow this order
 n_tot_years = n_years_base + n_years_burnin
 
 # --------------------------------------------------------
@@ -60,65 +61,84 @@ for(i in 1:length(growth_scenarios)){
   
   # Print model name:
   print(paste0("row ", i))
-
-  # Ecov information
-  ecov_i = gf_ecov
-
-  # ---------------------
-  # Define obs error scenarios (data rich vs data poor):
-  # if(df.scenario$data_scen[i] == 'rich') {
-    catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = n_tot_years)
-    agg_index_cv = matrix(0.1, ncol = n_indices, nrow = n_tot_years)
-    # Neff values in OM:
-    catch_Neff = matrix(100, ncol = n_fisheries, nrow = n_tot_years) # This will not be used, will be replaced later
-    index_Neff = matrix(200, ncol = n_indices, nrow = n_tot_years) # This will not be used, will be replaced later
-    catch_NeffL = matrix(100, ncol = n_fisheries, nrow = n_tot_years)
-    index_NeffL = matrix(200, ncol = n_indices, nrow = n_tot_years)
-    # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
-    ecov_i$logsigma = cbind(rep(log(0.4), n_tot_years)) # logsigma Ecov
-    # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-    waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base))) # This will not be used, will be replaced later
-  # }
-
-  # ---------------------
-  # Add more information to Ecov:
-  if(growth_scenarios[i] == 0){
-    ecov_i$where = "none" # none effect
-    Ecov_effect_i = c(0,0,0)
-  } else {
-    ecov_i$where = "LAA" # effect on growth parameter
-    if(growth_scenarios[i] == 1) {
-      ecov_i$parameter_i = list(c(1,2)) # select k and Linf parameter
-      Ecov_effect_i = c(Ecov_effect[1:2], 0)
-    }
-    if(growth_scenarios[i] == 2) {
-      ecov_i$parameter_i = list(3) # select L1 parameter
-      Ecov_effect_i = c(0, 0, Ecov_effect[3])
-    }
-  }
-  om_inputs[[i]] <- make_om(Fmax = F_max, 
-                            n_years_base = n_years_base, n_years_burnin = n_years_burnin,
-                            ages_base = ages_base, lengths_base = lengths_base,
-                            F_change_time = 0.8,
-							              sigma_R = sigma_R,
-                            selectivity = gf_selectivity,
-                            M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
-                            LAA = gf_growth, WAA = gf_LW,
-							              maturity = gf_mat,
-                            catchability = gf_Q, 
-                            n_fisheries = n_fisheries, n_indices = n_indices,
-                            catch_sigma = catch_sigma, agg_index_cv = agg_index_cv,
-                            catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
-                            index_NeffL = index_NeffL, catch_Neff_caal = catch_Neff_caal, 
-                            index_Neff_caal = index_Neff_caal, waa_cv = waa_cv,
-                            Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, 
-							              Ecov_effect = Ecov_effect_i) 
-  om_inputs[[i]] = set_simulation_options(om_inputs[[i]], simulate_data = TRUE, 
-                                          simulate_process = TRUE, simulate_projection = FALSE,
-                                          bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?
-  om_inputs[[i]]$data$simulate_state[4] = 0 # DO NOT simulate Ecov process in WHAM
+  om_inputs[[i]] = list()
   
-}
+  for(j in 1:length(data_scenarios)) {
+    
+    # Ecov information
+    ecov_i = gf_ecov
+  
+    # ---------------------
+    # Define obs error scenarios (data rich vs data poor):
+    if(data_scenarios[j] == 'rich') {
+      catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = n_tot_years)
+      agg_index_cv = matrix(0.1, ncol = n_indices, nrow = n_tot_years)
+      # Neff values in OM:
+      catch_Neff = matrix(100, ncol = n_fisheries, nrow = n_tot_years) # This will not be used, will be replaced later
+      index_Neff = matrix(200, ncol = n_indices, nrow = n_tot_years) # This will not be used, will be replaced later
+      catch_NeffL = matrix(100, ncol = n_fisheries, nrow = n_tot_years)
+      index_NeffL = matrix(200, ncol = n_indices, nrow = n_tot_years)
+      # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
+      ecov_i$logsigma = cbind(rep(log(0.4), n_tot_years)) # logsigma Ecov
+      # Nsamp for WAA, this should change in the future (function of NAA), TODO:
+      waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base))) # This will not be used, will be replaced later
+    }
+    
+    if(data_scenarios[j] == 'poor') {
+      catch_sigma = matrix(0.1, ncol = n_fisheries, nrow = n_tot_years)
+      agg_index_cv = matrix(0.4, ncol = n_indices, nrow = n_tot_years)
+      # Neff values in OM:
+      catch_Neff = matrix(25, ncol = n_fisheries, nrow = n_tot_years) # This will not be used, will be replaced later
+      index_Neff = matrix(50, ncol = n_indices, nrow = n_tot_years) # This will not be used, will be replaced later
+      catch_NeffL = matrix(25, ncol = n_fisheries, nrow = n_tot_years)
+      index_NeffL = matrix(50, ncol = n_indices, nrow = n_tot_years)
+      # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
+      ecov_i$logsigma = cbind(rep(log(0.8), n_tot_years)) # logsigma Ecov
+      # Nsamp for WAA, this should change in the future (function of NAA), TODO:
+      waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base))) # This will not be used, will be replaced later
+    }
+  
+    # ---------------------
+    # Add more information to Ecov:
+    if(growth_scenarios[i] == 0){
+      ecov_i$where = "none" # none effect
+      Ecov_effect_i = c(0,0,0)
+    } else {
+      ecov_i$where = "LAA" # effect on growth parameter
+      if(growth_scenarios[i] == 1) {
+        ecov_i$parameter_i = list(c(1,2)) # select k and Linf parameter
+        Ecov_effect_i = c(Ecov_effect[1:2], 0)
+      }
+      if(growth_scenarios[i] == 2) {
+        ecov_i$parameter_i = list(3) # select L1 parameter
+        Ecov_effect_i = c(0, 0, Ecov_effect[3])
+      }
+    }
+    tmp_om <- make_om(Fmax = F_max, 
+                              n_years_base = n_years_base, n_years_burnin = n_years_burnin,
+                              ages_base = ages_base, lengths_base = lengths_base,
+                              F_change_time = 0.8,
+  							              sigma_R = sigma_R,
+                              selectivity = gf_selectivity,
+                              M = gf_M, NAA_re = gf_NAA_re, ecov = ecov_i,
+                              LAA = gf_growth, WAA = gf_LW,
+  							              maturity = gf_mat,
+                              catchability = gf_Q, 
+                              n_fisheries = n_fisheries, n_indices = n_indices,
+                              catch_sigma = catch_sigma, agg_index_cv = agg_index_cv,
+                              catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
+                              index_NeffL = index_NeffL, catch_Neff_caal = catch_Neff_caal, 
+                              index_Neff_caal = index_Neff_caal, waa_cv = waa_cv,
+                              Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, 
+  							              Ecov_effect = Ecov_effect_i) 
+    tmp_om = set_simulation_options(tmp_om, simulate_data = TRUE, 
+                                            simulate_process = TRUE, simulate_projection = FALSE,
+                                            bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?
+    tmp_om$data$simulate_state[4] = 0 # DO NOT simulate Ecov process in WHAM
+    
+    om_inputs[[i]][[j]] = tmp_om
+  } # data scenarios
+} # growth var
 
 # Save OM inputs:
 saveRDS(om_inputs, file.path(write.dir, "om_inputs.RDS"))
