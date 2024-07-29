@@ -15,8 +15,9 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
                     Ecov_re_sig = NULL, Ecov_re_cor = NULL, Ecov_effect = NULL) {
   
   # Create basic WHAM input:
-  basic_info = make_basic_info(n_years_base = n_years_base, n_years_burnin = n_years_burnin, type = 'om',
-                               ages = ages_base, fish_len = lengths_base,
+  basic_info = make_basic_info(n_years_base = n_years_base, n_years_burnin = n_years_burnin, 
+                               type = 'om',
+                            ages = ages_base, fish_len = lengths_base,
                             n_fisheries = n_fisheries, n_indices = n_indices,
                             catch_sigma = catch_sigma, agg_index_cv = agg_index_cv,
                             catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
@@ -63,6 +64,9 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
   basic_info$use_catch_waa <- matrix(1, ncol = basic_info$n_fleets, nrow = ny)
   # }
 
+  # Turn off maturity as data input:
+  basic_info$maturity = NULL
+  
   # F trajectory:
 	year_change <- floor(n_years_base * F_change_time)
 	F_vals = numeric(n_years_base)

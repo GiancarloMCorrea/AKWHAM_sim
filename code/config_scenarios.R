@@ -11,31 +11,58 @@ write.dir = "inputs"
 # 2: variability on L1
 
 # -------------------------------------------------------------------------
-# Age only scenarios:
+# Age only scenarios (traditional sampling):
+growth_var = 0:2 # none, k-Linf, or  L1
+samp_scheme = c('random')
+Ecov_sim = c('stationary')
+method = c('EWAA', 'WAA')
+age_selex = c('fixed')
+re_method = c('iid', '2dar1', '3dgmrf')
+catch_data = 'paa'
+index_data = 'paa'
+data_scen = c('poor', 'rich')
+paa_generation = c('traditional')
+
+age_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
+                     Ecov_sim = Ecov_sim, method = method, 
+                     age_selex = age_selex, catch_data = catch_data,
+                     index_data = index_data, re_method = re_method,
+                     data_scen = data_scen, paa_generation = paa_generation,
+                     stringsAsFactors = FALSE)
+age_df = age_df %>% mutate(re_method = if_else(method == 'EWAA', 'none', re_method))
+# Only time varying selex when growth_var is zero:
+age_df$age_selex[age_df$growth_var == 0] = 'fixed'
+
+# Delete repeating scenarios:
+age_df = age_df[!duplicated(age_df), ]
+
+
+# -------------------------------------------------------------------------
+# Age only scenarios (Stepwise sampling):
 growth_var = 0:2 # none, k-Linf, or  L1
 samp_scheme = c('random', 'strat')
-Ecov_sim = c('stationary', 'trend')
+Ecov_sim = c('stationary')
 method = c('EWAA', 'WAA')
 age_selex = c('fixed', 'varying')
 re_method = c('iid', '2dar1', '3dgmrf')
 catch_data = 'paa'
 index_data = 'paa'
 data_scen = c('poor', 'rich')
+paa_generation = c('stepwise')
 
-age_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
+age_df2 = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
                      Ecov_sim = Ecov_sim, method = method, 
                      age_selex = age_selex, catch_data = catch_data,
                      index_data = index_data, re_method = re_method,
-                     data_scen = data_scen,
+                     data_scen = data_scen, paa_generation = paa_generation,
                      stringsAsFactors = FALSE)
-age_df = age_df %>% mutate(re_method = if_else(method == 'EWAA', 'none', re_method))
+age_df2 = age_df2 %>% mutate(re_method = if_else(method == 'EWAA', 'none', re_method))
 # Only time varying selex when growth_var is zero:
-age_df$age_selex[age_df$growth_var == 0] = 'fixed'
-# No Ecov sim type when growth_var = 0
-# age_df$Ecov_sim[age_df$growth_var == 0] = 'none'
+age_df2$age_selex[age_df2$growth_var == 0] = 'fixed'
 
 # Delete repeating scenarios:
-age_df = age_df[!duplicated(age_df), ]
+age_df2 = age_df2[!duplicated(age_df2), ]
+
 
 # # -------------------------------------------------------------------------
 # # Length only scenarios:
@@ -90,8 +117,7 @@ age_df = age_df[!duplicated(age_df), ]
 # 
 # -------------------------------------------------------------------------
 # Make scenario DF:
-# tmp_scenario = rbind(age_df, len_df, agelen_df)
-tmp_scenario = age_df
+tmp_scenario = rbind(age_df, age_df2)
 
 # -------------------------------------------------------------------------
 # Merge both data.frames:

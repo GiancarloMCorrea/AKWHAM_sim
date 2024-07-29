@@ -1,5 +1,5 @@
 # Make sure you update the WHAM package:
-# remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='growth')
+# remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='tuna')
 
 # Clear workspace
 rm(list=ls())
@@ -13,22 +13,18 @@ require(doParallel)
 require(foreach)
 library(here)
 
-# Define Working Directory:
-# IMPORTANT: change also this in sim_core2.R
-main_dir = here::here()
-out_dir = here::here('results') # folder where all simulations will be saved. preferably out of GitHub folder
-
-# Set working directory:
-setwd(main_dir)
-
-# Create Scenario and seeds DF (only do it once):
+# # Create Scenario and seeds DF (only do it once):
 source(here::here("code", "config_scenarios.R"))
-# Make OM and EM WHAM inputs
+# # Make OM and EM WHAM inputs
 source(here::here("code", "om_setup.R"))
 source(here::here("code", "em_setup.R"))
+
+
+# -------------------------------------------------------------------------
 # Clear workspace
 rm(list=ls())
 # Read main dir again
+out_dir = here::here('results') # folder where all simulations will be saved. preferably out of GitHub folder
 main_dir = getwd()
 
 # Read objects to be used in sim_core2.R
@@ -57,16 +53,12 @@ run_iter <- function(sim, scen){
 
 # -------------------------------------------------------------------------
 # Run in parallel several simulations for all scenarios
-# these_scenarios = c(1:16, seq(from = 17, by = 4, length.out = 10), 57:72, seq(from = 73, by = 4, length.out = 10),
-#                    113:128, seq(from = 129, by = 4, length.out = 10), 169:184, seq(from = 185, by = 4, length.out = 10))
-# these_scenarios = 129:224
-these_scenarios = c(1:16, seq(from = 17, by = 4, length.out = 10), 57:72, seq(from = 73, by = 4, length.out = 10),
-                   113:128)
+these_scenarios = c(1:nrow(df.scenario))
 snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
     snowfall::sfExportAll()
-    trash <- snowfall::sfLapply(1:125, function(sim) run_iter(sim, sc))
+    trash <- snowfall::sfLapply(1:60, function(sim) run_iter(sim, sc))
 }
 snowfall::sfStop()
 

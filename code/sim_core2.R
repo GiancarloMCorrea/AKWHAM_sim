@@ -22,7 +22,8 @@ seeds <- readRDS(here::here("inputs","seeds.RDS"))
 this_scenario <- data.frame(df.scenario[scenj, ])
 model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, this_scenario)
 this_dat_scen = match(this_scenario$data_scen, c('poor', 'rich'))
-this_om_input = om_inputs[[this_scenario$growth_var + 1]][[this_dat_scen]] # select the OM based on growth_var
+this_paagen_scen = match(this_scenario$paa_generation, c('traditional', 'stepwise'))
+this_om_input = om_inputs[[this_scenario$growth_var + 1]][[this_paagen_scen]][[this_dat_scen]] # select the OM based on growth_var
 
 #######################################################
 # Print scenario name:
@@ -32,7 +33,7 @@ cat(paste0("START Scenario: ", scenj, " Sim: ", simi, "\n"))
 # Simulate environmental time series:
 
 # none or stationary. when none, it wont affect any growth parameter
-if(df.scenario$Ecov_sim[scenj] %in% c('none', 'stationary')) {
+if(this_scenario$Ecov_sim %in% c('none', 'stationary')) {
   
   set.seed(seeds[simi])
   ecov_error = rnorm(n_years_base+n_years_burnin, mean = 0, sd = exp(Ecov_re_sig))
@@ -45,7 +46,7 @@ if(df.scenario$Ecov_sim[scenj] %in% c('none', 'stationary')) {
 
 }
 
-if(df.scenario$Ecov_sim[scenj] == 'trend') {
+if(this_scenario$Ecov_sim == 'trend') {
   
   set.seed(seeds[simi])
   ecov_error = rnorm(n_years_base+n_years_burnin, mean = 0, sd = exp(Ecov_re_sig))
@@ -73,29 +74,29 @@ om <- fit_wham(this_om_input, do.fit = FALSE, MakeADFun.silent = TRUE)
 # Define seed and simulate WHAM data:
 set.seed(seeds[simi])
 sim_data <- om$simulate(complete=TRUE)
-# if(simi == 1) make_plot_om(sim_data, scenj, main_dir) # Make plot 
-if(simi == 1 & scenj <= 3) {
+if(simi == 1 & scenj %in% c(1:3, 25:27)) {
   saveRDS(object = om, file = file.path(main_dir, "sample_data", 'om_sample', paste0("om_sample_", scenj, ".RDS"))) # Save OM data to make plots later
-  make_plot_om(sim_data, scenj, main_dir) # Make plot 
+  if(this_scenario$paa_generation == 'traditional') make_plot_traditional(sim_data, scenj, main_dir) # Make plot
+  if(this_scenario$paa_generation == 'stepwise') make_plot_stepwise(sim_data, scenj, main_dir) # Make plot
 }
-if(simi <= 10 & scenj %in% c(2:3, 7:8)) { # LAA variability by Ecov type. Only 10 iterations
+if(simi <= 10 & scenj %in% c(2:3)) { # LAA variability by Ecov type. Only 10 iterations
   # Simulated LAA in jan 1:
   this_laa = sim_data$jan1LAA
   colnames(this_laa) = 1:sim_data$n_ages
   rownames(this_laa) = 1:sim_data$n_years_model
   this_df = reshape2::melt(this_laa, varnames = c('year', 'age'))
-  this_df$growth_var = df.scenario$growth_var[scenj]
+  this_df$growth_var = this_scenario$growth_var
   this_df$sim = simi
-  this_df$ecov = df.scenario$Ecov_sim[scenj]
+  this_df$ecov = this_scenario$Ecov_sim
   saveRDS(object = this_df, file = file.path(main_dir, "sample_data", 'LAA_sample', paste0("sample_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
   # Simulate growth parameters:
   this_par = sim_data$LAA_par[,1,]
   colnames(this_par) = c('k', 'Linf', 'L1')
   rownames(this_par) = 1:sim_data$n_years_model
   this_df = reshape2::melt(this_par, varnames = c('year', 'par'))
-  this_df$growth_var = df.scenario$growth_var[scenj]
+  this_df$growth_var = this_scenario$growth_var
   this_df$sim = simi
-  this_df$ecov = df.scenario$Ecov_sim[scenj]
+  this_df$ecov = this_scenario$Ecov_sim
   saveRDS(object = this_df, file = file.path(main_dir, "sample_data", 'LAApar_sample', paste0("sample_", scenj, '-', simi, ".RDS"))) # Save sim parameters to make plots later
 }
 
@@ -103,22 +104,22 @@ if(simi <= 10 & scenj %in% c(2:3, 7:8)) { # LAA variability by Ecov type. Only 1
 # Only works for multinomial 
 
 #  Fishery:
-if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'paa') {
+if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
   
-  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 13 # Nsamp size for CAAL
-  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 25 # Nsamp size for CAAL
+  if(this_scenario$data_scen == 'poor') Nsamp_CAAL = 13 # Nsamp size for CAAL
+  if(this_scenario$data_scen == 'rich') Nsamp_CAAL = 25 # Nsamp size for CAAL
   # Nsamp_CAAL = 25 # Nsamp size for CAAL
 
   # Order to sort: year, fleet, len bin, age
   to_obsvec = NULL
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_fleets) {
-      if(df.scenario$caal_samp[scenj] == 'random') {
+      if(this_scenario$caal_samp == 'random') {
         # Random sampling:
         len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$catch_pal[i,j,]) 
         len_subsam = as.vector(len_subsam)
       }
-      if(df.scenario$caal_samp[scenj] == 'strat') {
+      if(this_scenario$caal_samp == 'strat') {
         # Length-stratified sampling:
         len_samp = sim_data$catch_pal[i,j,]*sim_data$catch_NeffL[j,i]
         len_subsam = numeric(length(len_samp)) # save CAAL Neff
@@ -179,20 +180,25 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
   to_obsvec_paa = NULL
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_fleets) {
-      tmp_paa = numeric(sim_data$n_ages)
-      for(k in 1:sim_data$n_lengths) {
-        obs_len = sim_data$catch_pal[i,j,k] > 0
-        if(obs_len) {
-          obs_caal = sum(sim_data$catch_caal[i,j,k,]) > 0
-          if(obs_caal) { # use year-specific ALK
-            tmp_paa = tmp_paa + sim_data$catch_pal[i,j,k] * sim_data$catch_caal[i,j,k,]
-          } else { # use average ALK across years
-            tmp_paa = tmp_paa + sim_data$catch_pal[i,j,k] * avg_alk[[i]][k,]
-          }
-        } # obs_len conditional
-      } # len loop
-      tmp_paa = tmp_paa/sum(tmp_paa) # in case there no len info in CAAL
-      sim_data$catch_paa[i,j,] = tmp_paa
+        if(this_scenario$paa_generation == 'stepwise') {
+          tmp_paa = numeric(sim_data$n_ages)
+          for(k in 1:sim_data$n_lengths) {
+            obs_len = sim_data$catch_pal[i,j,k] > 0
+            if(obs_len) {
+              obs_caal = sum(sim_data$catch_caal[i,j,k,]) > 0
+              if(obs_caal) { # use year-specific ALK
+                tmp_paa = tmp_paa + sim_data$catch_pal[i,j,k] * sim_data$catch_caal[i,j,k,]
+              } else { # use average ALK across years
+                tmp_paa = tmp_paa + sim_data$catch_pal[i,j,k] * avg_alk[[i]][k,]
+              }
+            } # obs_len conditional
+          } # len loop
+          tmp_paa = tmp_paa/sum(tmp_paa) # in case there no len info in CAAL
+          sim_data$catch_paa[i,j,] = tmp_paa
+        } # Conditional Stepwise
+        if(this_scenario$paa_generation == 'traditional') {
+          tmp_paa = sim_data$catch_paa[i,j,]
+        } # Conditional Traditional
       to_obsvec_paa = c(to_obsvec_paa, tmp_paa*sim_data$catch_Neff[j,i]) # Neff of EM
     } # fleet loop
   } # year loop
@@ -201,7 +207,7 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
   sim_data$obsvec[sim_data$obs$type == 'catchpaa'] = to_obsvec_paa
   
   # Simulate observed/empirical mean weight-at-age:
-  if(df.scenario$method[scenj] == 'WAA' | df.scenario$method[scenj] == 'EWAA') {
+  if(this_scenario$method == 'WAA' | this_scenario$method == 'EWAA') {
     to_obsvec = NULL
     for(j in 1:sim_data$n_years_model) {
       for(i in 1:sim_data$n_fleets) {
@@ -224,25 +230,29 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
             mean_wt = mean(ind_wt)
             cv_wt = sd(ind_wt)/(sqrt(length(ind_wt))*mean_wt) # when there is 2+ observations
           }
-          sim_data$waa[sim_data$waa_pointer_fleets[i],j,a] = mean_wt
-          sim_data$waa_cv[sim_data$waa_pointer_fleets[i],j,a] = cv_wt
+          if(this_scenario$paa_generation == 'stepwise') {
+            sim_data$waa[sim_data$waa_pointer_fleets[i],j,a] = mean_wt
+            sim_data$waa_cv[sim_data$waa_pointer_fleets[i],j,a] = cv_wt
+          }
         } # ages loop
       } # fleet loop
     } # year loop
     
     # replace NA (waa obs) with average value:
     for(i in 1:sim_data$n_fleets) {
-      for(a in 1:sim_data$n_ages) {
-        avg_waa = mean(sim_data$waa[sim_data$waa_pointer_fleets[i],,a], na.rm = TRUE)
-        these_na = which(is.na(sim_data$waa[sim_data$waa_pointer_fleets[i],,a]))
-        sim_data$waa[sim_data$waa_pointer_fleets[i],these_na,a] = avg_waa
-        if(is.na(avg_waa)) { # this only useful for EWAA. maybe not realistic but whatever. also, this will probably never be used.
-          this_mean = log(sim_data$pred_waa[sim_data$waa_pointer_fleets[i],these_na,a])
-          this_sd = sqrt(log(0.2^2 + 1.0)) # CV = 0.2
-          this_mean = this_mean - (this_sd^2)*0.5 # corrected mean
-          sim_data$waa[sim_data$waa_pointer_fleets[i],these_na,a] = exp(mapply(FUN = rnorm, n = 1, mean = this_mean, sd = this_sd))
+      if(this_scenario$paa_generation == 'stepwise') {
+        for(a in 1:sim_data$n_ages) {
+          avg_waa = mean(sim_data$waa[sim_data$waa_pointer_fleets[i],,a], na.rm = TRUE)
+          these_na = which(is.na(sim_data$waa[sim_data$waa_pointer_fleets[i],,a]))
+          sim_data$waa[sim_data$waa_pointer_fleets[i],these_na,a] = avg_waa
+          if(is.na(avg_waa)) { # this only useful for EWAA. maybe not realistic but whatever. also, this will probably never be used.
+            this_mean = log(sim_data$pred_waa[sim_data$waa_pointer_fleets[i],these_na,a])
+            this_sd = sqrt(log(0.2^2 + 1.0)) # CV = 0.2
+            this_mean = this_mean - (this_sd^2)*0.5 # corrected mean
+            sim_data$waa[sim_data$waa_pointer_fleets[i],these_na,a] = exp(mapply(FUN = rnorm, n = 1, mean = this_mean, sd = this_sd))
+          }
         }
-      }
+      } # if paa generation
       to_obsvec = c(to_obsvec, as.vector(t(sim_data$waa[sim_data$waa_pointer_fleets[i],,])))
     }
     
@@ -254,10 +264,10 @@ if(df.scenario$catch_data[scenj] == 'caal' | df.scenario$catch_data[scenj] == 'p
 
 
 #  Survey:
-if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'paa') {
+if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
   
-  if(df.scenario$data_scen[scenj] == 'poor') Nsamp_CAAL = 50 # Nsamp size for CAAL
-  if(df.scenario$data_scen[scenj] == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
+  if(this_scenario$data_scen == 'poor') Nsamp_CAAL = 50 # Nsamp size for CAAL
+  if(this_scenario$data_scen == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
   # Nsamp_CAAL = 100 # Nsamp size for CAAL
   
   # Order to sort: year, fleet, len bin, age
@@ -265,12 +275,12 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
   to_obsvec_paa = NULL
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_indices) {
-      if(df.scenario$caal_samp[scenj] == 'random') {
+      if(this_scenario$caal_samp == 'random') {
         # Random sampling:
         len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$index_pal[i,j,]) 
         len_subsam = as.vector(len_subsam)
       }
-      if(df.scenario$caal_samp[scenj] == 'strat') {
+      if(this_scenario$caal_samp == 'strat') {
         # Length-stratified sampling:
         len_samp = sim_data$index_pal[i,j,]*sim_data$index_NeffL[j,i]
         len_subsam = numeric(length(len_samp)) # save CAAL Neff
@@ -331,20 +341,25 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
   to_obsvec_paa = NULL
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_indices) {
-      tmp_paa = numeric(sim_data$n_ages)
-      for(k in 1:sim_data$n_lengths) {
-        obs_len = sim_data$index_pal[i,j,k] > 0
-        if(obs_len) {
-          obs_caal = sum(sim_data$index_caal[i,j,k,]) > 0
-          if(obs_caal) { # use year-specific ALK
-            tmp_paa = tmp_paa + sim_data$index_pal[i,j,k] * sim_data$index_caal[i,j,k,]
-          } else { # use average ALK across years
-            tmp_paa = tmp_paa + sim_data$index_pal[i,j,k] * avg_alk[[i]][k,]
-          }
-        } # obs_len conditional
-      } # len loop
-      tmp_paa = tmp_paa/sum(tmp_paa) # in case there no len info in CAAL
-      sim_data$index_paa[i,j,] = tmp_paa
+      if(this_scenario$paa_generation == 'stepwise') {
+        tmp_paa = numeric(sim_data$n_ages)
+        for(k in 1:sim_data$n_lengths) {
+          obs_len = sim_data$index_pal[i,j,k] > 0
+          if(obs_len) {
+            obs_caal = sum(sim_data$index_caal[i,j,k,]) > 0
+            if(obs_caal) { # use year-specific ALK
+              tmp_paa = tmp_paa + sim_data$index_pal[i,j,k] * sim_data$index_caal[i,j,k,]
+            } else { # use average ALK across years
+              tmp_paa = tmp_paa + sim_data$index_pal[i,j,k] * avg_alk[[i]][k,]
+            }
+          } # obs_len conditional
+        } # len loop
+        tmp_paa = tmp_paa/sum(tmp_paa) # in case there no len info in CAAL
+        sim_data$index_paa[i,j,] = tmp_paa
+      }
+      if(this_scenario$paa_generation == 'traditional') {
+        tmp_paa = sim_data$index_paa[i,j,]
+      } # Conditional Traditional
       to_obsvec_paa = c(to_obsvec_paa, tmp_paa*sim_data$index_Neff[j,i]) # Neff of EM
     } # fleet loop
   } # year loop
@@ -354,7 +369,7 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
   
   
   # Simulate observed/empirical mean weight-at-age:
-  if(df.scenario$method[scenj] == 'WAA' | df.scenario$method[scenj] == 'EWAA') {
+  if(this_scenario$method == 'WAA' | this_scenario$method == 'EWAA') {
     to_obsvec = NULL
     for(j in 1:sim_data$n_years_model) {
       for(i in 1:sim_data$n_indices) {
@@ -377,25 +392,29 @@ if(df.scenario$index_data[scenj] == 'caal' | df.scenario$index_data[scenj] == 'p
             mean_wt = mean(ind_wt)
             cv_wt = sd(ind_wt)/(sqrt(length(ind_wt))*mean_wt) # when there is 2+ observations
           }
-          sim_data$waa[sim_data$waa_pointer_indices[i],j,a] = mean_wt
-          sim_data$waa_cv[sim_data$waa_pointer_indices[i],j,a] = cv_wt
+          if(this_scenario$paa_generation == 'stepwise') {
+            sim_data$waa[sim_data$waa_pointer_indices[i],j,a] = mean_wt
+            sim_data$waa_cv[sim_data$waa_pointer_indices[i],j,a] = cv_wt
+          }
         } # ages loop
       } # fleet loop
     } # year loop
     
     # replace NA (waa obs) with average value:
     for(i in 1:sim_data$n_indices) {
-      for(a in 1:sim_data$n_ages) {
-        avg_waa = mean(sim_data$waa[sim_data$waa_pointer_indices[i],,a], na.rm = TRUE)
-        these_na = which(is.na(sim_data$waa[sim_data$waa_pointer_indices[i],,a]))
-        sim_data$waa[sim_data$waa_pointer_indices[i],these_na,a] = avg_waa
-        if(is.na(avg_waa)) { # this only useful for EWAA. maybe not realistic. also, this will probably never be used.
-          this_mean = log(sim_data$pred_waa[sim_data$waa_pointer_indices[i],these_na,a])
-          this_sd = sqrt(log(0.2^2 + 1.0)) # CV = 0.2
-          this_mean = this_mean - (this_sd^2)*0.5 # corrected mean
-          sim_data$waa[sim_data$waa_pointer_indices[i],these_na,a] = exp(mapply(FUN = rnorm, n = 1, mean = this_mean, sd = this_sd))
+      if(this_scenario$paa_generation == 'stepwise') {
+        for(a in 1:sim_data$n_ages) {
+          avg_waa = mean(sim_data$waa[sim_data$waa_pointer_indices[i],,a], na.rm = TRUE)
+          these_na = which(is.na(sim_data$waa[sim_data$waa_pointer_indices[i],,a]))
+          sim_data$waa[sim_data$waa_pointer_indices[i],these_na,a] = avg_waa
+          if(is.na(avg_waa)) { # this only useful for EWAA. maybe not realistic. also, this will probably never be used.
+            this_mean = log(sim_data$pred_waa[sim_data$waa_pointer_indices[i],these_na,a])
+            this_sd = sqrt(log(0.2^2 + 1.0)) # CV = 0.2
+            this_mean = this_mean - (this_sd^2)*0.5 # corrected mean
+            sim_data$waa[sim_data$waa_pointer_indices[i],these_na,a] = exp(mapply(FUN = rnorm, n = 1, mean = this_mean, sd = this_sd))
+          }
         }
-      }
+      } # if paa generation
       to_obsvec = c(to_obsvec, as.vector(t(sim_data$waa[sim_data$waa_pointer_indices[i],,])))
     }
     
@@ -430,13 +449,13 @@ EM_input$data$obs$val = EM_input$data$obsvec # not needed but whatever
 
 # -------------------------------------------------------------------------
 # Pass new caal_Neff and use_caal to EM_input:
-if(df.scenario$catch_data[scenj] %in% c('caal')) {
+if(this_scenario$catch_data %in% c('caal')) {
   for(i in 1:n_fisheries) {
     EM_input$data$catch_caal_Neff[,i,] = sim_data$catch_caal_Neff[(n_years_burnin+1):(n_years_burnin+n_years_base),i,]
     EM_input$data$use_catch_caal[,i,] = sim_data$use_catch_caal[(n_years_burnin+1):(n_years_burnin+n_years_base),i,]
   }
 }
-if(df.scenario$index_data[scenj] %in% c('caal')) {
+if(this_scenario$index_data %in% c('caal')) {
   for(i in 1:n_indices) {
     EM_input$data$index_caal_Neff[,i,] = sim_data$index_caal_Neff[(n_years_burnin+1):(n_years_burnin+n_years_base),i,]
     EM_input$data$use_index_caal[,i,] = sim_data$use_index_caal[(n_years_burnin+1):(n_years_burnin+n_years_base),i,]
@@ -445,14 +464,14 @@ if(df.scenario$index_data[scenj] %in% c('caal')) {
 
 # -------------------------------------------------------------------------
 # Pass waa and waa_cv data since it is not in obs data.frame:
-if(df.scenario$method[scenj] %in% c('EWAA', 'WAA')) {
+if(this_scenario$method %in% c('EWAA', 'WAA')) {
     EM_input$data$waa = sim_data$waa[,(n_years_burnin+1):(n_years_burnin+n_years_base),]
     EM_input$data$waa_cv = sim_data$waa_cv[,(n_years_burnin+1):(n_years_burnin+n_years_base),]
 }
 
 # -------------------------------------------------------------------------
 # Maturity
-if(df.scenario$method[scenj] %in% c('EWAA', 'WAA')) {
+if(this_scenario$method %in% c('EWAA', 'WAA')) {
   EM_input$data$mature = sim_data$mat_at_age
 }
 
@@ -475,9 +494,12 @@ res$fit <- list()
 
 # Modify initial values for nonparametric approach:
 # This is important. Convergence problems might appear if this is not done
-if(df.scenario$method[scenj] == 'WAA') {
+if(this_scenario$method == 'WAA') {
   EM_input$par$WAA_a = log(colMeans(EM_input$data$waa[2,,]))
 }
+
+# Fix N1 par at true values:
+EM_input$par$log_N1_pars = log(sim_data$NAA[n_years_burnin+1,])
 
 #######################################################
 # Run WHAM without sdreport first:

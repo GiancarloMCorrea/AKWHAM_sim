@@ -23,7 +23,8 @@ G_base = c(0.2, 90, 10, 2, 8) # K, Linf, L1, SD1, SDA
 LW_base = c(exp(-12.1), 3.2) # a and b parameters LW
 
 # Maturity relationship ---------------------------------------------------------
-mat_base = c(0.5, 45) # a and b parameters maturity
+mat_base_len = c(0.5, 45) # a and b parameters len maturity
+mat_base_age = c(5, 3.5) # a and b parameters age maturity
 
 # Initial abundance and sigmaR -------------------------------------------------------
 N1_base = 1e+05 # Initial Recruitment and mean recruitment over time period

@@ -37,11 +37,11 @@ gf_Q = list(initial_q = Q_base,
             q_upper = rep(10, times = length(Q_base)), 
             prior_sd = rep(NA, times = length(Q_base)))
 # NAA configuration
-gf_NAA_re = list(N1_pars = c(N1_base, 0),
+gf_NAA_re = list(N1_pars = rep(N1_base, times = length(ages_base)), # will be replaced later
                 sigma = "rec", #random about mean
                 cor = "iid", #random effects are independent
                 recruit_model = 2,
-                N1_model = 1)
+                N1_model = 0) # age-specific
 # Ecov configuration:
 gf_ecov <- list(
   label = "Ecov_sim",
@@ -66,7 +66,7 @@ gf_LAA <- list(model='vB_classic', init_vals=G_base[1:3],
                   SD_vals=G_base[4:5],
                   SD_est = 1:2) # Always estimate SD parameters
 gf_WAA <- list(model = 'Allometric', init_vals = LW_base) # fixed
-gf_mat = list(model = 'len-logistic', init_vals = mat_base)
+gf_mat = list(model = 'len-logistic', init_vals = mat_base_len)
 
 #make inputs for estimating model (smaller objects to save, can overwrinte data elements with simulated data)
 em_inputs = list()
@@ -151,11 +151,13 @@ for(i in 1:NROW(df.scenario)){
   }  
 
   # Make basic inputs (defined above)
-  basic_info = make_basic_info(n_years_base = n_years_base, n_years_burnin = n_years_burnin, type = 'em',
+  basic_info = make_basic_info(n_years_base = n_years_base, n_years_burnin = n_years_burnin, 
+                               type = 'em',
                               ages = ages_base, fish_len = lengths_base,
                               n_fisheries = n_fisheries, n_indices = n_indices,
                               catch_sigma = catch_sigma, agg_index_cv = agg_index_cv,
-                              catch_Neff = catch_Neff, index_Neff = index_Neff, catch_NeffL = catch_NeffL,
+                              catch_Neff = catch_Neff, index_Neff = index_Neff, 
+                              catch_NeffL = catch_NeffL,
                               index_NeffL = index_NeffL, catch_Neff_caal = catch_Neff_caal, 
                               index_Neff_caal = index_Neff_caal, waa_cv = waa_cv)
 
@@ -226,18 +228,18 @@ for(i in 1:NROW(df.scenario)){
                                           simulate_process = TRUE, simulate_projection = FALSE,
                                           bias_correct_pe = TRUE, bias_correct_oe = TRUE)
   # Fix some parameters:
-  em_inputs[[i]]$par$log_NAA_sigma = log(sigma_R)
-  em_inputs[[i]]$map$log_NAA_sigma <- factor(NA) # Fix NAA sigma
-  em_inputs[[i]]$map$log_N1_pars <- factor(c(1, NA)) # Fix F1 initial
+  #em_inputs[[i]]$par$log_NAA_sigma = log(sigma_R)
+  #em_inputs[[i]]$map$log_NAA_sigma <- factor(NA) # Fix NAA sigma
+  em_inputs[[i]]$map$log_N1_pars <- factor(rep(NA, times = length(ages_base))) # Fix N1 pars
   # Define random variable:
-  em_inputs[[i]]$random = NULL # default for EWAA
-  if(df.scenario$method[i] == 'WAA') em_inputs[[i]]$random = 'WAA_re'
-  if(df.scenario$method[i] == 'growth' & df.scenario$growth_var[i] > 0) em_inputs[[i]]$random = 'LAA_re'
-  if(df.scenario$method[i] == 'Ecov' & df.scenario$growth_var[i] > 0) em_inputs[[i]]$random = 'Ecov_re' 
-  if(df.scenario$age_selex[i] == 'varying') {
-    em_inputs[[i]]$map$sel_repars = factor(rep(NA, times = length(em_inputs[[i]]$map$sel_repars)))
-    em_inputs[[i]]$par$sel_repars[,1] = log(0.15) # fixed
-  }
+  #em_inputs[[i]]$random = NULL # default for EWAA
+  #if(df.scenario$method[i] == 'WAA') em_inputs[[i]]$random = 'WAA_re'
+  #if(df.scenario$method[i] == 'growth' & df.scenario$growth_var[i] > 0) em_inputs[[i]]$random = 'LAA_re'
+  #if(df.scenario$method[i] == 'Ecov' & df.scenario$growth_var[i] > 0) em_inputs[[i]]$random = 'Ecov_re' 
+  # if(df.scenario$age_selex[i] == 'varying') {
+  #   em_inputs[[i]]$map$sel_repars = factor(rep(NA, times = length(em_inputs[[i]]$map$sel_repars)))
+  #   em_inputs[[i]]$par$sel_repars[,1] = log(0.15) # fixed
+  # }
 
 }
 

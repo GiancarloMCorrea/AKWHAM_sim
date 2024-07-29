@@ -186,35 +186,42 @@ my_label_parsed <- function (variable, value) {
 }
 
 # Set EM and OM labels in df to plot:
-set_labels = function(df) {
+set_labels = function(df, selex_type = 'fixed', caal_type = 'random') {
   
   temp = df %>% filter(maxgrad < 1) # convergent replicates
-  temp = temp %>% mutate(method = factor(method, levels = c('EWAA', 'WAA', 'growth', 'Ecov'),
-                                         labels = c('WEm', 'WNP', 'LP', 'LEc')))
-  temp$caal_samp[temp$caal_samp == 'random'] = '(r)'
-  temp$caal_samp[temp$caal_samp == 'strat'] = '(s)'
-  temp$index_data[temp$index_data == 'caal'] = 'pal+caal'
-  # Set EM labels:
-  temp = temp %>% mutate(fish_label = if_else(condition = catch_data != 'pal',  true = paste0(catch_data, caal_samp), false = catch_data))
-  temp = temp %>% mutate(surv_label = if_else(condition = index_data != 'pal',  true = paste0(index_data, caal_samp), false = index_data))
-  temp = temp %>% mutate(em_label = paste0(method,':', fish_label, '/', surv_label))
+  temp = temp %>% filter(age_selex %in% selex_type)
+  temp = temp %>% filter(caal_samp %in% caal_type)
+  temp = temp %>% mutate(method = case_when(method == 'EWAA' ~ 'WEm', 
+                                            method == 'WAA' ~ 'WNP'))
+  temp = temp %>% mutate(re_method = case_when(re_method == '2dar1' ~ '2D', 
+                                               re_method == '3dgmrf' ~ '3D',
+                                               .default = re_method))
+  temp = temp %>% mutate(em_method = case_when(method == 'WEm' ~ 'WEm', 
+                                               method == 'WNP' ~ paste(method, re_method, sep = '-')))
+  temp = temp %>% mutate(em_method = factor(em_method, levels = c('WEm', 'WNP-iid', 'WNP-2D', 'WNP-3D')))
+  temp$caal_samp[temp$caal_samp == 'random'] = 'Rand'
+  temp$caal_samp[temp$caal_samp == 'strat'] = 'Strat'
+  temp$age_selex[temp$age_selex == 'fixed'] = 'Fixed'
+  temp$age_selex[temp$age_selex == 'varying'] = 'Vary'
+  # EM label:
+  temp = temp %>% mutate(em_label = em_method)
   temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor')))
-  temp = temp %>% mutate(em_label = factor(em_label, levels = EM_order))
-  temp = temp %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                           labels = c('Time~invariant', Variability~"in"~k, expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
-  temp = temp %>% mutate(Ecov_sim = factor(Ecov_sim, levels = c('stationary', 'trend'),
-                                         labels = c('Stationary', 'Trend')))
+  temp = temp %>% mutate(om_label = factor(growth_var, levels = 0:2,
+                                           labels = c('Time~invariant', Variability~"in"~k~"/"~L[infinity], 
+                                                      expression(Variability~"in"~L[1]))))
+  # temp = temp %>% mutate(Ecov_sim = factor(Ecov_sim, levels = c('stationary', 'trend'),
+  #                                        labels = c('Stationary', 'Trend')))
 
   return(temp)
   
 }
 
-filter_iter = function(df) {
+filter_iter = function(df, first_sims = 100) {
   
   filter1 = tapply(df$im, df$scenario, unique)
   for(i in seq_along(filter1)) {
     filter1[[i]] = sort(filter1[[i]])
-    filter1[[i]] = filter1[[i]][1:100] # first 100 replicates
+    filter1[[i]] = filter1[[i]][1:first_sims] # first first_sims replicates
     filter1[[i]] = data.frame(scenario = names(filter1)[i], im = filter1[[i]])
   }
 
@@ -228,44 +235,47 @@ filter_iter = function(df) {
 
 }
 
-make_plot_1 = function(df, y_break = 0.4) {
+# To make plot by parameter and rel_error (data_scen by color)
+make_plot_1 = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0.4,
+                       leg_pos = 'none', leg_title = NULL, alpha_level = 0.6) {
 
-  my_plot =  ggplot(df, aes(x=em_label, y=rel_error, fill=data_scen)) +
-      geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
-      scale_fill_brewer(palette = "Set1") +
+  my_plot =  ggplot(df, aes(x=em_label, y=rel_error, fill={{this_factor}})) +
+      geom_violin(position=position_dodge(violin_sep), alpha = alpha_level, color = NA) +
+      scale_fill_manual(values = col_vals) +
       coord_cartesian(ylim = y_break*c(-1, 1)) +
       geom_hline(yintercept=0, color=1, linetype='dashed') +
-      theme(legend.position = 'none',
+      theme(legend.position = leg_pos,
             axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
             strip.text = element_text(size = 10),
             strip.background = element_rect(fill="white")) +
       scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
       xlab(NULL) + ylab('Relative error') +
-      facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
+      #facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
+      facet_grid(par2 ~ om_label, labeller = 'label_parsed')
+  
+  if(!is.null(leg_title)) my_plot = my_plot + guides(fill=guide_legend(title=leg_title))
 
   return(my_plot)
 
 }
 
-
-make_plot_2 = function(df, y_break = 0.4) {
-
-  my_plot =  ggplot(df, aes(x=em_label, y=rel_error, fill=data_scen)) +
-      geom_violin(position=position_dodge(0.4), alpha = 0.6, color = NA) +
-      scale_fill_brewer(palette = "Set1") +
-      coord_cartesian(ylim = y_break*c(-1, 1)) +
-      geom_hline(yintercept=0, color=1, linetype='dashed') +
-      theme(legend.position = 'none',
-            axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
-            strip.text = element_text(size = 10),
-            strip.background = element_rect(fill="white")) +
-      scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
-      xlab(NULL) + ylab('Relative error') +
-      facet_nested(par2 ~ om_label, labeller = 'label_parsed')
-
+# To make plot by parameter and var_values (data_scen by color)
+make_plot_3 = function(df, this_var, this_factor, col_vals, violin_sep = 0.4,
+                       leg_pos = 'none', leg_title = NULL, alpha_level = 0.6,
+                       var_name = 'Variable name') {
+  
+  my_plot =  ggplot(df, aes(x=em_label, y={{this_var}}, fill={{this_factor}})) +
+    geom_violin(position=position_dodge(violin_sep), alpha = alpha_level, color = NA) +
+    scale_fill_manual(values = col_vals) +
+    theme(legend.position = leg_pos,
+          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+          strip.text = element_text(size = 10),
+          strip.background = element_rect(fill="white")) +
+    xlab(NULL) + ylab(var_name) +
+    facet_grid(par2 ~ om_label, labeller = 'label_parsed', scales = 'free_y')
+  
+  if(!is.null(leg_title)) my_plot = my_plot + guides(fill=guide_legend(title=leg_title))
+  
   return(my_plot)
-
+  
 }
-
-
-
