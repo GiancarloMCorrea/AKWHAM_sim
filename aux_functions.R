@@ -186,9 +186,10 @@ my_label_parsed <- function (variable, value) {
 }
 
 # Set EM and OM labels in df to plot:
-set_labels = function(df, selex_type = 'fixed', caal_type = 'random') {
+set_labels = function(df, selex_type = 'fixed', caal_type = 'random', remove_conv = TRUE) {
   
-  temp = df %>% filter(maxgrad < 1) # convergent replicates
+  temp = df
+  if(remove_conv) temp = temp %>% filter(maxgrad < 1) # convergent replicates
   temp = temp %>% filter(age_selex %in% selex_type)
   temp = temp %>% filter(caal_samp %in% caal_type)
   temp = temp %>% mutate(method = case_when(method == 'EWAA' ~ 'WEm', 
@@ -199,13 +200,14 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random') {
   temp = temp %>% mutate(em_method = case_when(method == 'WEm' ~ 'WEm', 
                                                method == 'WNP' ~ paste(method, re_method, sep = '-')))
   temp = temp %>% mutate(em_method = factor(em_method, levels = c('WEm', 'WNP-iid', 'WNP-2D', 'WNP-3D')))
-  temp$caal_samp[temp$caal_samp == 'random'] = 'Rand'
-  temp$caal_samp[temp$caal_samp == 'strat'] = 'Strat'
+  temp$caal_samp[temp$caal_samp == 'random'] = 'Random'
+  temp$caal_samp[temp$caal_samp == 'strat'] = 'Stratified'
   temp$age_selex[temp$age_selex == 'fixed'] = 'Fixed'
-  temp$age_selex[temp$age_selex == 'varying'] = 'Vary'
+  temp$age_selex[temp$age_selex == 'varying'] = 'Varying'
   # EM label:
   temp = temp %>% mutate(em_label = em_method)
-  temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor')))
+  temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor'), 
+                                            labels = c('Rich', 'Poor')))
   temp = temp %>% mutate(om_label = factor(growth_var, levels = 0:2,
                                            labels = c('Time~invariant', Variability~"in"~k~"/"~L[infinity], 
                                                       expression(Variability~"in"~L[1]))))
@@ -241,13 +243,16 @@ make_plot_1 = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0.
 
   my_plot =  ggplot(df, aes(x=em_label, y=rel_error, fill={{this_factor}})) +
       geom_violin(position=position_dodge(violin_sep), alpha = alpha_level, color = NA) +
+      stat_summary(fun = median,geom = "point",shape = 95,size = 4,colour='black',
+                   position=position_dodge(violin_sep)) +
       scale_fill_manual(values = col_vals) +
       coord_cartesian(ylim = y_break*c(-1, 1)) +
-      geom_hline(yintercept=0, color=1, linetype='dashed') +
+      # geom_hline(yintercept=0, color=1, linetype='dashed') +
       theme(legend.position = leg_pos,
             axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
             strip.text = element_text(size = 10),
-            strip.background = element_rect(fill="white")) +
+            strip.background = element_rect(fill="white"),
+            legend.byrow = TRUE) +
       scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
       xlab(NULL) + ylab('Relative error') +
       #facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
@@ -270,7 +275,8 @@ make_plot_3 = function(df, this_var, this_factor, col_vals, violin_sep = 0.4,
     theme(legend.position = leg_pos,
           axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
           strip.text = element_text(size = 10),
-          strip.background = element_rect(fill="white")) +
+          strip.background = element_rect(fill="white"),
+          legend.byrow = TRUE) +
     xlab(NULL) + ylab(var_name) +
     facet_grid(par2 ~ om_label, labeller = 'label_parsed', scales = 'free_y')
   
