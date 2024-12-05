@@ -186,10 +186,10 @@ my_label_parsed <- function (variable, value) {
 }
 
 # Set EM and OM labels in df to plot:
-set_labels = function(df, selex_type = 'fixed', caal_type = 'random', remove_conv = TRUE) {
+set_labels = function(df, selex_type = 'fixed', caal_type = 'random', remove_conv = TRUE, conv_level = 1e-04) {
   
   temp = df
-  if(remove_conv) temp = temp %>% filter(maxgrad < 1) # convergent replicates
+  if(remove_conv) temp = temp %>% filter(maxgrad < conv_level) # convergent replicates
   temp = temp %>% filter(age_selex %in% selex_type)
   temp = temp %>% filter(caal_samp %in% caal_type)
   temp = temp %>% mutate(method = case_when(method == 'EWAA' ~ 'WEm', 
@@ -264,6 +264,63 @@ make_plot_1 = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0.
 
 }
 
+# To make plot by parameter and rel_error (data_scen by color) geom linerange
+make_plot_1b = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0.4,
+                       leg_pos = 'none', leg_title = NULL, alpha_level = 0.6,
+                       var_name = 'Relative error') {
+  
+  my_plot =  ggplot(df, aes(x=em_label, y=q50, colour={{this_factor}})) +
+    geom_linerange(aes(ymin = q025, ymax = q975), alpha = alpha_level, position=position_dodge(violin_sep)) +
+    geom_pointrange(aes(ymin = q025, ymax = q975), alpha = alpha_level, 
+                    position=position_dodge(violin_sep), fatten = 3) +
+    scale_color_manual(values = col_vals) +
+    coord_cartesian(ylim = y_break*c(-1, 1)) +
+    theme(legend.position = leg_pos,
+          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+          strip.text = element_text(size = 10),
+          strip.background = element_rect(fill="white"),
+          legend.byrow = TRUE) +
+    scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
+    xlab(NULL) + ylab(var_name) +
+    facet_grid(par2 ~ om_label, labeller = 'label_parsed')
+  
+  if(!is.null(leg_title)) my_plot = my_plot + guides(colour=guide_legend(title=leg_title))
+  
+  return(my_plot)
+  
+}
+
+# Alpha as factor
+# To make plot by parameter and rel_error (data_scen by color) geom linerange
+make_plot_1c = function(df, this_factor, this_factor2, col_vals, y_break = 0.4, violin_sep = 0.4,
+                        leg_pos = 'none', leg_title = NULL, leg_title2 = NULL, min_alpha = 0.25,
+                        var_name = 'Relative error') {
+  
+  my_plot =  ggplot(df, aes(x=em_label, y=q50, colour={{this_factor}}, alpha={{this_factor2}})) +
+    geom_linerange(aes(ymin = q025, ymax = q975), position=position_dodge(violin_sep)) +
+    geom_pointrange(aes(ymin = q025, ymax = q975),  
+                    position=position_dodge(violin_sep), fatten = 3) +
+    scale_color_manual(values = col_vals) +
+    scale_alpha_discrete(range = c(min_alpha, 1)) +
+    coord_cartesian(ylim = y_break*c(-1, 1)) +
+    theme(legend.position = leg_pos,
+          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+          strip.text = element_text(size = 10),
+          strip.background = element_rect(fill="white"),
+          legend.byrow = TRUE) +
+    scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
+    xlab(NULL) + ylab(var_name) +
+    facet_grid(par2 ~ om_label, labeller = 'label_parsed')
+  
+  if(!is.null(leg_title)) my_plot = my_plot + guides(colour=guide_legend(title=leg_title))
+  if(!is.null(leg_title2)) my_plot = my_plot + guides(alpha=guide_legend(title=leg_title2))
+  
+  return(my_plot)
+  
+}
+
+# -------------------------------------------------------------------------
+
 # To make plot by parameter and var_values (data_scen by color)
 make_plot_3 = function(df, this_var, this_factor, col_vals, violin_sep = 0.4,
                        leg_pos = 'none', leg_title = NULL, alpha_level = 0.6,
@@ -285,3 +342,57 @@ make_plot_3 = function(df, this_var, this_factor, col_vals, violin_sep = 0.4,
   return(my_plot)
   
 }
+
+# To make plot by parameter and rel_error (data_scen by color) geom linerange
+make_plot_3b = function(df, this_factor, col_vals, violin_sep = 0.4, 
+                        leg_pos = 'none', leg_title = NULL, alpha_level = 0.6,
+                        var_name = 'Relative error') {
+  
+  my_plot =  ggplot(df, aes(x=em_label, y=q50, colour={{this_factor}})) +
+    geom_linerange(aes(ymin = q025, ymax = q975), alpha = alpha_level, position=position_dodge(violin_sep)) +
+    geom_pointrange(aes(ymin = q025, ymax = q975), alpha = alpha_level, 
+                    position=position_dodge(violin_sep), fatten = 3) +
+    scale_color_manual(values = col_vals) +
+    scale_y_continuous(n.breaks = 3) +
+    theme(legend.position = leg_pos,
+          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+          strip.text = element_text(size = 10),
+          strip.background = element_rect(fill="white"),
+          legend.byrow = TRUE) +
+    xlab(NULL) + ylab(var_name) +
+    facet_grid(par2 ~ om_label, labeller = 'label_parsed', scales = 'free_y')
+  
+  if(!is.null(leg_title)) my_plot = my_plot + guides(colour=guide_legend(title=leg_title))
+  
+  return(my_plot)
+  
+}
+
+# Alpha factor
+# To make plot by parameter and rel_error (data_scen by color) geom linerange
+make_plot_3c = function(df, this_factor, this_factor2, col_vals, violin_sep = 0.4, 
+                        leg_pos = 'none', leg_title = NULL, leg_title2 = NULL, min_alpha = 0.25,
+                        var_name = 'Relative error') {
+  
+  my_plot =  ggplot(df, aes(x=em_label, y=q50, colour={{this_factor}}, alpha={{this_factor2}})) +
+    geom_linerange(aes(ymin = q025, ymax = q975), position=position_dodge(violin_sep)) +
+    geom_pointrange(aes(ymin = q025, ymax = q975), 
+                    position=position_dodge(violin_sep), fatten = 3) +
+    scale_color_manual(values = col_vals) +
+    scale_alpha_discrete(range = c(min_alpha, 1)) +
+    scale_y_continuous(n.breaks = 3) +
+    theme(legend.position = leg_pos,
+          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+          strip.text = element_text(size = 10),
+          strip.background = element_rect(fill="white"),
+          legend.byrow = TRUE) +
+    xlab(NULL) + ylab(var_name) +
+    facet_grid(par2 ~ om_label, labeller = 'label_parsed', scales = 'free_y')
+  
+  if(!is.null(leg_title)) my_plot = my_plot + guides(colour=guide_legend(title=leg_title))
+  if(!is.null(leg_title2)) my_plot = my_plot + guides(alpha=guide_legend(title=leg_title2))
+  
+  return(my_plot)
+  
+}
+

@@ -31,6 +31,9 @@ img_width = 170
 colpal1 = brewer.pal(n = 8, name = 'Set1')[1:2] # for data poor rich plots
 colpal2 = c(brewer.pal(n = 9, name = 'Blues')[c(9,7,5,3)], brewer.pal(n = 9, name = 'Reds')[c(9,7,5,3)])
 
+# Convergence level:
+max_grad = 1e-04
+
 # -------------------------------------------------------------------------
 # Read output files -------------------------------------------------------
 
@@ -64,7 +67,7 @@ paa_gen_approach = paa_gen_approach
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach)
 temp = set_labels(tmp_df, caal_type = c('random', 'strat'), selex_type = c('fixed', 'varying'), remove_conv = FALSE)
 conv_df = temp %>% group_by(em_label, om_label, data_scen, caal_samp, age_selex) %>%
-  dplyr::summarise(n_conv = length(unique(maxgrad) < 1)) %>%
+  dplyr::summarise(n_conv = length(unique(maxgrad) < max_grad)) %>%
   dplyr::mutate(n_tot = n_sim) %>%
   dplyr::mutate(conv_rate = (n_conv/n_tot)*100)
 # OUTPUT TABLE WITH SCENARIO LABELS
@@ -77,7 +80,7 @@ c1 = ggplot(data = plot_data, aes(x = em_label, y = data_scen, fill = conv_rate)
         strip.text = element_text(size = 10),
         axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
         axis.text.y = element_text(size = 10)) +
-  labs(fill = 'Convergence rate') +
+  labs(fill = 'Convergence rate (%)') +
   facet_grid(y_label ~ om_label, labeller = 'label_parsed', scales = 'free_y')
 ggsave(filename = file.path(save_folder, paste0(paa_gen_approach, '_convrate', fig_type)),
        plot = c1, width = img_width , height = 190, units = 'mm', dpi = img_res)
@@ -89,18 +92,24 @@ this_caal_samp = 'random'
 temp = par_df %>% filter(par %in% c('logit_q', 'mean_rec_pars'), # 'log_F1', 'log_N1_pars'
                          paa_generation == paa_gen_approach) 
 # Set EM and OM labels:
-temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp)
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
 # Filter first X reps:
 temp = filter_iter(temp)
 # Set par labels:
 temp = temp %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q'),
                                      labels = c(expression(bar(R)), 'Q'))) # expression(N["1,1"]) 'F[1]'
-temp$comb = temp$data_scen
+
+# Prepare data for geom linerage plot:
+plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
+                dplyr::summarise(q025 = quantile(rel_error, probs = 0.025), q50 = quantile(rel_error, probs = 0.5),
+                                 q975 = quantile(rel_error, probs = 0.975))
 
 # WEm and WNP results:
-p1 = make_plot_1(temp, comb, y_break = 0.3, violin_sep = 0.6, 
-                 leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, this_caal_samp, 'par', sep = '-'), fig_type)), 
+# p1 = make_plot_1(temp, comb, y_break = 0.3, violin_sep = 0.6, 
+#                  leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
+p1 = make_plot_1b(plot_dat, data_scen, y_break = 0.3, violin_sep = 0.4, 
+                 leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'par', sep = '-'), fig_type)), 
        plot = p1, width = img_width , height = 130, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
@@ -113,18 +122,24 @@ temp = ts_df %>% filter(paa_generation == paa_gen_approach) %>%
                   method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
 # Set EM and OM labels:
-temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp)
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
 temp = temp %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
                                      labels = c('SSB', 'R', 'F')))
-temp$comb = temp$data_scen
+
+# Prepare data for geom linerage plot:
+plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
+  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025), q50 = quantile(rel_error, probs = 0.5),
+                   q975 = quantile(rel_error, probs = 0.975))
 
 # WEm and WNP results:
-p1 = make_plot_1(temp, comb, y_break = 0.2, violin_sep = 0.6, 
-                 leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, this_caal_samp, 'ts', sep = '-'), fig_type)), 
+# p1 = make_plot_1(temp, comb, y_break = 0.2, violin_sep = 0.6, 
+#                  leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
+p1 = make_plot_1b(plot_dat, data_scen, y_break = 0.15, violin_sep = 0.4, 
+                  leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'ts', sep = '-'), fig_type)), 
        plot = p1, width = img_width, height = 160, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
@@ -141,17 +156,23 @@ temp = waa_df %>% filter(paa_generation == paa_gen_approach) %>%
                   method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
 # Set EM and OM labels:
-temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp)
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
 temp = temp %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
-temp$comb = temp$data_scen
+
+# Prepare data for geom linerage plot:
+plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
+  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025), q50 = quantile(rel_error, probs = 0.5),
+                   q975 = quantile(rel_error, probs = 0.975))
 
 # Make plot (stationary):
-p6 = make_plot_1(temp, comb, y_break = 0.1, violin_sep = 0.6, 
-                 leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, this_caal_samp, 'waa', sep = '-'), fig_type)), plot = p6, 
+# p6 = make_plot_1(temp, comb, y_break = 0.1, violin_sep = 0.6, 
+#                  leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
+p6 = make_plot_1b(plot_dat, data_scen, y_break = 0.1, violin_sep = 0.4, 
+                  leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'waa', sep = '-'), fig_type)), plot = p6, 
        width = img_width , height = 240, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
@@ -163,17 +184,23 @@ temp = catch_paa_df %>% filter(paa_generation == paa_gen_approach) %>%
                   method, growth_var, im) %>%  
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
 # Set EM and OM labels:
-temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp)
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
 temp = temp %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
-temp$comb = temp$data_scen
+
+# Prepare data for geom linerage plot:
+plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
+  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025), q50 = quantile(rel_error, probs = 0.5),
+                   q975 = quantile(rel_error, probs = 0.975))
 
 # Make plot (stationary):
-p7 = make_plot_1(temp, comb, y_break = 0.2, violin_sep = 0.6, 
-                 leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, this_caal_samp, 'caa', sep = '-'), fig_type)), 
+# p7 = make_plot_1(temp, comb, y_break = 0.2, violin_sep = 0.6, 
+#                  leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
+p7 = make_plot_1b(plot_dat, data_scen, y_break = 0.1, violin_sep = 0.4, 
+                  leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'caa', sep = '-'), fig_type)), 
        plot = p7, width = img_width , height = 240, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
@@ -185,17 +212,23 @@ temp = index_paa_df %>% filter(paa_generation == paa_gen_approach) %>%
                   method, growth_var, im) %>%  
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
 # Set EM and OM labels:
-temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp)
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
 temp = temp %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
-temp$comb = temp$data_scen
+
+# Prepare data for geom linerage plot:
+plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
+  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025), q50 = quantile(rel_error, probs = 0.5),
+                   q975 = quantile(rel_error, probs = 0.975))
 
 # Make plot (stationary):
-p8 = make_plot_1(temp, comb, y_break = 0.2, violin_sep = 0.6, 
-                 leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, this_caal_samp, 'iaa', sep = '-'), fig_type)), 
+# p8 = make_plot_1(temp, comb, y_break = 0.2, violin_sep = 0.6, 
+#                  leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
+p8 = make_plot_1b(plot_dat, data_scen, y_break = 0.1, violin_sep = 0.4, 
+                  leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'iaa', sep = '-'), fig_type)), 
        plot = p8, width = img_width , height = 240, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
@@ -205,18 +238,25 @@ this_caal_samp = 'random'
 temp = selex_df %>% filter(paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, fleet, data_scen, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>%  
-  dplyr::summarise(par1 = mean(par1), maxgrad = 1e-06) #median(maxgrad)
+  dplyr::summarise(par1 = mean(par1), maxgrad = median(maxgrad)) #median(maxgrad)
 # Set EM and OM labels:
-temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp)
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
 temp = temp %>% mutate(par2 = factor(fleet, levels = 1:2, labels = c('Fishery', 'Survey')))
-temp$comb = temp$data_scen
+
+# Prepare data for geom linerage plot:
+plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
+  dplyr::summarise(q025 = quantile(par1, probs = 0.025), q50 = quantile(par1, probs = 0.5),
+                   q975 = quantile(par1, probs = 0.975))
 
 # Make plot (stationary):
-p9 = make_plot_3(temp,  par1, comb, violin_sep = 0.6, 
-                 leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1,
-                 var_name = expression('Selectivity parameter '~beta[1]))
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, this_caal_samp, 'sel', sep = '-'), fig_type)), 
+# p9 = make_plot_3(temp,  par1, comb, violin_sep = 0.6, 
+#                  leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1,
+#                  var_name = expression('Selectivity parameter '~beta[1]))
+p9 = make_plot_3b(plot_dat, data_scen, violin_sep = 0.4, 
+                  leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1,
+                  var_name = expression('Selectivity parameter '~beta[1]))
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'sel', sep = '-'), fig_type)), 
        plot = p9, width = img_width , height = 130, units = 'mm', dpi = img_res)
