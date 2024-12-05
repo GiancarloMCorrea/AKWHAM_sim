@@ -29,7 +29,7 @@ img_width = 170
 
 # Color palettes
 colpal1 = brewer.pal(n = 8, name = 'Set1')[1:2] # for data poor rich plots
-colpal2 = c(brewer.pal(n = 9, name = 'Blues')[c(9,7,5,3)], brewer.pal(n = 9, name = 'Reds')[c(9,7,5,3)])
+colpal2 = brewer.pal(n = 8, name = 'Dark2')[1:2]
 
 # Convergence level:
 max_grad = 1e-04
@@ -295,3 +295,68 @@ p10 = make_plot_3c(plot_dat, data_scen, caal_samp, violin_sep = 0.4, min_alpha =
                   var_name = 'Parameter value')
 ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'waare', sep = '-'), fig_type)), plot = p10, 
        width = img_width , height = 200, units = 'mm', dpi = img_res)
+
+
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+
+# Evaluate the impact of time-varying age selex:
+# Only for SSB-R-F and selectivity parameter beta_1
+
+# TS plot:
+this_age_selex = c('fixed', 'varying') # fixed or varying
+this_caal_samp = c('random', 'strat') # random or strat
+temp = ts_df %>% filter(paa_generation == paa_gen_approach) %>%
+  dplyr::group_by(scenario, par, data_scen, caal_samp, age_selex, re_method, 
+                  method, growth_var, im) %>% 
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+# Set EM and OM labels:
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
+# Filter first 100 reps:
+temp = filter_iter(temp)
+# Set par labels:
+temp = temp %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
+                                     labels = c('SSB', 'R', 'F')))
+# Select only data rich scenario and remove time- invariant:
+temp = temp %>% dplyr::filter(data_scen == 'Rich' & !(om_label == 'Time~invariant'))
+
+# Prepare data for geom linerage plot:
+plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
+  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025), q50 = quantile(rel_error, probs = 0.5),
+                   q975 = quantile(rel_error, probs = 0.975))
+
+p2 = make_plot_1c(plot_dat, age_selex, caal_samp, y_break = 0.3, violin_sep = 0.6,  min_alpha = 0.35,
+                  leg_pos = 'bottom', leg_title = '', leg_title2 = '', col_vals = colpal2)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex[2], 'ts', sep = '-'), fig_type)), plot = p2,
+       width = img_width , height = 210, units = 'mm', dpi = img_res)
+
+
+# -------------------------------------------------------------------------
+# Selex parameters (only for LP and Ecov scenarios):
+this_age_selex = c('fixed', 'varying') # fixed or varying
+this_caal_samp = c('random', 'strat') # random or strat
+temp = selex_df %>% filter(paa_generation == paa_gen_approach) %>%
+  dplyr::group_by(scenario, fleet, data_scen, caal_samp, age_selex, re_method, 
+                  method, growth_var, im) %>%  
+  dplyr::summarise(par1 = mean(par1), maxgrad = median(maxgrad)) #median(maxgrad)
+# Set EM and OM labels:
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
+# Filter first 100 reps:
+temp = filter_iter(temp)
+# Set par labels:
+temp = temp %>% mutate(par2 = factor(fleet, levels = 1:2, labels = c('Fishery', 'Survey')))
+# Select only data rich scenario and remove time- invariant:
+temp = temp %>% dplyr::filter(data_scen == 'Rich' & !(om_label == 'Time~invariant'))
+
+# Prepare data for geom linerage plot:
+plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
+  dplyr::summarise(q025 = quantile(par1, probs = 0.025), q50 = quantile(par1, probs = 0.5),
+                   q975 = quantile(par1, probs = 0.975))
+
+# Make plot (stationary):
+p9 = make_plot_3c(plot_dat, age_selex, caal_samp, violin_sep = 0.4, min_alpha = 0.35,
+                  leg_pos = 'bottom', leg_title = '', leg_title2 = '', col_vals = colpal2,
+                  var_name = expression('Selectivity parameter '~beta[1]))
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex[2], 'sel', sep = '-'), fig_type)), plot = p9, 
+       width = img_width , height = 140, units = 'mm', dpi = img_res)
+
