@@ -1,5 +1,4 @@
-# Code to make figures
-
+# Code to make other figures:
 library(ggplot2)
 library(dplyr)
 library(plyr)
@@ -18,7 +17,6 @@ seeds = readRDS(file.path("inputs","seeds.RDS"))
 
 # Save folder:
 save_folder = 'plots'
-
 
 # -------------------------------------------------------------------------
 # Make diagram sampling process:
@@ -71,7 +69,7 @@ HeightCM = 10
 
 diag1 %>% export_svg %>% charToRaw %>% 
   rsvg(width = WidthCM *(DPI/2.54), height = HeightCM *(DPI/2.54)) %>% 
-  jpeg::writeJPEG("plots/Figure_2.jpg", quality = 1)
+  png::writePNG("plots/Figure_2.png")
 
 # Now you have to modify the DPI using GIMP. Load the jpg file just created and go to
 # Image > Scale Image, and change resolution (px/in) to 500
@@ -80,47 +78,13 @@ diag1 %>% export_svg %>% charToRaw %>%
 # Supp figure: selectivity, phi matrix, F trajectory
 
 fish_lengths = seq(from = 2, to = 130, by = 2)
-om_sim = readRDS(file = 'inputs/om_sample/om_sample_1.RDS')
+om_sim = readRDS(file = 'sample_data/om_sample/om_sample_1.RDS')
 
-jpeg(filename = 'plots/Figure_1.jpg', width = 190, height = 60, units = 'mm', res = 500)
-par(mfrow = c(1,3))
-# Selectivity:
-fish_sel = om_sim$rep$selAL[[1]][1,]
-surv_sel = om_sim$rep$selAL[[2]][1,]
-par(mar = c(4,4,1,1))
-plot(fish_lengths, fish_sel, type = 'l', xlab = 'Length (cm)', ylab = 'Selectivity', ylim = c(0,1))
-lines(fish_lengths, surv_sel, col = 2)
-text(x = 2, y = 1, labels = "A", xpd = NA, cex = 1.5)
-legend('bottomright', legend = c('Fishery', 'Survey'), col = c(1,2), lwd = 1)
-# Fishery mortality
-f_vector = om_sim$rep$F[,1]
-par(mar = c(4,4,1,1))
-plot(1:length(f_vector), f_vector, type = 'l', xlab = 'Simulated years', ylab = 'Fishing mortality (F)')
-text(x = 1, y = 0.35, labels = "B", xpd = NA, cex = 1.5)
-# Phi matrix
-phi_matrix = om_sim$rep$jan1_phi_mat[,,1]
-par(mar = c(4,4,1,5))
-image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = 'Length (cm)', 
-      main = NULL)
-axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
-axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths)), labels = fish_lengths)
-mtext(text = 'Age', side = 1, line = 3, cex = 0.8)
-fields::image.plot(t(phi_matrix), add=T, legend.mar = 6, col = rev(viridis::viridis(100)))
-text(x = 0.04, y = 1, labels = "C", xpd = NA, cex = 1.5)
-box()
-dev.off()
-
-# -------------------------------------------------------------------------
-# Supp figure: simulated environmental time series:
-
+# For Ecov simulated:
 n_sim = 10 # number of replicates to plot
 n_years = 55
-
 save_stationary = matrix(0, ncol= n_sim, nrow = n_years)
-save_trend = save_stationary
-# Stationary time series:
 for(iter in 1:n_sim) {
-  
   set.seed(seeds[iter])
   ecov_error = rnorm(n_years, mean = 0, sd = exp(Ecov_re_sig))
   alpha = 0
@@ -130,37 +94,106 @@ for(iter in 1:n_sim) {
   for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
   sim_ecov = scale(sim_ecov)
   save_stationary[,iter] = sim_ecov[,1]
-  
-  # Nonstationary time series:
-  set.seed(seeds[iter])
-  ecov_error = rnorm(n_years, mean = 0, sd = exp(Ecov_re_sig))
-  alpha = 0
-  beta = Ecov_trend[2] # trend
-  theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
-  sim_ecov = 0
-  for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
-  sim_ecov = scale(sim_ecov)
-  save_trend[,iter] = sim_ecov[,1]
-  
 }
 
-df1 = melt(save_stationary, varnames = c('year', 'iter'))
-df1 = df1 %>% mutate(type = 'Stationary')
-df2 = melt(save_trend, varnames = c('year', 'iter'))
-df2 = df2 %>% mutate(type = 'Trend')
+png(filename = 'plots/Figure_1.png', width = 170, height = 170, units = 'mm', res = 400)
+par(mfrow = c(2,2))
 
-df_plot = rbind(df1, df2)
+# Selectivity:
+fish_sel = om_sim$rep$selAL[[1]][1,]
+surv_sel = om_sim$rep$selAL[[2]][1,]
+par(mar = c(4,4,1,1))
+plot(fish_lengths, fish_sel, type = 'l', xlab = 'Length (cm)', ylab = 'Selectivity', ylim = c(0,1))
+lines(fish_lengths, surv_sel, lty = 2)
+text(x = 2, y = 1, labels = "A", xpd = NA, cex = 1.5)
+legend('bottomright', legend = c('Fishery', 'Survey'), lty = c(1,2), lwd = 1, bty = 'n')
 
-figs1 = ggplot(df_plot, aes(x=year, y=value, group = factor(iter))) +
-  geom_vline( xintercept = 10, linetype = 'dashed') +
-  geom_line(aes(color = factor(type)), alpha = 0.5) +
-  xlab('Simulated year') +
-  ylab('Simulated environmental covariate') +
-  theme(legend.position = 'none') +
-  facet_wrap(. ~ factor(type)) 
-ggsave(filename = 'plots/Figure_S1.jpg', plot = figs1, 
-       width = 190 , height = 90, units = 'mm', dpi = 500)
+# Fishery mortality
+f_vector = om_sim$rep$F[,1]
+par(mar = c(4,4,1,1))
+plot(NA, NA, xlab = 'Simulated years', ylab = 'Fishing mortality (F)', xlim = c(1, 55), ylim = c(0, 0.35))
+polygon(x = c(-10, 10, 10, -10, -10), y = c(-1, -1, 1, 1, -1), col = 'grey', border = NA)
+lines(1:length(f_vector), f_vector)
+text(x = 1, y = 0.35, labels = "B", xpd = NA, cex = 1.5)
+box()
 
+# Phi matrix
+phi_matrix = om_sim$rep$jan1_phi_mat[,,1]
+par(mar = c(6,4,1,1))
+image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = 'Length (cm)', 
+      main = NULL)
+axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
+axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths)), labels = fish_lengths)
+mtext(text = 'Age', side = 1, line = 2, cex = 0.8)
+fields::image.plot(t(phi_matrix), add=T, horizontal = TRUE,
+                   col = rev(viridis::viridis(100)))
+text(x = 0.04, y = 1, labels = "C", xpd = NA, cex = 1.5)
+box()
+
+# Ecov simulated
+par(mar = c(4,4,1,1))
+plot(NA, NA, xlab = 'Simulated years', ylab = 'Simulated environmental covariate', 
+     ylim = c(-3,3), xlim = c(1, 55))
+polygon(x = c(-10, 10, 10, -10, -10), y = c(-10, -10, 10, 10, -10), col = 'grey', border = NA)
+for(k in 1:n_sim) {
+  lines(1:n_years, save_stationary[,k], lwd = 0.5)
+}
+text(x = 1, y = 3, labels = "D", xpd = NA, cex = 1.5)
+box()
+
+dev.off()
+
+# # -------------------------------------------------------------------------
+# # Supp figure: simulated environmental time series:
+# 
+# n_sim = 10 # number of replicates to plot
+# n_years = 55
+# 
+# save_stationary = matrix(0, ncol= n_sim, nrow = n_years)
+# save_trend = save_stationary
+# # Stationary time series:
+# for(iter in 1:n_sim) {
+#   
+#   set.seed(seeds[iter])
+#   ecov_error = rnorm(n_years, mean = 0, sd = exp(Ecov_re_sig))
+#   alpha = 0
+#   beta = Ecov_trend[1] # trend
+#   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
+#   sim_ecov = 0
+#   for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+#   sim_ecov = scale(sim_ecov)
+#   save_stationary[,iter] = sim_ecov[,1]
+#   
+#   # # Nonstationary time series:
+#   # set.seed(seeds[iter])
+#   # ecov_error = rnorm(n_years, mean = 0, sd = exp(Ecov_re_sig))
+#   # alpha = 0
+#   # beta = Ecov_trend[2] # trend
+#   # theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
+#   # sim_ecov = 0
+#   # for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+#   # sim_ecov = scale(sim_ecov)
+#   # save_trend[,iter] = sim_ecov[,1]
+#   
+# }
+# 
+# df1 = melt(save_stationary, varnames = c('year', 'iter'))
+# df1 = df1 %>% mutate(type = 'Stationary')
+# # df2 = melt(save_trend, varnames = c('year', 'iter'))
+# # df2 = df2 %>% mutate(type = 'Trend')
+# 
+# df_plot = df1
+# 
+# figs1 = ggplot(df_plot, aes(x=year, y=value, group = factor(iter))) +
+#   geom_vline( xintercept = 10, linetype = 'dashed') +
+#   geom_line(aes(color = factor(type)), alpha = 0.5) +
+#   xlab('Simulated year') +
+#   ylab('Simulated environmental covariate') +
+#   theme(legend.position = 'none') +
+#   facet_wrap(. ~ factor(type)) 
+# ggsave(filename = 'plots/Figure_S1.jpg', plot = figs1, 
+#        width = 190 , height = 90, units = 'mm', dpi = 500)
+# 
 # -------------------------------------------------------------------------
 # Supp figure: simulated variability in LAA:
 # WARNING: you need to run the previous plot (Ecov sim)

@@ -81,9 +81,9 @@ c1 = ggplot(data = plot_data, aes(x = em_label, y = data_scen, fill = conv_rate)
         axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
         axis.text.y = element_text(size = 10)) +
   labs(fill = 'Convergence rate (%)') +
-  facet_grid(y_label ~ om_label, labeller = 'label_parsed', scales = 'free_y')
+  facet_grid(. ~ om_label, labeller = 'label_parsed', scales = 'free_y')
 ggsave(filename = file.path(save_folder, paste0(paa_gen_approach, '_convrate', fig_type)),
-       plot = c1, width = img_width , height = 190, units = 'mm', dpi = img_res)
+       plot = c1, width = img_width , height = 110, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # PAR plot:
