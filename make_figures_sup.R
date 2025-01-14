@@ -200,31 +200,45 @@ dev.off()
 
 all_files = list.files(path = 'sample_data/LAA_sample')
 
+# Prepare LAA var for time-invariant scenario (because i didnt save it):
+om_sim = readRDS(file = 'sample_data/om_sample/om_sample_1.RDS')
+this_laa = om_sim$rep$jan1LAA
+colnames(this_laa) = 1:10
+rownames(this_laa) = 1:55
+this_df = reshape2::melt(this_laa, varnames = c('year', 'age'))
+this_df$growth_var = 0
+df0 = do.call(rbind, lapply(1:10,
+    function(i) {
+      this_df$sim <- i
+      this_df
+    }))
+
+# Read sim data (growth var present):
 all_df = list()
 for(k in seq_along(all_files)) {
   all_df[[k]] = readRDS(file = file.path('sample_data/LAA_sample', all_files[k]))
 }
-
 all_df = dplyr::bind_rows(all_df)
+all_df = all_df %>% dplyr::select(-ecov)
 
-#scenj = 114, simi = 89
-#scenj = 114, simi = 6
+# Merge dfs:
+merged_df = rbind(df0, all_df)
 
-all_df = all_df %>% mutate(om_label = factor(growth_par, levels = 0:3,
-                                           labels = c('Time~invariant', Variability~"in"~k, 
-                                                      expression(Variability~"in"~L[infinity]), expression(Variability~"in"~L[1]))))
-all_df = all_df %>% mutate(ecov = factor(ecov, levels = c('stationary', 'trend'),
-                                         labels = c('Stationary', 'Trend')))
-  
-figs2 = ggplot(all_df, aes(x=year, y=value, group = factor(sim))) +
-  geom_vline( xintercept = 10, linetype = 'dashed') +
-  geom_line(aes(color = factor(ecov)), alpha = 0.2) +
+# Prepare for plotting:
+merged_df = merged_df %>% mutate(om_label = factor(growth_var, levels = 0:2,
+                                             labels = c('Time~invariant', Variability~"in"~k~"/"~L[infinity], 
+                                                        expression(Variability~"in"~L[1]))))
+
+figs2 = ggplot(merged_df, aes(x=year, y=value, group = factor(sim))) +
+  geom_vline(xintercept = 10, linetype = 'dashed') +
+  geom_line(alpha = 0.2) +
   xlab('Simulated year') +
   ylab('Mean length (cm)') +
+  theme_classic() +
   theme(legend.position = 'none') +
-  facet_nested(age ~ om_label+ecov, scales = 'free_y', labeller = 'label_parsed')
-ggsave(filename = 'plots/Figure_S2.jpg', plot = figs2,
-       width = 190 , height = 230, units = 'mm', dpi = 500)
+  facet_nested(age ~ om_label, scales = 'free_y', labeller = 'label_parsed')
+ggsave(filename = 'plots/Figure_S1.png', plot = figs2,
+       width = 170 , height = 210, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
 # Sup figure: Impact of length-based selectivity and sampling
