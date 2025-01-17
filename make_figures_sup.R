@@ -240,6 +240,61 @@ figs2 = ggplot(merged_df, aes(x=year, y=value, group = factor(sim))) +
 ggsave(filename = 'plots/Figure_S1.png', plot = figs2,
        width = 170 , height = 210, units = 'mm', dpi = 500)
 
+
+# -------------------------------------------------------------------------
+# Make figure on stability of X replicates on SSB RE
+
+# TS data:
+
+# Specify these values (see main plot script)
+output_folder = 'outputs'
+max_grad = 1e-04
+min_alpha = 0.35
+colpal1 = brewer.pal(n = 8, name = 'Set1')[1:2] 
+ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))
+paa_gen_approach = 'stepwise'
+this_age_selex = 'fixed' # fixed or varying
+this_caal_samp = c('random', 'strat') # random or strat
+
+# Tidy data:
+temp = ts_df %>% filter(paa_generation == paa_gen_approach) %>%
+  dplyr::group_by(scenario, par, data_scen, caal_samp, age_selex, re_method, 
+                  method, growth_var, im) %>% 
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+temp = temp %>% dplyr::filter(par == 'SSB')
+# Set EM and OM labels:
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
+# Filter first 100 reps:
+temp = filter_iter(temp)
+# Set par labels:
+plot_dat = temp %>% dplyr::group_by(data_scen, caal_samp, age_selex, em_label, om_label) %>%
+              group_split()
+plot_dat = lapply(plot_dat, function(x) {
+  outdf = x %>% mutate(cum_im = 1:nrow(x),
+                       cum_re = cumsum(rel_error)/cum_im)
+  return(outdf)
+})
+plot_dat = bind_rows(plot_dat)
+plot_dat$em_label2 = factor(plot_dat$em_label, labels = c("WEm", expression(WNP*"-"*iid), 
+                                                     expression(WNP*"-"*2*"D"),
+                                                     expression(WNP*"-"*3*"D")))
+
+p1 = #ggplot(plot_dat, aes(x = cum_im, y = cum_re, color = data_scen)) +
+  ggplot(plot_dat, aes(x = cum_im, y = cum_re, color = data_scen, alpha = caal_samp)) +
+  geom_line() +
+  scale_color_manual(values = colpal1) +
+  scale_alpha_discrete(range = c(min_alpha, 1)) +
+  xlab('Number of iterations') +
+  ylab('Mean relative error') +
+  theme_classic() +
+  theme(legend.position = 'bottom') +
+  facet_grid(em_label2 ~ om_label, labeller = 'label_parsed') +
+  guides(color=guide_legend(title=NULL),
+         alpha=guide_legend(title=NULL)
+         )
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'iter-stability', sep = '-'), fig_type)), plot = p1,
+       width = img_width , height = 210, units = 'mm', dpi = img_res)
+
 # -------------------------------------------------------------------------
 # Sup figure: Impact of length-based selectivity and sampling
 

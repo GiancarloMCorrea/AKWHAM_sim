@@ -63,7 +63,6 @@ paa_gen_approach = 'traditional'
 n_sim = 110 # number of iterations run per scenario.
 
 # Set EM and OM labels:
-paa_gen_approach = paa_gen_approach
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach)
 temp = set_labels(tmp_df, caal_type = c('random', 'strat'), selex_type = c('fixed', 'varying'), remove_conv = FALSE)
 conv_df = temp %>% group_by(em_label, om_label, data_scen, caal_samp, age_selex) %>%
@@ -144,8 +143,50 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age
 
 # -------------------------------------------------------------------------
 # TS plot (by year, for ALL scenarios):
+# Do it variable by variable: F, R, SSB
+ts_folder_plot = file.path(save_folder, 'ts_plots')
+dir.create(ts_folder_plot, showWarnings = FALSE)
 
-# TODO
+# Sort data:
+temp = ts_df %>% filter(paa_generation == paa_gen_approach) %>%
+  dplyr::group_by(scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
+                  method, growth_var, im) %>% 
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+
+# Select filter:
+this_age_selex = 'fixed'
+this_caal_samp = 'random' # only select one
+sel_var = 'Rec'
+
+# Set EM and OM labels:
+temp2 = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
+# Filter first 100 reps:
+temp2 = filter_iter(temp2)
+# Select variable to plot:
+temp2 = temp2 %>% dplyr::filter(par == sel_var)
+# Make em label:
+temp2$em_label2 = factor(temp2$em_label, labels = c("WEm", expression(WNP*"-"*iid), 
+                                                          expression(WNP*"-"*2*"D"),
+                                                          expression(WNP*"-"*3*"D")))
+
+# Prepare data for geom linerage plot:
+plot_dat = temp2 %>% group_by(em_label2, year, om_label, data_scen) %>%
+  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025), q50 = quantile(rel_error, probs = 0.5),
+                   q975 = quantile(rel_error, probs = 0.975))
+
+# Make plot:
+p1 = ggplot(plot_dat, aes(x = year, y = q50)) +
+  geom_line(aes(color = data_scen)) +
+  geom_ribbon(aes(ymin = q025, ymax = q975, fill = data_scen), alpha = 0.3) +
+  scale_color_manual(values = colpal1) +
+  scale_fill_manual(values = colpal1) +
+  ylab('Relative error') + xlab('Simulated year') +
+  theme(legend.position = 'bottom') +
+  facet_grid(em_label2 ~ om_label, labeller = 'label_parsed') +
+  guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
+ggsave(filename = file.path(ts_folder_plot, paste0(paste(paa_gen_approach, this_age_selex, this_caal_samp, sel_var, sep = '-'), fig_type)), 
+       plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
+
 
 # -------------------------------------------------------------------------
 # WAA info (median over years, only for WAA and Ewaa scenarios):

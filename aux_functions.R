@@ -209,7 +209,7 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random', remove_con
   temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor'), 
                                             labels = c('Rich', 'Poor')))
   temp = temp %>% mutate(om_label = factor(growth_var, levels = 0:2,
-                                           labels = c('Time~invariant', Variability~"in"~k~"/"~L[infinity], 
+                                           labels = c('Time~invariant', Variability~"in"~k*"/"*L[infinity], 
                                                       expression(Variability~"in"~L[1]))))
   # temp = temp %>% mutate(Ecov_sim = factor(Ecov_sim, levels = c('stationary', 'trend'),
   #                                        labels = c('Stationary', 'Trend')))
@@ -380,7 +380,7 @@ make_plot_3c = function(df, this_factor, this_factor2, col_vals, violin_sep = 0.
                     position=position_dodge(violin_sep), fatten = 3) +
     scale_color_manual(values = col_vals) +
     scale_alpha_discrete(range = c(min_alpha, 1)) +
-    scale_y_continuous(n.breaks = 3) +
+    scale_y_continuous(n.breaks = 4) +
     theme(legend.position = leg_pos,
           axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
           strip.text = element_text(size = 10),
