@@ -1,4 +1,3 @@
-# remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='growth', INSTALL_opts = c("--no-docs", "--no-multiarch", "--no-demo"))
 
 # -------------------------------------------------------------------------
 # Create OM WHAM inputs 
@@ -36,12 +35,19 @@ gf_Q = list(initial_q = Q_base,
             q_upper = rep(10, times = length(Q_base)), 
             prior_sd = rep(NA, times = length(Q_base)))
 # Recruitment pars:
+# gf_NAA_re = list(N1_pars = c(N1_base, 0),
+#                 sigma = "rec", #random about mean
+#                 cor = "iid", #random effects are independent
+#                 recruit_model = 2,
+#                 recruit_pars = N1_base, # mean recruitment
+#                 N1_model = 1) #defined above from naa_om_inputs
 gf_NAA_re = list(N1_pars = c(N1_base, 0),
-                sigma = "rec", #random about mean
-                cor = "iid", #random effects are independent
-                recruit_model = 2,
-                recruit_pars = N1_base, # mean recruitment
-                N1_model = 1) #defined above from naa_om_inputs
+                 sigma = "rec", #random about mean
+                 cor = "iid", #random effects are independent
+                 recruit_model = 3, # BH SR relationship
+                 use_steepness = TRUE,
+                 recruit_pars = c(h_par, N1_base), # steepness and R0
+                 N1_model = 1) #defined above from naa_om_inputs
 # Ecov pars:
 gf_ecov <- list(
   label = "Ecov_sim",
@@ -152,8 +158,10 @@ for(i in 1:length(growth_scenarios)) {
                                 Ecov_re_sig = Ecov_re_sig, Ecov_re_cor = Ecov_re_cor, 
     							              Ecov_effect = Ecov_effect_i) 
       tmp_om = set_simulation_options(tmp_om, simulate_data = TRUE, 
-                                              simulate_process = TRUE, simulate_projection = FALSE,
-                                              bias_correct_pe = TRUE, bias_correct_oe = TRUE) # do bias correction?
+                                              simulate_process = TRUE, 
+                                              simulate_projection = FALSE,
+                                              bias_correct_pe = TRUE, 
+                                              bias_correct_oe = TRUE) # do bias correction?
       tmp_om$data$simulate_state[4] = 0 # DO NOT simulate Ecov process in WHAM
       
       om_inputs[[i]][[k]][[j]] = tmp_om

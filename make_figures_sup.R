@@ -82,7 +82,7 @@ om_sim = readRDS(file = 'sample_data/om_sample/om_sample_1.RDS')
 
 # For Ecov simulated:
 n_sim = 10 # number of replicates to plot
-n_years = 55
+n_years = n_years_base+n_years_burnin
 save_stationary = matrix(0, ncol= n_sim, nrow = n_years)
 for(iter in 1:n_sim) {
   set.seed(seeds[iter])
@@ -200,36 +200,24 @@ dev.off()
 
 all_files = list.files(path = 'sample_data/LAA_sample')
 
-# Prepare LAA var for time-invariant scenario (because i didnt save it):
-om_sim = readRDS(file = 'sample_data/om_sample/om_sample_1.RDS')
-this_laa = om_sim$rep$jan1LAA
-colnames(this_laa) = 1:10
-rownames(this_laa) = 1:55
-this_df = reshape2::melt(this_laa, varnames = c('year', 'age'))
-this_df$growth_var = 0
-df0 = do.call(rbind, lapply(1:10,
-    function(i) {
-      this_df$sim <- i
-      this_df
-    }))
-
 # Read sim data (growth var present):
 all_df = list()
 for(k in seq_along(all_files)) {
   all_df[[k]] = readRDS(file = file.path('sample_data/LAA_sample', all_files[k]))
 }
 all_df = dplyr::bind_rows(all_df)
-all_df = all_df %>% dplyr::select(-ecov)
 
 # Merge dfs:
-merged_df = rbind(df0, all_df)
+merged_df = all_df
 
 # Prepare for plotting:
 merged_df = merged_df %>% mutate(om_label = factor(growth_var, levels = 0:2,
                                              labels = c('Time~invariant', Variability~"in"~k~"/"~L[infinity], 
-                                                        expression(Variability~"in"~L[1]))))
+                                                        expression(Variability~"in"~L[1]))),
+                                 ecov = factor(ecov),
+                                 i_group = paste(sim, ecov, sep = '-'))
 
-figs2 = ggplot(merged_df, aes(x=year, y=value, group = factor(sim))) +
+figs2 = ggplot(merged_df, aes(x=year, y=value, group = factor(i_group), color = ecov)) +
   geom_vline(xintercept = 10, linetype = 'dashed') +
   geom_line(alpha = 0.2) +
   xlab('Simulated year') +

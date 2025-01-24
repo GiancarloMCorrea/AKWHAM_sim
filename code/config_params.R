@@ -2,7 +2,7 @@
 # These values are also used in EM as starting values
 
 # Years, Ages and lengths --------------------------------------------------------
-n_years_base = 45 # for EM and OM
+n_years_base = 40 # for EM and OM
 n_years_burnin = 10 # only for OM
 ages_base = 1:10
 lengths_base = seq(from = 2, to = 130, by = 2)
@@ -29,6 +29,7 @@ mat_base_age = c(5, 3.5) # a and b parameters age maturity
 # Initial abundance and sigmaR -------------------------------------------------------
 N1_base = 1e+05 # Initial Recruitment and mean recruitment over time period
 sigma_R = 0.6 # sigma R recruitment
+h_par = 0.8 # steepness
 
 # Selectivity ------------------------------------------------------
 agesel_based = list(model = c("logistic", "logistic"),

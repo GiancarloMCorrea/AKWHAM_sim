@@ -5,7 +5,7 @@ scenj = as.integer(args[2])
 
 # Set WD
 main_dir = here::here() 
-out_dir = here::here('results') # folder where all simulations will be saved. preferably out of GitHub folder
+out_dir = here::here('results') # folder where all simulations will be saved. 
 
 # Load required libraries:
 library(wham)
@@ -16,6 +16,7 @@ source(here::here("code", "config_params.R"))
 om_inputs <- readRDS(here::here("inputs", "om_inputs.RDS"))
 em_inputs <- readRDS(here::here("inputs", "em_inputs.RDS"))
 df.scenario <- readRDS(here::here("inputs", "df.scenarios.RDS"))
+env_data = readRDS(here::here("env_data", "env_sim.rds"))
 seeds <- readRDS(here::here("inputs","seeds.RDS"))
 
 # Make data.frame summarizing scenario:
@@ -33,37 +34,46 @@ cat(paste0("START Scenario: ", scenj, " Sim: ", simi, "\n"))
 # Simulate environmental time series:
 
 # none or stationary. when none, it wont affect any growth parameter
-if(this_scenario$Ecov_sim %in% c('none', 'stationary')) {
-  
-  set.seed(seeds[simi])
-  ecov_error = rnorm(n_years_base+n_years_burnin, mean = 0, sd = exp(Ecov_re_sig))
-  alpha = 0
-  beta = Ecov_trend[1] # trend
-  theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
-  sim_ecov = 0
-  for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
-  sim_ecov = scale(sim_ecov)
+# if(this_scenario$Ecov_sim %in% c('none', 'stationary')) {
+#   
+#   set.seed(seeds[simi])
+#   ecov_error = rnorm(n_years_base+n_years_burnin, mean = 0, sd = exp(Ecov_re_sig))
+#   alpha = 0
+#   beta = Ecov_trend[1] # trend
+#   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
+#   sim_ecov = 0
+#   for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+#   sim_ecov = scale(sim_ecov)
+#   
+# }
+# 
+# if(this_scenario$Ecov_sim == 'trend') {
+#   
+#   set.seed(seeds[simi])
+#   ecov_error = rnorm(n_years_base+n_years_burnin, mean = 0, sd = exp(Ecov_re_sig))
+#   alpha = 0
+#   beta = Ecov_trend[2] # trend
+#   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
+#   sim_ecov = 0
+#   for(i in 2:length(ecov_error)) {
+#     if(i < Ecov_year_trend) {
+#       sim_ecov[i] = alpha+0*i+theta*sim_ecov[i-1] + ecov_error[i] # beta = 0
+#     } else {
+#       sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
+#     }
+#   }
+#   sim_ecov = scale(sim_ecov)
+#   # plot(sim_ecov, type = 'l')
+# }
 
-}
-
-if(this_scenario$Ecov_sim == 'trend') {
-  
-  set.seed(seeds[simi])
-  ecov_error = rnorm(n_years_base+n_years_burnin, mean = 0, sd = exp(Ecov_re_sig))
-  alpha = 0
-  beta = Ecov_trend[2] # trend
-  theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
-  sim_ecov = 0
-  for(i in 2:length(ecov_error)) {
-    if(i < Ecov_year_trend) {
-      sim_ecov[i] = alpha+0*i+theta*sim_ecov[i-1] + ecov_error[i] # beta = 0
-    } else {
-      sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
-    }
-  }
-  sim_ecov = scale(sim_ecov)
-  # plot(sim_ecov, type = 'l')
-}
+# Use Env time series:
+ts_series = env_data$var_std[env_data$type == this_scenario$Ecov_sim]
+sim_ts = numeric(length(ts_series))
+for(t in 1:n_years_base) sim_ts[t] = rnorm(n = 1, mean = ts_series[t], sd = 0.5) # sd = 0.5
+# Create input object:
+sim_ecov = matrix(0, ncol = 1, nrow = n_years_base + n_years_burnin)
+sim_ecov[1:(n_years_burnin), 1] = rnorm(n = n_years_burnin, mean = 0, sd = 1) # mean = 0, sd = 1 for burn-in period
+sim_ecov[(n_years_burnin + 1):(n_years_base + n_years_burnin), 1] = sim_ts
 
 # Now replace the sim_ecov in the OM input:
 this_om_input$par$Ecov_re = sim_ecov
@@ -74,12 +84,12 @@ om <- fit_wham(this_om_input, do.fit = FALSE, MakeADFun.silent = TRUE)
 # Define seed and simulate WHAM data:
 set.seed(seeds[simi])
 sim_data <- om$simulate(complete=TRUE)
-if(simi == 1 & scenj %in% c(1:3, 25:27)) {
+if(simi == 1 & scenj %in% c(1:6, 41:43, 47:49)) {
   saveRDS(object = om, file = file.path(main_dir, "sample_data", 'om_sample', paste0("om_sample_", scenj, ".RDS"))) # Save OM data to make plots later
   if(this_scenario$paa_generation == 'traditional') make_plot_traditional(sim_data, scenj, main_dir) # Make plot
   if(this_scenario$paa_generation == 'stepwise') make_plot_stepwise(sim_data, scenj, main_dir) # Make plot
 }
-if(simi <= 10 & scenj %in% c(2:3)) { # LAA variability by Ecov type. Only 10 iterations
+if(simi <= 10 & scenj %in% c(1:6)) { # LAA variability by Ecov type. Only 10 iterations
   # Simulated LAA in jan 1:
   this_laa = sim_data$jan1LAA
   colnames(this_laa) = 1:sim_data$n_ages

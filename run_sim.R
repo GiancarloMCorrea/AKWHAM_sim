@@ -18,7 +18,7 @@ source(here::here("code", "config_scenarios.R"))
 # # Make OM and EM WHAM inputs
 source(here::here("code", "om_setup.R"))
 source(here::here("code", "em_setup.R"))
-
+source(here::here("code", "order_env_data.R"))
 
 # -------------------------------------------------------------------------
 # Clear workspace
@@ -31,10 +31,10 @@ main_dir = getwd()
 df.scenario = readRDS(here::here("inputs", "df.scenarios.RDS"))
 
 # Create folder to save sample data:
-dir.create('sample_data')
-dir.create(here::here('sample_data', 'om_sample'))
-dir.create(here::here('sample_data', 'LAA_sample'))
-dir.create(here::here('sample_data', 'LAApar_sample'))
+dir.create('sample_data', showWarnings = FALSE)
+dir.create(here::here('sample_data', 'om_sample'), showWarnings = FALSE)
+dir.create(here::here('sample_data', 'LAA_sample'), showWarnings = FALSE)
+dir.create(here::here('sample_data', 'LAApar_sample'), showWarnings = FALSE)
 
 # Create folder to save results:
 for(k in 1:nrow(df.scenario)) {
@@ -44,8 +44,6 @@ for(k in 1:nrow(df.scenario)) {
 
 # -------------------------------------------------------------
 # Function to run sim:
-# WARNING: before running this change main_dir in sim_core2.R
-# TODO: use here::here()
 run_iter <- function(sim, scen){
   cmd <- paste("Rscript --vanilla code/sim_core2.R", sim, scen)
   system(cmd)
@@ -58,7 +56,7 @@ snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
     snowfall::sfExportAll()
-    trash <- snowfall::sfLapply(61:110, function(sim) run_iter(sim, sc))
+    trash <- snowfall::sfLapply(1:20, function(sim) run_iter(sim, sc))
 }
 snowfall::sfStop()
 

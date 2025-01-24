@@ -14,13 +14,13 @@ write.dir = "inputs"
 # Age only scenarios (traditional sampling):
 growth_var = 0:2 # none, k-Linf, or  L1
 samp_scheme = c('random')
-Ecov_sim = c('stationary')
+Ecov_sim = c('stationary', 'trend')
 method = c('EWAA', 'WAA')
-age_selex = c('fixed')
+age_selex = c('fixed', 'varying')
 re_method = c('iid', '2dar1', '3dgmrf')
 catch_data = 'paa'
 index_data = 'paa'
-data_scen = c('poor', 'rich')
+data_scen = c('rich')
 paa_generation = c('traditional')
 
 age_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
@@ -41,13 +41,13 @@ age_df = age_df[!duplicated(age_df), ]
 # Age only scenarios (Stepwise sampling):
 growth_var = 0:2 # none, k-Linf, or  L1
 samp_scheme = c('random', 'strat')
-Ecov_sim = c('stationary')
+Ecov_sim = c('stationary', 'trend')
 method = c('EWAA', 'WAA')
 age_selex = c('fixed', 'varying')
 re_method = c('iid', '2dar1', '3dgmrf')
 catch_data = 'paa'
 index_data = 'paa'
-data_scen = c('poor', 'rich')
+data_scen = c('rich')
 paa_generation = c('stepwise')
 
 age_df2 = expand.grid(growth_var = growth_var, caal_samp = samp_scheme, 
