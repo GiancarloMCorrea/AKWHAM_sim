@@ -186,12 +186,14 @@ my_label_parsed <- function (variable, value) {
 }
 
 # Set EM and OM labels in df to plot:
-set_labels = function(df, selex_type = 'fixed', caal_type = 'random', remove_conv = TRUE, conv_level = 1e-04) {
+set_labels = function(df, selex_type = 'fixed', caal_type = 'random', data_type = c('rich', 'poor'),
+                      remove_conv = TRUE, conv_level = 1e-04) {
   
   temp = df
   if(remove_conv) temp = temp %>% filter(maxgrad < conv_level) # convergent replicates
   temp = temp %>% filter(age_selex %in% selex_type)
   temp = temp %>% filter(caal_samp %in% caal_type)
+  temp = temp %>% filter(data_scen %in% data_type)
   temp = temp %>% mutate(method = case_when(method == 'EWAA' ~ 'WEm', 
                                             method == 'WAA' ~ 'WNP'))
   temp = temp %>% mutate(re_method = case_when(re_method == '2dar1' ~ '2D', 
@@ -200,14 +202,14 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random', remove_con
   temp = temp %>% mutate(em_method = case_when(method == 'WEm' ~ 'WEm', 
                                                method == 'WNP' ~ paste(method, re_method, sep = '-')))
   temp = temp %>% mutate(em_method = factor(em_method, levels = c('WEm', 'WNP-iid', 'WNP-2D', 'WNP-3D')))
-  temp$caal_samp[temp$caal_samp == 'random'] = 'Random'
-  temp$caal_samp[temp$caal_samp == 'strat'] = 'Stratified'
   temp$age_selex[temp$age_selex == 'fixed'] = 'Fixed'
   temp$age_selex[temp$age_selex == 'varying'] = 'Varying'
   # EM label:
   temp = temp %>% mutate(em_label = em_method)
   temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor'), 
                                             labels = c('Rich', 'Poor')))
+  temp = temp %>% mutate(caal_samp = factor(caal_samp, levels = c('random', 'strat'), 
+                                            labels = c('Rand', 'Strat')))
   temp = temp %>% mutate(om_label = factor(growth_var, levels = 0:2,
                                            labels = c('Time~invariant', Variability~"in"~k*"/"*L[infinity], 
                                                       expression(Variability~"in"~L[1]))))
@@ -267,22 +269,23 @@ make_plot_1 = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0.
 # To make plot by parameter and rel_error (data_scen by color) geom linerange
 make_plot_1b = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0.4,
                        leg_pos = 'none', leg_title = NULL, alpha_level = 0.6,
-                       var_name = 'Relative error') {
+                       var_name = 'Relative error (%)') {
   
   my_plot =  ggplot(df, aes(x=em_label, y=q50, colour={{this_factor}})) +
     geom_linerange(aes(ymin = q025, ymax = q975), alpha = alpha_level, position=position_dodge(violin_sep)) +
     geom_pointrange(aes(ymin = q025, ymax = q975), alpha = alpha_level, 
                     position=position_dodge(violin_sep), fatten = 3) +
     scale_color_manual(values = col_vals) +
-    coord_cartesian(ylim = y_break*c(-1, 1)) +
+    geom_hline(yintercept=0, color=1, linetype='dashed') +
+    # coord_cartesian(ylim = y_break*c(-1, 1)) +
     theme(legend.position = leg_pos,
-          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+          axis.text.x = element_text(size = 8),
           strip.text = element_text(size = 10),
           strip.background = element_rect(fill="white"),
           legend.byrow = TRUE) +
-    scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
+    #scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
     xlab(NULL) + ylab(var_name) +
-    facet_grid(par2 ~ om_label, labeller = 'label_parsed')
+    facet_grid(par2 ~ om_label, labeller = 'label_parsed', scales = 'free_y')
   
   if(!is.null(leg_title)) my_plot = my_plot + guides(colour=guide_legend(title=leg_title))
   
@@ -396,3 +399,27 @@ make_plot_3c = function(df, this_factor, this_factor2, col_vals, violin_sep = 0.
   
 }
 
+
+# -------------------------------------------------------------------------
+
+make_heatmap = function(df, this_factor, y_label, 
+                        col_vals = c("#075AFF", "white",  "#FF0000"), 
+                        col_pal = 'YlGnBu',
+                        type = 1 # 1 = bias, 2 = precision
+                        ) {
+  
+  my_plot =  ggplot(data = df, aes(x = em_label, y = {{y_label}}, fill = {{this_factor}})) +
+    geom_tile(color = NA) +
+    geom_text(aes(label = round({{this_factor}}, 1)), color = 'black', size = 3) +
+    xlab(NULL) + ylab(NULL) +
+    theme(legend.position = 'none', axis.text.y = element_text(angle = 0, hjust = 1),
+          axis.text.x = element_text(size = 7),
+          strip.background = element_rect(fill="white")) +
+    facet_grid(par2 ~ om_label, labeller = 'label_parsed')
+
+  if(type == 1) my_plot = my_plot + scale_fill_gradient2(low = col_vals[1], mid = col_vals[2], high = col_vals[3])
+  if(type == 2) my_plot = my_plot + scale_fill_distiller(palette = col_pal, direction = 1) 
+    
+  return(my_plot)
+  
+}
