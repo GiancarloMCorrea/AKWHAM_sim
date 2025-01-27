@@ -62,7 +62,8 @@ this_age_selex = 'fixed'
 this_caal_samp = 'random'
 this_data_scen = 'rich'
 temp1 = par_df %>% dplyr::filter(par %in% c('logit_q', 'mean_rec_pars')) # 'log_F1', 'log_N1_pars'
-temp2 = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, caal_samp, age_selex, re_method, method, growth_var, im) %>% 
+temp2 = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
+                                  caal_samp, age_selex, re_method, method, growth_var, im) %>% 
             dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
 # Merge both:
 temp = bind_rows(temp1, temp2)
@@ -82,7 +83,8 @@ tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit
                                                labels = c('Traditional', 'Stepwise'))) 
 
 # Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation, data_scen, caal_samp, age_selex) %>%
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation, Ecov_sim, 
+                               caal_samp, age_selex) %>%
   dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                    q50 = quantile(rel_error, probs = 0.5)*re_mult,
                    q975 = quantile(rel_error, probs = 0.975)*re_mult)

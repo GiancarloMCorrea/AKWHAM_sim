@@ -27,7 +27,6 @@ trend_df = tail(trend_df, n = n_years_base)
 trend_df = trend_df %>% dplyr::mutate(year_id = row_number(), var_std = scale(Value), type = 'trend') %>%
   dplyr::select(year_id, var_std, type)
 
+# Merge dfs and save:
 env_df = bind_rows(stationary_df, trend_df)
-
-# Save data:
 saveRDS(env_df, file = 'env_data/env_sim.rds')

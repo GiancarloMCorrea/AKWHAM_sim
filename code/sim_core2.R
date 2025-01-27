@@ -492,7 +492,7 @@ truth = sim_data
 # Save the version for reproducibility
 truth$wham_version = om$wham_version
 # Create data.frame saving parameter names:
-ompars <- data.frame(par=names(om$par), value=om$par) |> dplyr::filter(par!='F_devs')
+ompars <- data.frame(par=names(om$par), value=om$par) |> dplyr::filter(!(par %in% c('F_devs', 'Ecov_beta', 'Ecov_process_pars')))
 ompars$par2 <- sapply(unique(ompars$par), function(x) {
   y <- which(ompars$par==x)
   if(length(y)==1) return(x)
@@ -523,7 +523,7 @@ if(!'err' %in% names(fit) & class(fit) != "character"){
   res$model$optimized <- TRUE
   res$fit <- fit[c("wham_version", "TMB_version", "opt", "final_gradient", "runtime", "rep")]
   empars <- data.frame(par=names(res$fit$opt$par), value=res$fit$opt$par)%>%
-    dplyr::filter(!grepl(x=par,'F_devs|log_NAA'))
+    dplyr::filter(!grepl(x=par,'F_devs'))
   empars$par2 <- sapply(unique(empars$par), function(x) {
     y <- which(empars$par==x)
     if(length(y)==1) return(x)

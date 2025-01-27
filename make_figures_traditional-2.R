@@ -63,18 +63,18 @@ paa_gen_approach = 'traditional'
 # -------------------------------------------------------------------------
 
 # Convergence rates:
-n_sim = 110 # number of iterations run per scenario.
+n_sim = 20 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach)
 temp = set_labels(tmp_df, caal_type = c('random', 'strat'), selex_type = c('fixed', 'varying'), remove_conv = FALSE)
-conv_df = temp %>% group_by(em_label, om_label, data_scen, caal_samp, age_selex) %>%
+conv_df = temp %>% group_by(em_label, om_label, Ecov_sim, caal_samp, age_selex) %>%
   dplyr::summarise(n_conv = length(unique(maxgrad) < max_grad)) %>%
   dplyr::mutate(n_tot = n_sim) %>%
   dplyr::mutate(conv_rate = (n_conv/n_tot)*100)
 # OUTPUT TABLE WITH SCENARIO LABELS
 plot_data = conv_df %>% mutate(y_label = paste(caal_samp, age_selex, sep = '/'))
-c1 = ggplot(data = plot_data, aes(x = em_label, y = data_scen, fill = conv_rate)) +
+c1 = ggplot(data = plot_data, aes(x = em_label, y = Ecov_sim, fill = conv_rate)) +
   geom_tile() +
   viridis::scale_fill_viridis(discrete = FALSE) +
   xlab(NULL) + ylab(NULL) +
@@ -84,7 +84,7 @@ c1 = ggplot(data = plot_data, aes(x = em_label, y = data_scen, fill = conv_rate)
         axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
         axis.text.y = element_text(size = 10)) +
   labs(fill = 'Convergence rate (%)') +
-  facet_grid(. ~ om_label, labeller = 'label_parsed', scales = 'free_y')
+  facet_grid(y_label ~ om_label, labeller = 'label_parsed', scales = 'free_y')
 ggsave(filename = file.path(save_folder, paste0(paa_gen_approach, '_convrate', fig_type)),
        plot = c1, width = img_width , height = 110, units = 'mm', dpi = img_res)
 
@@ -98,7 +98,8 @@ paa_gen_approach = 'traditional'
 this_age_selex = 'fixed'
 this_caal_samp = 'random'
 temp1 = par_df %>% dplyr::filter(par %in% c('logit_q', 'mean_rec_pars')) # 'log_F1', 'log_N1_pars'
-temp2 = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, caal_samp, age_selex, re_method, method, growth_var, im) %>% 
+temp2 = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
+                                  caal_samp, age_selex, re_method, method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
 # Merge both:
 temp = bind_rows(temp1, temp2)
@@ -122,14 +123,14 @@ counter = 1
 for(j in seq_along(all_pars)) { 
   
   dat_i = tmp_df %>% dplyr::filter(par == all_pars[j])
-  dat_i = dat_i %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
+  dat_i = dat_i %>% group_by(em_label, par2, om_label, Ecov_sim, caal_samp, age_selex) %>%
     dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
                      precision = (quantile(rel_error, probs = 0.975)-quantile(rel_error, probs = 0.025))*re_mult)
   
   # Bias plot:
-  save_bias[[counter]] = make_heatmap(dat_i, bias, data_scen)
+  save_bias[[counter]] = make_heatmap(dat_i, bias, Ecov_sim)
   # Precision plot:
-  save_precision[[counter]] = make_heatmap(dat_i, precision, data_scen, type = 2)
+  save_precision[[counter]] = make_heatmap(dat_i, precision, Ecov_sim, type = 2)
   
   counter = counter + 1
   

@@ -77,44 +77,41 @@ diag1 %>% export_svg %>% charToRaw %>%
 # -------------------------------------------------------------------------
 # Supp figure: selectivity, phi matrix, F trajectory
 
-fish_lengths = seq(from = 2, to = 130, by = 2)
-om_sim = readRDS(file = 'sample_data/om_sample/om_sample_1.RDS')
-
-# For Ecov simulated:
-n_sim = 10 # number of replicates to plot
+fish_lengths = lengths_base
 n_years = n_years_base+n_years_burnin
-save_stationary = matrix(0, ncol= n_sim, nrow = n_years)
-for(iter in 1:n_sim) {
-  set.seed(seeds[iter])
-  ecov_error = rnorm(n_years, mean = 0, sd = exp(Ecov_re_sig))
-  alpha = 0
-  beta = Ecov_trend[1] # trend
-  theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
-  sim_ecov = 0
-  for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
-  sim_ecov = scale(sim_ecov)
-  save_stationary[,iter] = sim_ecov[,1]
-}
+om_sim1 = readRDS(file = 'sample_data/om_sample/om_sample_1.RDS')
+om_sim2 = readRDS(file = 'sample_data/om_sample/om_sample_41.RDS')
+env_data = readRDS(file = 'env_data/env_sim.rds')
 
-png(filename = 'plots/Figure_1.png', width = 170, height = 170, units = 'mm', res = 400)
-par(mfrow = c(2,2))
+png(filename = 'plots/Figure_1.png', width = 170, height = 210, units = 'mm', res = 400)
+par(mfrow = c(3,2))
 
-# Selectivity:
-fish_sel = om_sim$rep$selAL[[1]][1,]
-surv_sel = om_sim$rep$selAL[[2]][1,]
+# Selectivity (age based, traditional):
+fish_sel = om_sim1$rep$selAL[[1]][1,]
+surv_sel = om_sim1$rep$selAL[[2]][1,]
+par(mar = c(4,4,1,1))
+plot(ages_base, fish_sel, type = 'l', xlab = 'Length (cm)', ylab = 'Selectivity', ylim = c(0,1))
+lines(ages_base, surv_sel, lty = 2)
+text(x = 1, y = 1, labels = "A", xpd = NA, cex = 1.5)
+legend('bottomright', legend = c('Fishery', 'Survey'), lty = c(1,2), lwd = 1, bty = 'n')
+
+# Selectivity (size based, stepwise):
+fish_sel = om_sim2$rep$selAL[[1]][1,]
+surv_sel = om_sim2$rep$selAL[[2]][1,]
 par(mar = c(4,4,1,1))
 plot(fish_lengths, fish_sel, type = 'l', xlab = 'Length (cm)', ylab = 'Selectivity', ylim = c(0,1))
 lines(fish_lengths, surv_sel, lty = 2)
-text(x = 2, y = 1, labels = "A", xpd = NA, cex = 1.5)
+text(x = 2, y = 1, labels = "B", xpd = NA, cex = 1.5)
 legend('bottomright', legend = c('Fishery', 'Survey'), lty = c(1,2), lwd = 1, bty = 'n')
 
 # Fishery mortality
 f_vector = om_sim$rep$F[,1]
 par(mar = c(4,4,1,1))
-plot(NA, NA, xlab = 'Simulated years', ylab = 'Fishing mortality (F)', xlim = c(1, 55), ylim = c(0, 0.35))
+plot(NA, NA, xlab = 'Simulated years', ylab = 'Fishing mortality (F)', xlim = c(1, n_years),
+     ylim = c(0, F_max))
 polygon(x = c(-10, 10, 10, -10, -10), y = c(-1, -1, 1, 1, -1), col = 'grey', border = NA)
 lines(1:length(f_vector), f_vector)
-text(x = 1, y = 0.35, labels = "B", xpd = NA, cex = 1.5)
+text(x = 1, y = F_max, labels = "C", xpd = NA, cex = 1.5)
 box()
 
 # Phi matrix
@@ -127,19 +124,33 @@ axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths)), labels = 
 mtext(text = 'Age', side = 1, line = 2, cex = 0.8)
 fields::image.plot(t(phi_matrix), add=T, horizontal = TRUE,
                    col = rev(viridis::viridis(100)))
-text(x = 0.04, y = 1, labels = "C", xpd = NA, cex = 1.5)
+text(x = 0.04, y = 1, labels = "D", xpd = NA, cex = 1.5)
 box()
 
-# Ecov simulated
+# Ecov time series: EBS
 par(mar = c(4,4,1,1))
-plot(NA, NA, xlab = 'Simulated years', ylab = 'Simulated environmental covariate', 
-     ylim = c(-3,3), xlim = c(1, 55))
+plot(NA, NA, xlab = 'Simulated years', ylab = 'EBS index', 
+     ylim = c(-3,3), xlim = c(1, n_years))
 polygon(x = c(-10, 10, 10, -10, -10), y = c(-10, -10, 10, 10, -10), col = 'grey', border = NA)
-for(k in 1:n_sim) {
-  lines(1:n_years, save_stationary[,k], lwd = 0.5)
-}
-text(x = 1, y = 3, labels = "D", xpd = NA, cex = 1.5)
+ts_1 = env_data %>% dplyr::filter(type == 'stationary')
+lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5) # double check with sim_core.R
+trend = lm(var_std ~ year_id, data = ts_1)
+lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
+text(x = 1, y = 3, labels = "E", xpd = NA, cex = 1.5)
 box()
+
+# Ecov time series: MAB
+par(mar = c(4,4,1,1))
+plot(NA, NA, xlab = 'Simulated years', ylab = 'MAB index', 
+     ylim = c(-3,3), xlim = c(1, n_years))
+polygon(x = c(-10, 10, 10, -10, -10), y = c(-10, -10, 10, 10, -10), col = 'grey', border = NA)
+ts_1 = env_data %>% dplyr::filter(type == 'trend')
+lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5) # double check with sim_core.R
+trend = lm(var_std ~ year_id, data = ts_1)
+lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
+text(x = 1, y = 3, labels = "F", xpd = NA, cex = 1.5)
+box()
+
 
 dev.off()
 
@@ -212,18 +223,20 @@ merged_df = all_df
 
 # Prepare for plotting:
 merged_df = merged_df %>% mutate(om_label = factor(growth_var, levels = 0:2,
-                                             labels = c('Time~invariant', Variability~"in"~k~"/"~L[infinity], 
+                                             labels = c('Time~invariant', Variability~"in"~k*"/"*L[infinity], 
                                                         expression(Variability~"in"~L[1]))),
-                                 ecov = factor(ecov),
+                                 ecov = factor(ecov, levels = c('stationary', 'trend'), 
+                                               labels = c('EBS index', 'MAB index')),
                                  i_group = paste(sim, ecov, sep = '-'))
 
 figs2 = ggplot(merged_df, aes(x=year, y=value, group = factor(i_group), color = ecov)) +
   geom_vline(xintercept = 10, linetype = 'dashed') +
-  geom_line(alpha = 0.2) +
+  geom_line(alpha = 1) +
   xlab('Simulated year') +
   ylab('Mean length (cm)') +
   theme_classic() +
-  theme(legend.position = 'none') +
+  theme(legend.position = 'bottom') +
+  guides(color = guide_legend(title = NULL)) +
   facet_nested(age ~ om_label, scales = 'free_y', labeller = 'label_parsed')
 ggsave(filename = 'plots/Figure_S1.png', plot = figs2,
        width = 170 , height = 210, units = 'mm', dpi = 500)

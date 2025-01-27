@@ -56,7 +56,7 @@ snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
     snowfall::sfExportAll()
-    trash <- snowfall::sfLapply(1:20, function(sim) run_iter(sim, sc))
+    trash <- snowfall::sfLapply(1:40, function(sim) run_iter(sim, sc))
 }
 snowfall::sfStop()
 

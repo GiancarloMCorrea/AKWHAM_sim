@@ -43,7 +43,7 @@ for(k in seq_along(scenario_names)) {
       par_df = NULL
       waa_df = NULL
       catch_paa_df = NULL
-      catch_paa_df = NULL
+      index_paa_df = NULL
       sel_df = NULL
       waare_df = NULL
       if(rep_i$model$optimized) {
@@ -67,12 +67,13 @@ for(k in seq_along(scenario_names)) {
                           sim = as.factor(im), maxgrad = get_maxgrad(rep_i))
         # PARAMETERS ----------------------------------
         # 1) Main parameters:
+        rep_i$ompars$par2[2] = 'mean_rec_pars' # do this by hand in order to merge. double check when estimated parameters change
         pars <- merge(rep_i$ompars, rep_i$empars, by='par2') %>%
-                        filter(grepl(x=par.y, "mean_rec_pars|logit_q"))
+                        filter(grepl(x=par.y, "mean_rec_pars|logit_q|log_F1"))
         # Exp() parameters in log-scale
-        pars = pars %>% mutate(value.x = if_else(grepl(x = par.x, "mean_rec_pars"), 
+        pars = pars %>% mutate(value.x = if_else(grepl(x = par.x, "mean_rec_pars|log_F1"), 
                                                  exp(value.x), value.x),
-                               value.y = if_else(grepl(x = par.y, "mean_rec_pars"), 
+                               value.y = if_else(grepl(x = par.y, "mean_rec_pars|log_F1"), 
                                                  exp(value.y), value.y))
         # Now for Q:
         pars = pars %>% dplyr::mutate(value.x = if_else(grepl(x = par.x, "logit_q"), 

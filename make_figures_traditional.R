@@ -34,6 +34,9 @@ colpal2 = c(brewer.pal(n = 9, name = 'Blues')[c(9,7,5,3)], brewer.pal(n = 9, nam
 # Convergence level:
 max_grad = 1e-04
 
+# RE in %?
+re_mult = 100
+
 # -------------------------------------------------------------------------
 # Read output files -------------------------------------------------------
 
@@ -60,18 +63,20 @@ paa_gen_approach = 'traditional'
 # -------------------------------------------------------------------------
 
 # Convergence rates:
-n_sim = 110 # number of iterations run per scenario.
+n_sim = 20 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach)
-temp = set_labels(tmp_df, caal_type = c('random', 'strat'), selex_type = c('fixed', 'varying'), remove_conv = FALSE)
-conv_df = temp %>% group_by(em_label, om_label, data_scen, caal_samp, age_selex) %>%
+temp = set_labels(tmp_df, caal_type = c('random', 'strat'), 
+                  selex_type = c('fixed', 'varying'), 
+                  remove_conv = FALSE)
+conv_df = temp %>% group_by(em_label, om_label, Ecov_sim, caal_samp, age_selex) %>%
   dplyr::summarise(n_conv = length(unique(maxgrad) < max_grad)) %>%
   dplyr::mutate(n_tot = n_sim) %>%
   dplyr::mutate(conv_rate = (n_conv/n_tot)*100)
 # OUTPUT TABLE WITH SCENARIO LABELS
 plot_data = conv_df %>% mutate(y_label = paste(caal_samp, age_selex, sep = '/'))
-c1 = ggplot(data = plot_data, aes(x = em_label, y = data_scen, fill = conv_rate)) +
+c1 = ggplot(data = plot_data, aes(x = em_label, y = Ecov_sim, fill = conv_rate)) +
   geom_tile() +
   viridis::scale_fill_viridis(discrete = FALSE) +
   xlab(NULL) + ylab(NULL) +
@@ -80,7 +85,7 @@ c1 = ggplot(data = plot_data, aes(x = em_label, y = data_scen, fill = conv_rate)
         axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
         axis.text.y = element_text(size = 10)) +
   labs(fill = 'Convergence rate (%)') +
-  facet_grid(. ~ om_label, labeller = 'label_parsed', scales = 'free_y')
+  facet_grid(y_label ~ om_label, labeller = 'label_parsed', scales = 'free_y')
 ggsave(filename = file.path(save_folder, paste0(paa_gen_approach, '_convrate', fig_type)),
        plot = c1, width = img_width , height = 110, units = 'mm', dpi = img_res)
 
@@ -99,14 +104,15 @@ temp = temp %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q')
                                      labels = c(expression(bar(R)), 'Q'))) # expression(N["1,1"]) 'F[1]'
 
 # Prepare data for geom linerage plot:
-plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
-                dplyr::summarise(q025 = quantile(rel_error, probs = 0.025), q50 = quantile(rel_error, probs = 0.5),
-                                 q975 = quantile(rel_error, probs = 0.975))
+plot_dat = temp %>% group_by(em_label, par2, om_label, Ecov_sim, caal_samp, age_selex) %>%
+                dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
+                                 q50 = quantile(rel_error, probs = 0.5)*re_mult,
+                                 q975 = quantile(rel_error, probs = 0.975)*re_mult)
 
 # WEm and WNP results:
 # p1 = make_plot_1(temp, comb, y_break = 0.3, violin_sep = 0.6, 
 #                  leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
-p1 = make_plot_1b(plot_dat, data_scen, y_break = 0.3, violin_sep = 0.4, 
+p1 = make_plot_1b(plot_dat, Ecov_sim, y_break = 0.3, violin_sep = 0.4, 
                  leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
 ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'par', sep = '-'), fig_type)), 
        plot = p1, width = img_width , height = 130, units = 'mm', dpi = img_res)
@@ -117,7 +123,7 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age
 this_age_selex = 'fixed'
 this_caal_samp = 'random'
 temp = ts_df %>% filter(paa_generation == paa_gen_approach) %>%
-  dplyr::group_by(scenario, par, data_scen, caal_samp, age_selex, re_method, 
+  dplyr::group_by(scenario, par, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
 # Set EM and OM labels:
@@ -129,14 +135,15 @@ temp = temp %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
                                      labels = c('SSB', 'R', 'F')))
 
 # Prepare data for geom linerage plot:
-plot_dat = temp %>% group_by(em_label, par2, om_label, data_scen, caal_samp, age_selex) %>%
-  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025), q50 = quantile(rel_error, probs = 0.5),
-                   q975 = quantile(rel_error, probs = 0.975))
+plot_dat = temp %>% group_by(em_label, par2, om_label, Ecov_sim, caal_samp, age_selex) %>%
+  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
+                   q50 = quantile(rel_error, probs = 0.5)*re_mult,
+                   q975 = quantile(rel_error, probs = 0.975)*re_mult)
 
 # WEm and WNP results:
 # p1 = make_plot_1(temp, comb, y_break = 0.2, violin_sep = 0.6, 
 #                  leg_pos = 'bottom', leg_title = '', alpha_level = 0.75, col_vals = colpal1)
-p1 = make_plot_1b(plot_dat, data_scen, y_break = 0.15, violin_sep = 0.4, 
+p1 = make_plot_1b(plot_dat, Ecov_sim, y_break = 0.15, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
 ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'ts', sep = '-'), fig_type)), 
        plot = p1, width = img_width, height = 160, units = 'mm', dpi = img_res)

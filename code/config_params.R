@@ -41,7 +41,7 @@ lensel_based = list(model = c("len-logistic", "len-logistic"),
 
 Ecov_re_sig = c(0) # Ecov process error SD (this will be exp() in WHAM)
 Ecov_re_cor <- c(0.3) # Ecov process error autocorrelation: in WHAM: -1 + 2/(1 + exp(-phi))
-Ecov_effect <- c(0.2, -0.1, 0.25) # Effect on growth parameter (Beta, parameter-specific: k, Linf, L1)
+Ecov_effect <- c(0.3, -0.15, 0.25) # Effect on growth parameter (Beta, parameter-specific: k, Linf, L1)
 # K and Linf have negatively correlated variability
 Ecov_trend = c(0, 0.03)
 # When ecov trend positive, year when this trend will start to be simulated:

@@ -62,19 +62,19 @@ paa_gen_approach = 'stepwise'
 # -------------------------------------------------------------------------
 
 # Convergence rates:
-n_sim = 110 # number of iterations run per scenario.
+n_sim = 20 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 paa_gen_approach = paa_gen_approach
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach)
 temp = set_labels(tmp_df, caal_type = c('random', 'strat'), selex_type = c('fixed', 'varying'), remove_conv = FALSE)
-conv_df = temp %>% group_by(em_label, om_label, data_scen, caal_samp, age_selex) %>%
+conv_df = temp %>% group_by(em_label, om_label, Ecov_sim, caal_samp, age_selex) %>%
             dplyr::summarise(n_conv = length(unique(maxgrad) < max_grad)) %>%
             dplyr::mutate(n_tot = n_sim) %>%
             dplyr::mutate(conv_rate = (n_conv/n_tot)*100)
 # OUTPUT TABLE WITH SCENARIO LABELS
-plot_data = conv_df %>% mutate(y_label = caal_samp)
-c1 = ggplot(data = plot_data, aes(x = em_label, y = data_scen, fill = conv_rate)) +
+plot_data = conv_df %>% mutate(y_label = paste(caal_samp, age_selex, sep = '/'))
+c1 = ggplot(data = plot_data, aes(x = em_label, y = Ecov_sim, fill = conv_rate)) +
   geom_tile() +
   viridis::scale_fill_viridis(discrete = FALSE) +
   xlab(NULL) + ylab(NULL) +
@@ -97,7 +97,8 @@ paa_gen_approach = 'stepwise'
 this_age_selex = 'fixed'
 this_caal_samp = c('random', 'strat')
 temp1 = par_df %>% dplyr::filter(par %in% c('logit_q', 'mean_rec_pars')) # 'log_F1', 'log_N1_pars'
-temp2 = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, caal_samp, age_selex, re_method, method, growth_var, im) %>% 
+temp2 = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
+                                  caal_samp, age_selex, re_method, method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
 # Merge both:
 temp = bind_rows(temp1, temp2)
@@ -112,7 +113,7 @@ tmp_df = filter_iter(tmp_df)
 tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'SSB', 'Rec', 'F'),
                                          labels = c(expression(bar(R)), 'Q', 'SSB', 'R', 'F')) # expression(N["1,1"]) 'F[1]'
 )
-tmp_df = tmp_df %>% mutate(y_label = paste(caal_samp, data_scen, sep = '/'))
+tmp_df = tmp_df %>% mutate(y_label = paste(caal_samp, Ecov_sim, sep = '/'))
 
 # Make heatmap parameter by parameter and OM by OM:
 all_pars = c('mean_rec_pars', 'logit_q', 'SSB', 'Rec', 'F')

@@ -208,6 +208,8 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random', data_type 
   temp = temp %>% mutate(em_label = em_method)
   temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor'), 
                                             labels = c('Rich', 'Poor')))
+  temp = temp %>% mutate(Ecov_sim = factor(Ecov_sim, levels = c('stationary','trend'), 
+                                            labels = c('No-Trend', 'Trend')))
   temp = temp %>% mutate(caal_samp = factor(caal_samp, levels = c('random', 'strat'), 
                                             labels = c('Rand', 'Strat')))
   temp = temp %>% mutate(om_label = factor(growth_var, levels = 0:2,

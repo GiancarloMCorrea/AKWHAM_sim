@@ -90,7 +90,7 @@ make_om <- function(Fmax = 0.8, Fmin = 0.05,
     input$par$Ecov_beta[i+3,1,1,] = Ecov_effect[i] # 4:6 = LAA effect vonB. change if number of surveys change
   }
   input$par$log_NAA_sigma = log(sigma_R) # sigmaR recruitment
-  input$map$log_NAA_sigma = factor(NA) # fix sigma Important to do this for plotting
+  input$map$mean_rec_pars <- factor(c(NA, 1)) # fix this parameter Important to do this for plotting
   input$map$log_N1_pars <- factor(c(1, NA)) # Important to do this for plotting
 
   return(input)

@@ -235,7 +235,7 @@ for(i in 1:NROW(df.scenario)){
                                           simulate_process = TRUE, simulate_projection = FALSE,
                                           bias_correct_pe = TRUE, bias_correct_oe = TRUE)
   # Fix some parameters:
-  #em_inputs[[i]]$par$log_NAA_sigma = log(sigma_R)
+  em_inputs[[i]]$par$log_NAA_sigma = log(sigma_R)
   #em_inputs[[i]]$map$log_NAA_sigma <- factor(NA) # Fix NAA sigma
   em_inputs[[i]]$map$log_N1_pars <- factor(rep(NA, times = length(ages_base))) # Fix N1 pars
   em_inputs[[i]]$map$mean_rec_pars <- factor(c(NA, 1)) # Fix steepness
