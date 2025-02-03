@@ -57,23 +57,22 @@ for(k in seq_along(scenario_names)) {
         recruits <- data.frame(par = 'Rec',
                                year = 1:nyears,
                                est = rep_i$fit$rep$NAA[,1],
-                               truth = rep_i$truth$NAA[(n_years_burnin+1):(n_years_base+n_years_burnin),1])
+                               truth = tail(rep_i$truth$NAA[,1], n = n_years_base))
         f <- data.frame(par = 'F',
                         year = 1:nyears,
-                        est = rep_i$fit$rep$Fbar,
-                        truth = tail(rep_i$truth$Fbar, n = n_years_base))
+                        est = rep_i$fit$rep$F[,1],
+                        truth = tail(rep_i$truth$F[,1], n = n_years_base))
         ts_df <- bind_rows(ssb, f, recruits) %>% bind_cols(rep_i$model) %>%
                           mutate(rel_error = (est-truth)/truth, abs_error = est-truth,
                           sim = as.factor(im), maxgrad = get_maxgrad(rep_i))
         # PARAMETERS ----------------------------------
         # 1) Main parameters:
-        rep_i$ompars$par2[2] = 'mean_rec_pars' # do this by hand in order to merge. double check when estimated parameters change
         pars <- merge(rep_i$ompars, rep_i$empars, by='par2') %>%
-                        filter(grepl(x=par.y, "mean_rec_pars|logit_q|log_F1"))
+                        filter(grepl(x=par.y, "mean_rec_pars|logit_q|log_F1|log_NAA_sigma"))
         # Exp() parameters in log-scale
-        pars = pars %>% mutate(value.x = if_else(grepl(x = par.x, "mean_rec_pars|log_F1"), 
+        pars = pars %>% mutate(value.x = if_else(grepl(x = par.x, "mean_rec_pars|log_F1|log_NAA_sigma"), 
                                                  exp(value.x), value.x),
-                               value.y = if_else(grepl(x = par.y, "mean_rec_pars|log_F1"), 
+                               value.y = if_else(grepl(x = par.y, "mean_rec_pars|log_F1|log_NAA_sigma"), 
                                                  exp(value.y), value.y))
         # Now for Q:
         pars = pars %>% dplyr::mutate(value.x = if_else(grepl(x = par.x, "logit_q"), 

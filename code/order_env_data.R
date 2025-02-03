@@ -6,12 +6,12 @@ source(here::here('code', 'config_params.R'))
 # 1985-2024, 2020 value is imputated from average 2019 and 2021
 # Standardized to mean of zero
 stationary_df = read.csv("env_data/EBS_Temp.csv")
-stationary_df = stationary_df %>% dplyr::select(YEAR, MEAN_GEAR_TEMPERATURE)
-imputate_2020 = mean(stationary_df$MEAN_GEAR_TEMPERATURE[stationary_df$YEAR %in% c(2019, 2021)])
-stationary_df = stationary_df %>% add_row(YEAR = 2020, MEAN_GEAR_TEMPERATURE = imputate_2020, .after = 38)
+stationary_df = stationary_df %>% dplyr::select(YEAR, AREA_LTE2_KM2)
+imputate_2020 = mean(stationary_df$AREA_LTE2_KM2[stationary_df$YEAR %in% c(2019, 2021)])
+stationary_df = stationary_df %>% add_row(YEAR = 2020, AREA_LTE2_KM2 = imputate_2020, .after = 38)
 stationary_df = tail(stationary_df, n = n_years_base)
 stationary_df = stationary_df %>% dplyr::mutate(year_id = row_number(), 
-                                         var_std = scale(MEAN_GEAR_TEMPERATURE),
+                                         var_std = scale(AREA_LTE2_KM2),
                                          type = 'stationary') %>%
   dplyr::select(year_id, var_std, type)
 
