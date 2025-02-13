@@ -276,8 +276,8 @@ if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
 #  Survey:
 if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
   
-  if(this_scenario$data_scen == 'poor') Nsamp_CAAL = 50 # Nsamp size for CAAL
-  if(this_scenario$data_scen == 'rich') Nsamp_CAAL = 100 # Nsamp size for CAAL
+  if(this_scenario$data_scen == 'poor') Nsamp_CAAL = 25 # Nsamp size for CAAL
+  if(this_scenario$data_scen == 'rich') Nsamp_CAAL = 50 # Nsamp size for CAAL
   # Nsamp_CAAL = 100 # Nsamp size for CAAL
   
   # Order to sort: year, fleet, len bin, age

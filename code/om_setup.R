@@ -97,16 +97,16 @@ for(i in 1:length(growth_scenarios)) {
       # Define obs error scenarios (data rich vs data poor):
       if(data_scenarios[j] == 'rich') {
         catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = n_tot_years)
-        agg_index_cv = matrix(0.1, ncol = n_indices, nrow = n_tot_years)
+        agg_index_cv = matrix(0.2, ncol = n_indices, nrow = n_tot_years)
         # Neff values in OM:
-        catch_Neff = matrix(100, ncol = n_fisheries, nrow = n_tot_years) # This will not be used, will be replaced later
-        index_Neff = matrix(200, ncol = n_indices, nrow = n_tot_years) # This will not be used, will be replaced later
-        catch_NeffL = matrix(100, ncol = n_fisheries, nrow = n_tot_years)
-        index_NeffL = matrix(200, ncol = n_indices, nrow = n_tot_years)
+        catch_Neff = matrix(50, ncol = n_fisheries, nrow = n_tot_years) # This will not be used, will be replaced later
+        index_Neff = matrix(100, ncol = n_indices, nrow = n_tot_years) # This will not be used, will be replaced later
+        catch_NeffL = matrix(50, ncol = n_fisheries, nrow = n_tot_years)
+        index_NeffL = matrix(100, ncol = n_indices, nrow = n_tot_years)
         # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
         ecov_i$logsigma = cbind(rep(log(0.4), n_tot_years)) # logsigma Ecov
         # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-        waa_cv = array(0.1, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base))) 
+        waa_cv = array(0.2, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base))) 
       }
       
       if(data_scenarios[j] == 'poor') {
@@ -120,7 +120,7 @@ for(i in 1:length(growth_scenarios)) {
         # Go to sim_core.R file to change the Nsamp for CAAL. Remember it should be smaller than PAL Nsamp 
         ecov_i$logsigma = cbind(rep(log(0.8), n_tot_years)) # logsigma Ecov
         # Nsamp for WAA, this should change in the future (function of NAA), TODO:
-        waa_cv = array(0.3, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base)))
+        waa_cv = array(0.4, dim = c(n_fisheries+n_indices+2, n_tot_years, length(ages_base)))
       }
     
       # ---------------------
