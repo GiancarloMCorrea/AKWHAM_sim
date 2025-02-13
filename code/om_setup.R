@@ -96,7 +96,7 @@ for(i in 1:length(growth_scenarios)) {
       # ---------------------
       # Define obs error scenarios (data rich vs data poor):
       if(data_scenarios[j] == 'rich') {
-        catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = n_tot_years)
+        catch_sigma = matrix(0.05, ncol = n_fisheries, nrow = n_tot_years)
         agg_index_cv = matrix(0.2, ncol = n_indices, nrow = n_tot_years)
         # Neff values in OM:
         catch_Neff = matrix(50, ncol = n_fisheries, nrow = n_tot_years) # This will not be used, will be replaced later

@@ -92,7 +92,7 @@ for(i in 1:NROW(df.scenario)){
   # ---------------------
   # Define obs error scenarios (data rich vs data poor):
   if(df.scenario$data_scen[i] == 'rich') {
-    catch_sigma = matrix(0.025, ncol = n_fisheries, nrow = n_years_base)
+    catch_sigma = matrix(0.05, ncol = n_fisheries, nrow = n_years_base)
     agg_index_cv = matrix(0.2, ncol = n_indices, nrow = n_years_base)
     catch_Neff = matrix(50, ncol = n_fisheries, nrow = n_years_base)
     index_Neff = matrix(100, ncol = n_indices, nrow = n_years_base)
