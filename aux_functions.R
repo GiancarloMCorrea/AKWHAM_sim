@@ -186,7 +186,8 @@ my_label_parsed <- function (variable, value) {
 }
 
 # Set EM and OM labels in df to plot:
-set_labels = function(df, selex_type = 'fixed', caal_type = 'random', data_type = c('rich', 'poor'),
+set_labels = function(df, selex_type = 'fixed', caal_type = 'random', 
+                      data_type = 'rich', ecov_type = 'stationary',
                       remove_conv = TRUE, conv_level = 1e-04) {
   
   temp = df
@@ -194,6 +195,7 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random', data_type 
   temp = temp %>% filter(age_selex %in% selex_type)
   temp = temp %>% filter(caal_samp %in% caal_type)
   temp = temp %>% filter(data_scen %in% data_type)
+  temp = temp %>% filter(Ecov_sim %in% ecov_type)
   temp = temp %>% mutate(method = case_when(method == 'EWAA' ~ 'WEm', 
                                             method == 'WAA' ~ 'WNP'))
   temp = temp %>% mutate(re_method = case_when(re_method == '2dar1' ~ '2D', 
@@ -209,7 +211,7 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random', data_type 
   temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor'), 
                                             labels = c('Rich', 'Poor')))
   temp = temp %>% mutate(Ecov_sim = factor(Ecov_sim, levels = c('stationary','trend'), 
-                                            labels = c('No-Trend', 'Trend')))
+                                            labels = c('EBS', 'MAB')))
   temp = temp %>% mutate(caal_samp = factor(caal_samp, levels = c('random', 'strat'), 
                                             labels = c('Rand', 'Strat')))
   temp = temp %>% mutate(om_label = factor(growth_var, levels = 0:2,
@@ -415,7 +417,7 @@ make_heatmap = function(df, this_factor, y_label,
     geom_text(aes(label = round({{this_factor}}, 1)), color = 'black', size = 3) +
     xlab(NULL) + ylab(NULL) +
     theme(legend.position = 'none', axis.text.y = element_text(angle = 0, hjust = 1),
-          axis.text.x = element_text(size = 7),
+          axis.text.x = element_text(size = 9),
           strip.background = element_rect(fill="white")) +
     facet_grid(par2 ~ om_label, labeller = 'label_parsed')
 

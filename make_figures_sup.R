@@ -5,6 +5,7 @@ library(plyr)
 library(tidyr)
 library(reshape2)
 require(ggh4x)
+library(fields)
 theme_set(theme_bw())
 
 # Clean workspace
@@ -82,6 +83,7 @@ n_years = n_years_base+n_years_burnin
 om_sim1 = readRDS(file = 'sample_data/om_sample/om_sample_1.RDS')
 om_sim2 = readRDS(file = 'sample_data/om_sample/om_sample_41.RDS')
 env_data = readRDS(file = 'env_data/env_sim.rds')
+cex_lab = 0.8
 
 png(filename = 'plots/Figure_1.png', width = 170, height = 210, units = 'mm', res = 400)
 par(mfrow = c(3,2))
@@ -89,34 +91,40 @@ par(mfrow = c(3,2))
 # Selectivity (age based, traditional):
 fish_sel = om_sim1$rep$selAL[[1]][1,]
 surv_sel = om_sim1$rep$selAL[[2]][1,]
-par(mar = c(4,4,1,1))
-plot(ages_base, fish_sel, type = 'l', xlab = 'Length (cm)', ylab = 'Selectivity', ylim = c(0,1))
+par(mar = c(3,3.5,0.8,0.5))
+plot(ages_base, fish_sel, type = 'l', xlab = '', ylab = '', ylim = c(0,1))
 lines(ages_base, surv_sel, lty = 2)
 text(x = 1, y = 1, labels = "A", xpd = NA, cex = 1.5)
+mtext(text = 'Age (years)', side = 1, line = 2, cex = cex_lab)
+mtext(text = 'Selectivity', side = 2, line = 2.25, cex = cex_lab)
 legend('bottomright', legend = c('Fishery', 'Survey'), lty = c(1,2), lwd = 1, bty = 'n')
 
 # Selectivity (size based, stepwise):
 fish_sel = om_sim2$rep$selAL[[1]][1,]
 surv_sel = om_sim2$rep$selAL[[2]][1,]
-par(mar = c(4,4,1,1))
-plot(fish_lengths, fish_sel, type = 'l', xlab = 'Length (cm)', ylab = 'Selectivity', ylim = c(0,1))
+par(mar = c(3,3.5,0.8,0.5))
+plot(fish_lengths, fish_sel, type = 'l', xlab = '', ylab = '', ylim = c(0,1))
 lines(fish_lengths, surv_sel, lty = 2)
 text(x = 2, y = 1, labels = "B", xpd = NA, cex = 1.5)
+mtext(text = 'Length (cm)', side = 1, line = 2, cex = cex_lab)
+mtext(text = 'Selectivity', side = 2, line = 2.25, cex = cex_lab)
 legend('bottomright', legend = c('Fishery', 'Survey'), lty = c(1,2), lwd = 1, bty = 'n')
 
 # Fishery mortality
-f_vector = om_sim$rep$F[,1]
-par(mar = c(4,4,1,1))
-plot(NA, NA, xlab = 'Simulated years', ylab = 'Fishing mortality (F)', xlim = c(1, n_years),
+f_vector = om_sim1$rep$F[,1]
+par(mar = c(3,3.5,0.8,0.5))
+plot(NA, NA, xlab = '', ylab = '', xlim = c(1, n_years),
      ylim = c(0, F_max))
 polygon(x = c(-10, 10, 10, -10, -10), y = c(-1, -1, 1, 1, -1), col = 'grey', border = NA)
 lines(1:length(f_vector), f_vector)
 text(x = 1, y = F_max, labels = "C", xpd = NA, cex = 1.5)
+mtext(text = 'Simulated years', side = 1, line = 2, cex = cex_lab)
+mtext(text = 'Fishing mortality (F)', side = 2, line = 2.25, cex = cex_lab)
 box()
 
 # Ecov time series: EBS
-par(mar = c(4,4,1,1))
-plot(NA, NA, xlab = 'Simulated years', ylab = 'EBS index', 
+par(mar = c(3,3.5,0.8,0.5))
+plot(NA, NA, xlab = '', ylab = '', 
      ylim = c(-3,3), xlim = c(1, n_years))
 polygon(x = c(-10, 10, 10, -10, -10), y = c(-10, -10, 10, 10, -10), col = 'grey', border = NA)
 ts_1 = env_data %>% dplyr::filter(type == 'stationary')
@@ -124,11 +132,13 @@ lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), l
 trend = lm(var_std ~ year_id, data = ts_1)
 lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
 text(x = 1, y = 3, labels = "D", xpd = NA, cex = 1.5)
+mtext(text = 'Simulated years', side = 1, line = 2, cex = cex_lab)
+mtext(text = 'EBS index', side = 2, line = 2.25, cex = cex_lab)
 box()
 
 # Ecov time series: MAB
-par(mar = c(4,4,1,1))
-plot(NA, NA, xlab = 'Simulated years', ylab = 'MAB index', 
+par(mar = c(3,3.5,0.8,0.5))
+plot(NA, NA, xlab = '', ylab = '', 
      ylim = c(-3,3), xlim = c(1, n_years))
 polygon(x = c(-10, 10, 10, -10, -10), y = c(-10, -10, 10, 10, -10), col = 'grey', border = NA)
 ts_1 = env_data %>% dplyr::filter(type == 'trend')
@@ -136,18 +146,21 @@ lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), l
 trend = lm(var_std ~ year_id, data = ts_1)
 lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
 text(x = 1, y = 3, labels = "E", xpd = NA, cex = 1.5)
+mtext(text = 'Simulated years', side = 1, line = 2, cex = cex_lab)
+mtext(text = 'MAB index', side = 2, line = 2.25, cex = cex_lab)
 box()
 
 # Phi matrix
-phi_matrix = om_sim$rep$jan1_phi_mat[,,1]
-par(mar = c(6,4,1,1))
-image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = 'Length (cm)', 
+phi_matrix = om_sim1$rep$jan1_phi_mat[,,1]
+par(mar = c(6,3.5,0.8,0.5))
+image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = '', 
       main = NULL)
 axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
 axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths)), labels = fish_lengths)
-mtext(text = 'Age', side = 1, line = 2, cex = 0.8)
 fields::image.plot(t(phi_matrix), add=T, horizontal = TRUE,
-                   col = rev(viridis::viridis(100)))
+                   col = rev(viridis::viridis(100)), legend.mar = 3.5)
+mtext(text = 'Age', side = 1, line = 2, cex = cex_lab)
+mtext(text = 'Length (cm)', side = 2, line = 2.25, cex = cex_lab)
 text(x = 0.04, y = 1, labels = "F", xpd = NA, cex = 1.5)
 box()
 

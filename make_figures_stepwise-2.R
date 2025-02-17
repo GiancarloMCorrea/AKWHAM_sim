@@ -67,7 +67,10 @@ n_sim = 20 # number of iterations run per scenario.
 # Set EM and OM labels:
 paa_gen_approach = paa_gen_approach
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach)
-temp = set_labels(tmp_df, caal_type = c('random', 'strat'), selex_type = c('fixed', 'varying'), remove_conv = FALSE)
+temp = set_labels(tmp_df, caal_type = c('random', 'strat'), 
+                  selex_type = c('fixed', 'varying'), 
+                  ecov_type = c('stationary', 'trend'),
+                  remove_conv = FALSE)
 conv_df = temp %>% group_by(em_label, om_label, Ecov_sim, caal_samp, age_selex) %>%
             dplyr::summarise(n_conv = length(unique(maxgrad) < max_grad)) %>%
             dplyr::mutate(n_tot = n_sim) %>%
@@ -363,3 +366,47 @@ p9 = make_plot_3c(plot_dat, age_selex, caal_samp, violin_sep = 0.4, min_alpha = 
 ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex[2], 'sel', sep = '-'), fig_type)), plot = p9, 
        width = img_width , height = 140, units = 'mm', dpi = img_res)
 
+
+# -------------------------------------------------------------------------
+
+# Heatmap to analyze effects of data_scen and sampling strategy:
+# Stepwise approach
+paa_gen_approach = 'stepwise'
+tmp_df = temp %>% dplyr::filter(paa_generation == paa_gen_approach)
+# Set EM and OM labels:
+tmp_df = set_labels(tmp_df, selex_type = this_age_selex, caal_type = c('random', 'strat'), conv_level = max_grad)
+# Filter first X reps:
+tmp_df = filter_iter(tmp_df)
+# Set par labels:
+tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'SSB', 'Rec', 'F'),
+                                         labels = c(expression(bar(R)), 'Q', 'SSB', 'R', 'F')) # expression(N["1,1"]) 'F[1]'
+) 
+tmp_df = tmp_df %>% mutate(y_label = paste(caal_samp, data_scen, sep = '/'))
+
+# Make heatmap parameter by parameter and OM by OM:
+all_pars = c('mean_rec_pars', 'logit_q', 'SSB', 'Rec', 'F')
+save_bias = list()
+save_precision = list()
+counter = 1
+for(j in seq_along(all_pars)) { 
+  
+  dat_i = tmp_df %>% dplyr::filter(par == all_pars[j])
+  dat_i = dat_i %>% group_by(em_label, par2, om_label, y_label, age_selex) %>%
+    dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
+                     precision = (quantile(rel_error, probs = 0.975)-quantile(rel_error, probs = 0.025))*re_mult)
+  
+  # Bias plot:
+  save_bias[[counter]] = make_heatmap(dat_i, bias, y_label)
+  # Precision plot:
+  save_precision[[counter]] = make_heatmap(dat_i, precision, y_label, type = 2)
+  
+  counter = counter + 1
+  
+}
+
+p_bias = gridExtra::grid.arrange(grobs = save_bias, ncol = 1)
+p_precision = gridExtra::grid.arrange(grobs = save_precision, ncol = 1)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'par-bias', sep = '-'), fig_type)), 
+       plot = p_bias, width = img_width, height = 220, units = 'mm', dpi = img_res)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'par-precision', sep = '-'), fig_type)), 
+       plot = p_precision, width = img_width, height = 220, units = 'mm', dpi = img_res)

@@ -32,6 +32,8 @@ age_df = expand.grid(growth_var = growth_var, caal_samp = samp_scheme,
 age_df = age_df %>% mutate(re_method = if_else(method == 'EWAA', 'none', re_method))
 # Only time varying selex when growth_var is zero:
 age_df$age_selex[age_df$growth_var == 0] = 'fixed'
+# To remove Ecov when growth var is zero
+age_df$Ecov_sim[age_df$growth_var == 0] = 'stationary'
 
 # Delete repeating scenarios:
 age_df = age_df[!duplicated(age_df), ]
@@ -59,6 +61,8 @@ age_df2 = expand.grid(growth_var = growth_var, caal_samp = samp_scheme,
 age_df2 = age_df2 %>% mutate(re_method = if_else(method == 'EWAA', 'none', re_method))
 # Only time varying selex when growth_var is zero:
 age_df2$age_selex[age_df2$growth_var == 0] = 'fixed'
+# To remove Ecov when growth var is zero
+age_df2$Ecov_sim[age_df2$growth_var == 0] = 'stationary'
 
 # Delete repeating scenarios:
 age_df2 = age_df2[!duplicated(age_df2), ]

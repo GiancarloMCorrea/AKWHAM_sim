@@ -84,12 +84,12 @@ om <- fit_wham(this_om_input, do.fit = FALSE, MakeADFun.silent = TRUE)
 # Define seed and simulate WHAM data:
 set.seed(seeds[simi])
 sim_data <- om$simulate(complete=TRUE)
-if(simi == 1 & scenj %in% c(1:6, 41:43, 47:49)) {
+if(simi == 1 & scenj %in% c(1:5, 37:39, 43:44)) {
   saveRDS(object = om, file = file.path(main_dir, "sample_data", 'om_sample', paste0("om_sample_", scenj, ".RDS"))) # Save OM data to make plots later
   if(this_scenario$paa_generation == 'traditional') make_plot_traditional(sim_data, scenj, main_dir) # Make plot
   if(this_scenario$paa_generation == 'stepwise') make_plot_stepwise(sim_data, scenj, main_dir) # Make plot
 }
-if(simi <= 10 & scenj %in% c(1:6)) { # LAA variability by Ecov type. Only 10 iterations
+if(simi <= 10 & scenj %in% c(1:5)) { # LAA variability by Ecov type. Only 10 iterations
   # Simulated LAA in jan 1:
   this_laa = sim_data$jan1LAA
   colnames(this_laa) = 1:sim_data$n_ages
