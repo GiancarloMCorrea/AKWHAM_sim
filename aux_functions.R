@@ -406,7 +406,7 @@ make_plot_3c = function(df, this_factor, this_factor2, col_vals, violin_sep = 0.
 
 # -------------------------------------------------------------------------
 
-make_heatmap = function(df, this_factor, y_label, 
+make_heatmap = function(df, this_factor, this_label, y_label, 
                         col_vals = c("#075AFF", "white",  "#FF0000"), 
                         col_pal = 'YlGnBu',
                         type = 1 # 1 = bias, 2 = precision
@@ -414,7 +414,7 @@ make_heatmap = function(df, this_factor, y_label,
   
   my_plot =  ggplot(data = df, aes(x = em_label, y = {{y_label}}, fill = {{this_factor}})) +
     geom_tile(color = NA) +
-    geom_text(aes(label = round({{this_factor}}, 1)), color = 'black', size = 3) +
+    geom_text(aes(label = {{this_label}}), color = 'black', size = 3) +
     xlab(NULL) + ylab(NULL) +
     theme(legend.position = 'none', axis.text.y = element_text(angle = 0, hjust = 1),
           axis.text.x = element_text(size = 9),

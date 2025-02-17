@@ -109,36 +109,30 @@ tmp_df = set_labels(tmp_df, ecov_type = c('stationary', 'trend'), conv_level = m
 tmp_df = filter_iter(tmp_df)
 # Set par labels:
 tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_NAA_sigma'),
-                                         labels = c(expression(bar(R)), 'Q', expression(sigma[R]))) # expression(N["1,1"]) 'F[1]'
+                                         labels = c(expression(R[0]), 'Q', expression(sigma[R]))) # expression(N["1,1"]) 'F[1]'
 ) 
 
 # Make heatmap parameter by parameter and OM by OM:
 all_pars = c('mean_rec_pars', 'logit_q', 'log_NAA_sigma')
 save_bias = list()
-save_precision = list()
 counter = 1
 for(j in seq_along(all_pars)) { 
   
   dat_i = tmp_df %>% dplyr::filter(par == all_pars[j])
   dat_i = dat_i %>% group_by(em_label, par2, om_label, Ecov_sim, caal_samp, age_selex) %>%
-    dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                     precision = (quantile(rel_error, probs = 0.975)-quantile(rel_error, probs = 0.025))*re_mult)
+    dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult, 1),
+                     precision = round(sd(rel_error)*re_mult))
+  dat_i = dat_i %>% mutate(box_label = paste0(bias, ' (', precision, ')'))
   
   # Bias plot:
-  save_bias[[counter]] = make_heatmap(dat_i, bias, Ecov_sim)
-  # Precision plot:
-  save_precision[[counter]] = make_heatmap(dat_i, precision, Ecov_sim, type = 2)
-  
+  save_bias[[counter]] = make_heatmap(df = dat_i, this_factor = bias, this_label = box_label, y_label = Ecov_sim)
   counter = counter + 1
   
 }
 
 p_bias = gridExtra::grid.arrange(grobs = save_bias, ncol = 1)
-p_precision = gridExtra::grid.arrange(grobs = save_precision, ncol = 1)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'par-bias', sep = '-'), fig_type)), 
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'par', sep = '-'), fig_type)), 
        plot = p_bias, width = img_width, height = 190, units = 'mm', dpi = img_res)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'par-precision', sep = '-'), fig_type)), 
-       plot = p_precision, width = img_width, height = 190, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # avg TS plot:
@@ -161,30 +155,24 @@ tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
 # Make heatmap parameter by parameter and OM by OM:
 all_pars = c('SSB', 'Rec', 'F')
 save_bias = list()
-save_precision = list()
 counter = 1
 for(j in seq_along(all_pars)) { 
   
   dat_i = tmp_df %>% dplyr::filter(par == all_pars[j])
   dat_i = dat_i %>% group_by(em_label, par2, om_label, Ecov_sim, caal_samp, age_selex) %>%
-    dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                     precision = (quantile(rel_error, probs = 0.975)-quantile(rel_error, probs = 0.025))*re_mult)
+    dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult, 1),
+                     precision = round(sd(rel_error)*re_mult))
+  dat_i = dat_i %>% mutate(box_label = paste0(bias, ' (', precision, ')'))
   
   # Bias plot:
-  save_bias[[counter]] = make_heatmap(dat_i, bias, Ecov_sim)
-  # Precision plot:
-  save_precision[[counter]] = make_heatmap(dat_i, precision, Ecov_sim, type = 2)
-  
+  save_bias[[counter]] = make_heatmap(df = dat_i, this_factor = bias, this_label = box_label, y_label = Ecov_sim)
   counter = counter + 1
   
 }
 
 p_bias = gridExtra::grid.arrange(grobs = save_bias, ncol = 1)
-p_precision = gridExtra::grid.arrange(grobs = save_precision, ncol = 1)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'avg-ts-bias', sep = '-'), fig_type)), 
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'avg-ts', sep = '-'), fig_type)), 
        plot = p_bias, width = img_width, height = 190, units = 'mm', dpi = img_res)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'avg-ts-precision', sep = '-'), fig_type)), 
-       plot = p_precision, width = img_width, height = 190, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # WAA info:
@@ -203,15 +191,13 @@ temp = temp %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
 
 # Prepare data for geom linerage plot:
 plot_dat = temp %>% group_by(em_label, par2, om_label, Ecov_sim, age_selex) %>%
-  dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                   precision = (quantile(rel_error, probs = 0.975)-quantile(rel_error, probs = 0.025))*re_mult)
+  dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult, 1),
+                   precision = round(sd(rel_error)*re_mult))
+plot_dat = plot_dat %>% mutate(box_label = paste0(bias, ' (', precision, ')'))
 
-p3 = make_heatmap(plot_dat, bias, Ecov_sim)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'waa-bias', sep = '-'), fig_type)), 
+p3 = make_heatmap(df = plot_dat, this_factor = bias, this_label = box_label, y_label = Ecov_sim)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'waa', sep = '-'), fig_type)), 
        plot = p3, width = img_width, height = 210, units = 'mm', dpi = img_res)
-p4 = make_heatmap(plot_dat, precision, Ecov_sim, type = 2)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'waa-precision', sep = '-'), fig_type)), 
-       plot = p4, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # Pred catch CAA info:
@@ -230,16 +216,14 @@ temp = temp %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
 
 # Prepare data for plot:
 plot_dat = temp %>% group_by(em_label, par2, om_label, Ecov_sim, caal_samp, age_selex) %>%
-  dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                   precision = (quantile(rel_error, probs = 0.975)-quantile(rel_error, probs = 0.025))*re_mult)
+  dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult, 1),
+                   precision = round(sd(rel_error)*re_mult))
+plot_dat = plot_dat %>% mutate(box_label = paste0(bias, ' (', precision, ')'))
 
 # Make plot:
-p3 = make_heatmap(plot_dat, bias, Ecov_sim)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'caa-bias', sep = '-'), fig_type)), 
+p3 = make_heatmap(df = plot_dat, this_factor = bias, this_label = box_label, y_label = Ecov_sim)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'caa', sep = '-'), fig_type)), 
        plot = p3, width = img_width, height = 210, units = 'mm', dpi = img_res)
-p4 = make_heatmap(plot_dat, precision, Ecov_sim, type = 2)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'caa-precision', sep = '-'), fig_type)), 
-       plot = p4, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # Pred catch IAA info:
@@ -258,13 +242,11 @@ temp = temp %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
 
 # Prepare data for plot:
 plot_dat = temp %>% group_by(em_label, par2, om_label, Ecov_sim, caal_samp, age_selex) %>%
-  dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                   precision = (quantile(rel_error, probs = 0.975)-quantile(rel_error, probs = 0.025))*re_mult)
+  dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult, 1),
+                   precision = round(sd(rel_error)*re_mult))
+plot_dat = plot_dat %>% mutate(box_label = paste0(bias, ' (', precision, ')'))
 
 # Make plot:
-p3 = make_heatmap(plot_dat, bias, Ecov_sim)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'iaa-bias', sep = '-'), fig_type)), 
+p3 = make_heatmap(df = plot_dat, this_factor = bias, this_label = box_label, y_label = Ecov_sim)
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'iaa', sep = '-'), fig_type)), 
        plot = p3, width = img_width, height = 210, units = 'mm', dpi = img_res)
-p4 = make_heatmap(plot_dat, precision, Ecov_sim, type = 2)
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'iaa-precision', sep = '-'), fig_type)), 
-       plot = p4, width = img_width, height = 210, units = 'mm', dpi = img_res)
