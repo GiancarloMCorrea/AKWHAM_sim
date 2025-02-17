@@ -23,8 +23,8 @@ G_base = c(0.2, 90, 10, 2, 8) # K, Linf, L1, SD1, SDA
 LW_base = c(exp(-12.1), 3.2) # a and b parameters LW
 
 # Maturity relationship ---------------------------------------------------------
-mat_base_len = c(0.25, 45) # a and b parameters len maturity
-mat_base_age = c(5, 3.5) # a and b parameters age maturity
+mat_base_len = c(0.3, 41) # a and b parameters len maturity
+mat_base_age = c(3, 3.5) # a and b parameters age maturity
 
 # Initial abundance and sigmaR -------------------------------------------------------
 N1_base = 1e+05 # Initial Recruitment and mean recruitment over time period
@@ -35,7 +35,7 @@ h_par = 0.8 # steepness
 agesel_based = list(model = c("logistic", "logistic"),
                     initial_pars = list(c(3.5, 0.2), c(1.5, 0.2)))
 lensel_based = list(model = c("len-logistic", "len-logistic"),
-                    initial_pars = list(c(45, 3), c(15, 3)))
+                    initial_pars = list(c(41, 3), c(17, 3)))
 
 # Ecov information ------------------------------------------------------
 

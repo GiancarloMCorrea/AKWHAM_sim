@@ -508,7 +508,7 @@ if(this_scenario$method == 'WAA') {
   EM_input$par$WAA_a = log(colMeans(EM_input$data$waa[2,,]))
 }
 
-# Fix N1 par at true values:
+# Set N1 par at true values:
 EM_input$par$log_N1_pars = log(sim_data$NAA[n_years_burnin+1,])
 
 #######################################################

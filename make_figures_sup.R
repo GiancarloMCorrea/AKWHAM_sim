@@ -114,19 +114,6 @@ lines(1:length(f_vector), f_vector)
 text(x = 1, y = F_max, labels = "C", xpd = NA, cex = 1.5)
 box()
 
-# Phi matrix
-phi_matrix = om_sim$rep$jan1_phi_mat[,,1]
-par(mar = c(6,4,1,1))
-image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = 'Length (cm)', 
-      main = NULL)
-axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
-axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths)), labels = fish_lengths)
-mtext(text = 'Age', side = 1, line = 2, cex = 0.8)
-fields::image.plot(t(phi_matrix), add=T, horizontal = TRUE,
-                   col = rev(viridis::viridis(100)))
-text(x = 0.04, y = 1, labels = "D", xpd = NA, cex = 1.5)
-box()
-
 # Ecov time series: EBS
 par(mar = c(4,4,1,1))
 plot(NA, NA, xlab = 'Simulated years', ylab = 'EBS index', 
@@ -136,7 +123,7 @@ ts_1 = env_data %>% dplyr::filter(type == 'stationary')
 lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5) # double check with sim_core.R
 trend = lm(var_std ~ year_id, data = ts_1)
 lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
-text(x = 1, y = 3, labels = "E", xpd = NA, cex = 1.5)
+text(x = 1, y = 3, labels = "D", xpd = NA, cex = 1.5)
 box()
 
 # Ecov time series: MAB
@@ -148,7 +135,20 @@ ts_1 = env_data %>% dplyr::filter(type == 'trend')
 lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5) # double check with sim_core.R
 trend = lm(var_std ~ year_id, data = ts_1)
 lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
-text(x = 1, y = 3, labels = "F", xpd = NA, cex = 1.5)
+text(x = 1, y = 3, labels = "E", xpd = NA, cex = 1.5)
+box()
+
+# Phi matrix
+phi_matrix = om_sim$rep$jan1_phi_mat[,,1]
+par(mar = c(6,4,1,1))
+image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = 'Length (cm)', 
+      main = NULL)
+axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
+axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths)), labels = fish_lengths)
+mtext(text = 'Age', side = 1, line = 2, cex = 0.8)
+fields::image.plot(t(phi_matrix), add=T, horizontal = TRUE,
+                   col = rev(viridis::viridis(100)))
+text(x = 0.04, y = 1, labels = "F", xpd = NA, cex = 1.5)
 box()
 
 

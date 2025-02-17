@@ -27,6 +27,7 @@ waa_results = list()
 catch_paa_results = list()
 index_paa_results = list()
 sel_results = list()
+selre_results = list()
 waare_results = list()
 countList = 1
 for(k in seq_along(scenario_names)) {
@@ -45,6 +46,7 @@ for(k in seq_along(scenario_names)) {
       catch_paa_df = NULL
       index_paa_df = NULL
       sel_df = NULL
+      selre_df = NULL
       waare_df = NULL
       if(rep_i$model$optimized) {
         nyears = rep_i$truth$n_years_model - n_years_burnin # Only main years (exclude burnin)
@@ -145,6 +147,11 @@ for(k in seq_along(scenario_names)) {
                             year = rep(1:nyears, times = 2)) %>% bind_cols(rep_i$model) %>%
                   mutate(sim=as.factor(im), maxgrad=get_maxgrad(rep_i))
         
+        # Selectivity RE par values:
+        selre_df = data.frame(est = exp(as.vector(rep_i$fit$rep$sel_repars[,1])), 
+                            par = c('par1','par2')) %>% bind_cols(rep_i$model) %>%
+          mutate(sim=as.factor(im), maxgrad=get_maxgrad(rep_i))
+        
         # RE effects
         waare_df = data.frame(est = as.vector(rep_i$fit$rep$WAA_repars[1,]), 
                               par = c('par1','par2','par3','par4')) %>% bind_cols(rep_i$model) %>%
@@ -158,6 +165,7 @@ for(k in seq_along(scenario_names)) {
       catch_paa_results[[countList]] = catch_paa_df
       index_paa_results[[countList]] = index_paa_df
       sel_results[[countList]] = sel_df
+      selre_results[[countList]] = selre_df
       waare_results[[countList]] = waare_df
       countList = countList + 1
       
@@ -175,6 +183,7 @@ waa_results = dplyr::bind_rows(waa_results)
 catch_paa_results = dplyr::bind_rows(catch_paa_results)
 index_paa_results = dplyr::bind_rows(index_paa_results)
 sel_results = dplyr::bind_rows(sel_results)
+selre_results = dplyr::bind_rows(selre_results)
 waare_results = dplyr::bind_rows(waare_results)
 
 # Save results
@@ -184,4 +193,5 @@ saveRDS(waa_results, file.path(output_folder, 'waa_results.RDS'))
 saveRDS(catch_paa_results, file.path(output_folder, 'catch_paa_results.RDS'))
 saveRDS(index_paa_results, file.path(output_folder, 'index_paa_results.RDS'))
 saveRDS(sel_results, file.path(output_folder, 'sel_results.RDS'))
+saveRDS(selre_results, file.path(output_folder, 'selre_results.RDS'))
 saveRDS(waare_results, file.path(output_folder, 'waare_results.RDS'))

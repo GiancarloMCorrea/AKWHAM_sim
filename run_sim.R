@@ -12,14 +12,17 @@ library(wham)
 require(doParallel)
 require(foreach)
 library(here)
+create_inputs = FALSE # want to create OM EM inputs? (just do it once)
 
-# # Create Scenario and seeds DF (only do it once):
-source(here::here("code", "config_scenarios.R"))
-# # Make OM and EM WHAM inputs
-source(here::here("code", "om_setup.R"))
-source(here::here("code", "em_setup.R"))
-source(here::here("code", "order_env_data.R"))
-
+if(create_inputs) {
+  # Create Scenario and seeds DF (only do it once):
+  source(here::here("code", "config_scenarios.R"))
+  # Make OM and EM WHAM inputs
+  source(here::here("code", "om_setup.R"))
+  source(here::here("code", "em_setup.R"))
+  source(here::here("code", "order_env_data.R"))
+}
+  
 # -------------------------------------------------------------------------
 # Clear workspace
 rm(list=ls())
@@ -56,7 +59,7 @@ snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
     snowfall::sfExportAll()
-    trash <- snowfall::sfLapply(1:30, function(sim) run_iter(sim, sc))
+    trash <- snowfall::sfLapply(1:20, function(sim) run_iter(sim, sc))
 }
 snowfall::sfStop()
 

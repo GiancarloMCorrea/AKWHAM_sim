@@ -12,6 +12,7 @@ stationary_df = stationary_df %>% add_row(YEAR = 2020, AREA_LTE2_KM2 = imputate_
 stationary_df = tail(stationary_df, n = n_years_base)
 stationary_df = stationary_df %>% dplyr::mutate(year_id = row_number(), 
                                          var_std = scale(AREA_LTE2_KM2),
+                                         #var_std = AREA_LTE2_KM2 - mean(AREA_LTE2_KM2),
                                          type = 'stationary') %>%
   dplyr::select(year_id, var_std, type)
 
@@ -24,7 +25,10 @@ trend_df = trend_df %>% dplyr::filter(Var == 'cold_pool_index',
                                       source %in% c('ROMS', 'GLORYS')) %>% 
   dplyr::select(Time, Value)
 trend_df = tail(trend_df, n = n_years_base)
-trend_df = trend_df %>% dplyr::mutate(year_id = row_number(), var_std = scale(Value), type = 'trend') %>%
+trend_df = trend_df %>% dplyr::mutate(year_id = row_number(), 
+                                      var_std = scale(Value), 
+                                      #var_std = Value - mean(Value),
+                                      type = 'trend') %>%
   dplyr::select(year_id, var_std, type)
 
 # Merge dfs and save:
