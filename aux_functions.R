@@ -204,8 +204,8 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random',
   temp = temp %>% mutate(em_method = case_when(method == 'WEm' ~ 'WEm', 
                                                method == 'WNP' ~ paste(method, re_method, sep = '-')))
   temp = temp %>% mutate(em_method = factor(em_method, levels = c('WEm', 'WNP-iid', 'WNP-2D', 'WNP-3D')))
-  temp$age_selex[temp$age_selex == 'fixed'] = 'Fixed'
-  temp$age_selex[temp$age_selex == 'varying'] = 'Varying'
+  temp$age_selex[temp$age_selex == 'fixed'] = 'Const'
+  temp$age_selex[temp$age_selex == 'varying'] = 'Vary'
   # EM label:
   temp = temp %>% mutate(em_label = em_method)
   temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor'), 
@@ -213,7 +213,7 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random',
   temp = temp %>% mutate(Ecov_sim = factor(Ecov_sim, levels = c('stationary','trend'), 
                                             labels = c('EBS', 'MAB')))
   temp = temp %>% mutate(caal_samp = factor(caal_samp, levels = c('random', 'strat'), 
-                                            labels = c('Rand', 'Strat')))
+                                            labels = c('RS', 'LSS')))
   temp = temp %>% mutate(om_label = factor(growth_var, levels = 0:2,
                                            labels = c('Time~invariant', Variability~"in"~k*"/"*L[infinity], 
                                                       expression(Variability~"in"~L[1]))))
@@ -417,7 +417,7 @@ make_heatmap = function(df, this_factor, this_label, y_label,
     geom_text(aes(label = {{this_label}}), color = 'black', size = 3) +
     xlab(NULL) + ylab(NULL) +
     theme(legend.position = 'none', axis.text.y = element_text(angle = 0, hjust = 1),
-          axis.text.x = element_text(size = 9),
+          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9),
           strip.background = element_rect(fill="white")) +
     facet_grid(par2 ~ om_label, labeller = 'label_parsed')
 
