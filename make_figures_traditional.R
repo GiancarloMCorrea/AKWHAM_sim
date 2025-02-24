@@ -131,7 +131,7 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'par', s
 # avg TS plot:
 # Prepare data
 temp = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
-                                  caal_samp, age_selex, re_method, method, growth_var, im) %>% 
+                                 caal_samp, age_selex, re_method, method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
 temp = temp %>% dplyr::filter(growth_var > 0)
 

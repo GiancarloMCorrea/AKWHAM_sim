@@ -206,9 +206,8 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random',
   temp = temp %>% mutate(em_method = factor(em_method, levels = c('WEm', 'WNP-iid', 'WNP-2D', 'WNP-3D')))
   # EM label:
   temp = temp %>% mutate(em_label = em_method)
-  temp = temp %>% mutate(age_selex = if_else(growth_var == 0, 'none', age_selex)) %>%  
-                  mutate(age_selex = factor(age_selex, levels = c('fixed','varying','none'), 
-                                            labels = c('Const', 'Vary', 'None')))
+  temp = temp %>% mutate(age_selex = factor(age_selex, levels = c('fixed','varying'), 
+                                            labels = c('Const', 'Vary')))
   temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor'), 
                                             labels = c('Rich', 'Poor')))
   temp = temp %>% mutate(Ecov_sim = if_else(growth_var == 0, 'none', Ecov_sim)) %>% 

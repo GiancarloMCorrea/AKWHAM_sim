@@ -46,8 +46,8 @@ POP1 [label = 'Predicted \n age-length structure', fillcolor = Pink];
 POP3 [label = 'Weight-at-length', fillcolor = Pink];
 SAMP1 [label =  'Length sample', fillcolor = lightskyblue2];
 SAMP2 [label =  'Age subsample', fillcolor = lightskyblue2];
-DAT1 [label =  'Marginal length \n composition', fillcolor = Beige, style = rounded];
-DAT2 [label =  'Conditional \n age-at-length', fillcolor = Beige, style = rounded];
+DAT1 [label =  'Marginal length \n composition', fillcolor = lightskyblue2];
+DAT2 [label =  'Conditional \n age-at-length', fillcolor = lightskyblue2];
 DAT3 [label =  'Marginal age \n composition', fillcolor = Beige, style = rounded];
 DAT4 [label =  'Mean weight-at-age', fillcolor = Beige, style = rounded];
 
@@ -62,7 +62,7 @@ d2 [shape=point,width=0.01,height=0.01];
 d3 [shape=point,width=0.01,height=0.01];
 POP1 -> {SAMP1}[label='random \n sample'];
 SAMP1 -> {DAT1};
-SAMP1 -> {SAMP2}[label='sample (either random \n or length-stratified)'];
+SAMP1 -> {SAMP2}[label='sample (either RS or LSS)'];
 SAMP2 -> DAT2;
 {DAT1 DAT2}->d2[dir=none];
 d2->DAT3;
@@ -331,7 +331,7 @@ output_folder = 'outputs'
 max_grad = 1e-04
 min_alpha = 0.35
 ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))
-paa_gen_approach = 'traditional'
+paa_gen_approach = 'stepwise'
 
 this_age_selex = c('fixed', 'varying') # fixed or varying
 this_caal_samp = c('random') # random or strat
@@ -364,7 +364,7 @@ plot_dat$em_label2 = factor(plot_dat$em_label, labels = c("WEm", expression(WNP*
 p1 = ggplot(plot_dat, aes(x = cum_im, y = cum_re*100)) +
   geom_line(aes(color = Ecov_sim, linetype = age_selex)) +
   scale_color_manual(values = c(colpal1, 'gray50')) +
-  scale_linetype_manual(values = c('dotted', 'solid', 'longdash')) +
+  scale_linetype_manual(values = c('solid', 'longdash')) +
   xlab('Number of replicates') +
   ylab('Mean relative error (%)') +
   theme_classic() +
