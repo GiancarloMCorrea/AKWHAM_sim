@@ -6,6 +6,12 @@ library(tidyr)
 library(reshape2)
 require(ggh4x)
 library(fields)
+require(DiagrammeR)
+library(scales)
+require(DiagrammeRsvg)
+require(rsvg)
+require(wesanderson)
+library(RColorBrewer)
 theme_set(theme_bw())
 
 # Clean workspace
@@ -15,16 +21,19 @@ rm(list = ls())
 source('aux_functions.R')
 source(file.path('code', 'config_params.R'))
 seeds = readRDS(file.path("inputs","seeds.RDS"))
+df.scenarios = readRDS(file.path("inputs","df.scenarios.RDS"))
 
 # Save folder:
 save_folder = 'plots'
+fig_type = '.png'
+img_res = 400
+img_width = 170
+
+# color scale for EBS and MAB:
+colpal1 = wesanderson::wes_palettes$GrandBudapest1[3:4]
 
 # -------------------------------------------------------------------------
-# Make diagram sampling process:
-
-require(DiagrammeR)
-require(DiagrammeRsvg)
-require(rsvg)
+# Make diagram stepwise sampling process:
 
 diag1 = DiagrammeR::grViz("digraph {
 
@@ -70,7 +79,61 @@ HeightCM = 10
 
 diag1 %>% export_svg %>% charToRaw %>% 
   rsvg(width = WidthCM *(DPI/2.54), height = HeightCM *(DPI/2.54)) %>% 
-  png::writePNG("plots/Figure_2.png")
+  png::writePNG("plots/Figure_samp_step.png")
+
+# Now you have to modify the DPI using GIMP. Load the jpg file just created and go to
+# Image > Scale Image, and change resolution (px/in) to 500
+
+# -------------------------------------------------------------------------
+# Make diagram Traditional scenarios:
+
+diag2 = DiagrammeR::grViz("digraph {
+
+graph [layout = dot, rankdir = TB];
+
+# define the global styles of the nodes. We can override these in box if we wish
+node [shape = rectangle, style = filled, fontsize=25];
+
+LEV1 [label = 'Traditional', fillcolor = lightskyblue2];
+LEV2 [label = 'Stepwise', fillcolor = lightskyblue2];
+
+OM1 [label = 'Time invariant', fillcolor = Pink];
+OM3 [label = 'Variability in L\U2081: \n simulated from EBS or \n MAB', fillcolor = Pink];
+OM2 [label = 'Variability in k/L\u221e: \n simulated from EBS or \n MAB', fillcolor = Pink];
+
+DAT1 [label = 'Age sampling: \n random (RS) or \n length-stratified (LSS)', fillcolor = DarkSeaGreen];
+DAT2 [label = 'Age sampling: \n random (RS) or \n length-stratified (LSS)', fillcolor = DarkSeaGreen];
+
+EM1 [label =  'Random effects on WAA: \n WEm \n WNP-iid \n WNP-2D \n WNP-3D', fillcolor = Beige];
+EM2 [label =  'Random effects on WAA: \n WEm \n WNP-iid \n WNP-2D \n WNP-3D', fillcolor = Beige];
+EM3 [label =  'Selectivity: \n constant (Const) or \n time-varying (Vary)', fillcolor = Beige];
+
+{rank = min; LEV1};
+{rank = same; OM1 OM2 OM3};
+{rank = same; DAT1 DAT2};
+{rank = same; EM1 EM2};
+
+# edge definitions with the node IDs
+{LEV1} -> {OM1 OM2 OM3};
+{LEV2} -> {OM1 OM2 OM3}[style=dashed];
+{OM1} -> {DAT1}[style=dashed];
+{OM2 OM3} -> {DAT2}[style=dashed];
+DAT1 -> {EM1}[style=dashed];
+DAT2 -> {EM2 EM3}[style=dashed];
+OM1 -> {EM1};
+{OM2 OM3} -> {EM2 EM3};
+
+}", engine = "dot")
+
+
+# Save:
+DPI = 500
+WidthCM = 17
+HeightCM = 10
+
+diag2 %>% export_svg %>% charToRaw %>% 
+  rsvg(width = WidthCM *(DPI/2.54), height = HeightCM *(DPI/2.54)) %>% 
+  png::writePNG("plots/Figure_sim.png")
 
 # Now you have to modify the DPI using GIMP. Load the jpg file just created and go to
 # Image > Scale Image, and change resolution (px/in) to 500
@@ -81,11 +144,11 @@ diag1 %>% export_svg %>% charToRaw %>%
 fish_lengths = lengths_base
 n_years = n_years_base+n_years_burnin
 om_sim1 = readRDS(file = 'sample_data/om_sample/om_sample_1.RDS')
-om_sim2 = readRDS(file = 'sample_data/om_sample/om_sample_41.RDS')
+om_sim2 = readRDS(file = 'sample_data/om_sample/om_sample_37.RDS')
 env_data = readRDS(file = 'env_data/env_sim.rds')
 cex_lab = 0.8
 
-png(filename = 'plots/Figure_1.png', width = 170, height = 210, units = 'mm', res = 400)
+png(filename = 'plots/Figure_config.png', width = 170, height = 210, units = 'mm', res = 400)
 par(mfrow = c(3,2))
 
 # Selectivity (age based, traditional):
@@ -128,7 +191,7 @@ plot(NA, NA, xlab = '', ylab = '',
      ylim = c(-3,3), xlim = c(1, n_years))
 polygon(x = c(-10, 10, 10, -10, -10), y = c(-10, -10, 10, 10, -10), col = 'grey', border = NA)
 ts_1 = env_data %>% dplyr::filter(type == 'stationary')
-lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5) # double check with sim_core.R
+lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5, col = colpal1[1]) # double check with sim_core.R
 trend = lm(var_std ~ year_id, data = ts_1)
 lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
 text(x = 1, y = 3, labels = "D", xpd = NA, cex = 1.5)
@@ -142,7 +205,7 @@ plot(NA, NA, xlab = '', ylab = '',
      ylim = c(-3,3), xlim = c(1, n_years))
 polygon(x = c(-10, 10, 10, -10, -10), y = c(-10, -10, 10, 10, -10), col = 'grey', border = NA)
 ts_1 = env_data %>% dplyr::filter(type == 'trend')
-lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5) # double check with sim_core.R
+lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5, col = colpal1[2]) # double check with sim_core.R
 trend = lm(var_std ~ year_id, data = ts_1)
 lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
 text(x = 1, y = 3, labels = "E", xpd = NA, cex = 1.5)
@@ -235,23 +298,26 @@ all_df = dplyr::bind_rows(all_df)
 merged_df = all_df
 
 # Prepare for plotting:
+merged_df = merged_df %>% mutate(ecov = if_else(growth_var == 0, 'none', ecov))
 merged_df = merged_df %>% mutate(om_label = factor(growth_var, levels = 0:2,
                                              labels = c('Time~invariant', Variability~"in"~k*"/"*L[infinity], 
                                                         expression(Variability~"in"~L[1]))),
-                                 ecov = factor(ecov, levels = c('stationary', 'trend'), 
-                                               labels = c('EBS index', 'MAB index')),
+                                 ecov = factor(ecov, levels = c('stationary', 'trend', 'none'), 
+                                               labels = c('EBS', 'MAB', 'None')),
                                  i_group = paste(sim, ecov, sep = '-'))
 
 figs2 = ggplot(merged_df, aes(x=year, y=value, group = factor(i_group), color = ecov)) +
   geom_vline(xintercept = 10, linetype = 'dashed') +
   geom_line(alpha = 1) +
+  scale_color_manual(values = c(colpal1, 'gray50')) +
   xlab('Simulated year') +
   ylab('Mean length (cm)') +
   theme_classic() +
-  theme(legend.position = 'bottom') +
+  theme(legend.position = 'bottom',
+        legend.text = element_text(size = 10)) +
   guides(color = guide_legend(title = NULL)) +
   facet_nested(age ~ om_label, scales = 'free_y', labeller = 'label_parsed')
-ggsave(filename = 'plots/Figure_S1.png', plot = figs2,
+ggsave(filename = 'plots/Figure_LAA.png', plot = figs2,
        width = 170 , height = 210, units = 'mm', dpi = 500)
 
 
@@ -264,24 +330,26 @@ ggsave(filename = 'plots/Figure_S1.png', plot = figs2,
 output_folder = 'outputs'
 max_grad = 1e-04
 min_alpha = 0.35
-colpal1 = brewer.pal(n = 8, name = 'Set1')[1:2] 
 ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))
-paa_gen_approach = 'stepwise'
-this_age_selex = 'fixed' # fixed or varying
-this_caal_samp = c('random', 'strat') # random or strat
+paa_gen_approach = 'traditional'
+
+this_age_selex = c('fixed', 'varying') # fixed or varying
+this_caal_samp = c('random') # random or strat
+this_ecov = c('stationary', 'trend')
 
 # Tidy data:
 temp = ts_df %>% filter(paa_generation == paa_gen_approach) %>%
-  dplyr::group_by(scenario, par, data_scen, caal_samp, age_selex, re_method, 
+  dplyr::group_by(scenario, par, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
 temp = temp %>% dplyr::filter(par == 'SSB')
 # Set EM and OM labels:
-temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, conv_level = max_grad)
+temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, 
+                  ecov_type = this_ecov, conv_level = max_grad)
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
-plot_dat = temp %>% dplyr::group_by(data_scen, caal_samp, age_selex, em_label, om_label) %>%
+plot_dat = temp %>% dplyr::group_by(Ecov_sim, caal_samp, age_selex, em_label, om_label) %>%
               group_split()
 plot_dat = lapply(plot_dat, function(x) {
   outdf = x %>% mutate(cum_im = 1:nrow(x),
@@ -293,64 +361,66 @@ plot_dat$em_label2 = factor(plot_dat$em_label, labels = c("WEm", expression(WNP*
                                                      expression(WNP*"-"*2*"D"),
                                                      expression(WNP*"-"*3*"D")))
 
-p1 = #ggplot(plot_dat, aes(x = cum_im, y = cum_re, color = data_scen)) +
-  ggplot(plot_dat, aes(x = cum_im, y = cum_re, color = data_scen, alpha = caal_samp)) +
-  geom_line() +
-  scale_color_manual(values = colpal1) +
-  scale_alpha_discrete(range = c(min_alpha, 1)) +
-  xlab('Number of iterations') +
-  ylab('Mean relative error') +
+p1 = ggplot(plot_dat, aes(x = cum_im, y = cum_re*100)) +
+  geom_line(aes(color = Ecov_sim, linetype = age_selex)) +
+  scale_color_manual(values = c(colpal1, 'gray50')) +
+  scale_linetype_manual(values = c('dotted', 'solid', 'longdash')) +
+  xlab('Number of replicates') +
+  ylab('Mean relative error (%)') +
   theme_classic() +
-  theme(legend.position = 'bottom') +
+  theme(legend.position = 'bottom',
+        axis.text.x = element_text(size = 9, angle = 45, vjust = 1, hjust=1),
+        strip.text = element_text(size = 10),
+        legend.text=element_text(size=10)) +
   facet_grid(em_label2 ~ om_label, labeller = 'label_parsed') +
   guides(color=guide_legend(title=NULL),
-         alpha=guide_legend(title=NULL)
+         linetype=guide_legend(title=NULL)
          )
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, this_age_selex, 'iter-stability', sep = '-'), fig_type)), plot = p1,
+ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'iter-stability', sep = '-'), fig_type)), plot = p1,
        width = img_width , height = 210, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # Sup figure: Impact of length-based selectivity and sampling
-
-year = 1 #select year to plot
-om_sim = readRDS(file = 'inputs/om_sample/om_sample_1.RDS')
-
-fish_lengths = om_sim$input$data$lengths
-n_years = om_sim$input$data$n_years_model
-n_ages = om_sim$input$data$n_ages
-
-this_dist = t(om_sim$rep$NAA[year,] * t(om_sim$rep$jan1_phi_mat[,,year]))
-rownames(this_dist) = fish_lengths
-colnames(this_dist) = 1:n_ages
-df1 = melt(this_dist, varnames = c('len', 'age'))
-df1 = df1 %>% mutate(type = 'Population')
-
-this_dist = om_sim$rep$pred_CAAL[year, 1, ,]
-rownames(this_dist) = fish_lengths
-colnames(this_dist) = 1:n_ages
-df2 = melt(this_dist, varnames = c('len', 'age'))
-df2 = df2 %>% mutate(type = 'Fishery')
-
-this_dist = om_sim$rep$pred_IAAL[year, 1, ,]
-rownames(this_dist) = fish_lengths
-colnames(this_dist) = 1:n_ages
-df3 = melt(this_dist, varnames = c('len', 'age'))
-df3 = df3 %>% mutate(type = 'Survey')
-
-df_plot = rbind(df1, df2, df3)
-df_plot$type = factor(df_plot$type, levels = c('Population', 'Fishery', 'Survey'))
-mean_plot = df_plot %>% 
-  dplyr::group_by(age, type) %>%
-  dplyr::summarise(mean_len = weighted.mean(x = len, w = value))
-
-figs3 = ggplot(df_plot, aes(x=len, y=value)) +
-  geom_line() +
-  xlab('Length (cm)') +
-  ylab('Abundance') +
-  geom_vline(data = mean_plot, aes(xintercept = mean_len), color = 'red') +
-  facet_grid(type ~ factor(age), scales = 'free_y') +
-  theme(legend.position = 'none',
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank())
-ggsave(filename = 'plots/Figure_S3.jpg', plot = figs3, 
-       width = 190 , height = 90, units = 'mm', dpi = 500)
+# 
+# year = 1 #select year to plot
+# om_sim = readRDS(file = 'inputs/om_sample/om_sample_1.RDS')
+# 
+# fish_lengths = om_sim$input$data$lengths
+# n_years = om_sim$input$data$n_years_model
+# n_ages = om_sim$input$data$n_ages
+# 
+# this_dist = t(om_sim$rep$NAA[year,] * t(om_sim$rep$jan1_phi_mat[,,year]))
+# rownames(this_dist) = fish_lengths
+# colnames(this_dist) = 1:n_ages
+# df1 = melt(this_dist, varnames = c('len', 'age'))
+# df1 = df1 %>% mutate(type = 'Population')
+# 
+# this_dist = om_sim$rep$pred_CAAL[year, 1, ,]
+# rownames(this_dist) = fish_lengths
+# colnames(this_dist) = 1:n_ages
+# df2 = melt(this_dist, varnames = c('len', 'age'))
+# df2 = df2 %>% mutate(type = 'Fishery')
+# 
+# this_dist = om_sim$rep$pred_IAAL[year, 1, ,]
+# rownames(this_dist) = fish_lengths
+# colnames(this_dist) = 1:n_ages
+# df3 = melt(this_dist, varnames = c('len', 'age'))
+# df3 = df3 %>% mutate(type = 'Survey')
+# 
+# df_plot = rbind(df1, df2, df3)
+# df_plot$type = factor(df_plot$type, levels = c('Population', 'Fishery', 'Survey'))
+# mean_plot = df_plot %>% 
+#   dplyr::group_by(age, type) %>%
+#   dplyr::summarise(mean_len = weighted.mean(x = len, w = value))
+# 
+# figs3 = ggplot(df_plot, aes(x=len, y=value)) +
+#   geom_line() +
+#   xlab('Length (cm)') +
+#   ylab('Abundance') +
+#   geom_vline(data = mean_plot, aes(xintercept = mean_len), color = 'red') +
+#   facet_grid(type ~ factor(age), scales = 'free_y') +
+#   theme(legend.position = 'none',
+#         axis.text.y=element_blank(),
+#         axis.ticks.y=element_blank())
+# ggsave(filename = 'plots/Figure_S3.jpg', plot = figs3, 
+#        width = 190 , height = 90, units = 'mm', dpi = 500)

@@ -204,14 +204,16 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random',
   temp = temp %>% mutate(em_method = case_when(method == 'WEm' ~ 'WEm', 
                                                method == 'WNP' ~ paste(method, re_method, sep = '-')))
   temp = temp %>% mutate(em_method = factor(em_method, levels = c('WEm', 'WNP-iid', 'WNP-2D', 'WNP-3D')))
-  temp$age_selex[temp$age_selex == 'fixed'] = 'Const'
-  temp$age_selex[temp$age_selex == 'varying'] = 'Vary'
   # EM label:
   temp = temp %>% mutate(em_label = em_method)
+  temp = temp %>% mutate(age_selex = if_else(growth_var == 0, 'none', age_selex)) %>%  
+                  mutate(age_selex = factor(age_selex, levels = c('fixed','varying','none'), 
+                                            labels = c('Const', 'Vary', 'None')))
   temp = temp %>% mutate(data_scen = factor(data_scen, levels = c('rich','poor'), 
                                             labels = c('Rich', 'Poor')))
-  temp = temp %>% mutate(Ecov_sim = factor(Ecov_sim, levels = c('stationary','trend'), 
-                                            labels = c('EBS', 'MAB')))
+  temp = temp %>% mutate(Ecov_sim = if_else(growth_var == 0, 'none', Ecov_sim)) %>% 
+                  mutate(Ecov_sim = factor(Ecov_sim, levels = c('stationary','trend', 'none'), 
+                                            labels = c('EBS', 'MAB', 'None')))
   temp = temp %>% mutate(caal_samp = factor(caal_samp, levels = c('random', 'strat'), 
                                             labels = c('RS', 'LSS')))
   temp = temp %>% mutate(om_label = factor(growth_var, levels = 0:2,
@@ -243,32 +245,8 @@ filter_iter = function(df, first_sims = 100) {
 
 }
 
-# To make plot by parameter and rel_error (data_scen by color)
-make_plot_1 = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0.4,
-                       leg_pos = 'none', leg_title = NULL, alpha_level = 0.6) {
 
-  my_plot =  ggplot(df, aes(x=em_label, y=rel_error, fill={{this_factor}})) +
-      geom_violin(position=position_dodge(violin_sep), alpha = alpha_level, color = NA) +
-      stat_summary(fun = median,geom = "point",shape = 95,size = 4,colour='black',
-                   position=position_dodge(violin_sep)) +
-      scale_fill_manual(values = col_vals) +
-      coord_cartesian(ylim = y_break*c(-1, 1)) +
-      # geom_hline(yintercept=0, color=1, linetype='dashed') +
-      theme(legend.position = leg_pos,
-            axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
-            strip.text = element_text(size = 10),
-            strip.background = element_rect(fill="white"),
-            legend.byrow = TRUE) +
-      scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
-      xlab(NULL) + ylab('Relative error') +
-      #facet_nested(par2+Ecov_sim ~ om_label, labeller = 'label_parsed')
-      facet_grid(par2 ~ om_label, labeller = 'label_parsed')
-  
-  if(!is.null(leg_title)) my_plot = my_plot + guides(fill=guide_legend(title=leg_title))
-
-  return(my_plot)
-
-}
+# -------------------------------------------------------------------------
 
 # To make plot by parameter and rel_error (data_scen by color) geom linerange
 make_plot_1b = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0.4,
@@ -283,9 +261,10 @@ make_plot_1b = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0
     geom_hline(yintercept=0, color=1, linetype='dashed') +
     # coord_cartesian(ylim = y_break*c(-1, 1)) +
     theme(legend.position = leg_pos,
-          axis.text.x = element_text(size = 8),
+          axis.text.x = element_text(size = 9, angle = 45, vjust = 1, hjust=1),
           strip.text = element_text(size = 10),
           strip.background = element_rect(fill="white"),
+          legend.text=element_text(size=10),
           legend.byrow = TRUE) +
     #scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
     xlab(NULL) + ylab(var_name) +
@@ -297,58 +276,7 @@ make_plot_1b = function(df, this_factor, col_vals, y_break = 0.4, violin_sep = 0
   
 }
 
-# Alpha as factor
-# To make plot by parameter and rel_error (data_scen by color) geom linerange
-make_plot_1c = function(df, this_factor, this_factor2, col_vals, y_break = 0.4, violin_sep = 0.4,
-                        leg_pos = 'none', leg_title = NULL, leg_title2 = NULL, min_alpha = 0.25,
-                        var_name = 'Relative error') {
-  
-  my_plot =  ggplot(df, aes(x=em_label, y=q50, colour={{this_factor}}, alpha={{this_factor2}})) +
-    geom_linerange(aes(ymin = q025, ymax = q975), position=position_dodge(violin_sep)) +
-    geom_pointrange(aes(ymin = q025, ymax = q975),  
-                    position=position_dodge(violin_sep), fatten = 3) +
-    scale_color_manual(values = col_vals) +
-    scale_alpha_discrete(range = c(min_alpha, 1)) +
-    coord_cartesian(ylim = y_break*c(-1, 1)) +
-    theme(legend.position = leg_pos,
-          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
-          strip.text = element_text(size = 10),
-          strip.background = element_rect(fill="white"),
-          legend.byrow = TRUE) +
-    scale_y_continuous(breaks=c(-1*y_break, 0, 1*y_break)) +
-    xlab(NULL) + ylab(var_name) +
-    facet_grid(par2 ~ om_label, labeller = 'label_parsed')
-  
-  if(!is.null(leg_title)) my_plot = my_plot + guides(colour=guide_legend(title=leg_title))
-  if(!is.null(leg_title2)) my_plot = my_plot + guides(alpha=guide_legend(title=leg_title2))
-  
-  return(my_plot)
-  
-}
-
 # -------------------------------------------------------------------------
-
-# To make plot by parameter and var_values (data_scen by color)
-make_plot_3 = function(df, this_var, this_factor, col_vals, violin_sep = 0.4,
-                       leg_pos = 'none', leg_title = NULL, alpha_level = 0.6,
-                       var_name = 'Variable name') {
-  
-  my_plot =  ggplot(df, aes(x=em_label, y={{this_var}}, fill={{this_factor}})) +
-    geom_violin(position=position_dodge(violin_sep), alpha = alpha_level, color = NA) +
-    scale_fill_manual(values = col_vals) +
-    theme(legend.position = leg_pos,
-          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
-          strip.text = element_text(size = 10),
-          strip.background = element_rect(fill="white"),
-          legend.byrow = TRUE) +
-    xlab(NULL) + ylab(var_name) +
-    facet_grid(par2 ~ om_label, labeller = 'label_parsed', scales = 'free_y')
-  
-  if(!is.null(leg_title)) my_plot = my_plot + guides(fill=guide_legend(title=leg_title))
-  
-  return(my_plot)
-  
-}
 
 # To make plot by parameter and rel_error (data_scen by color) geom linerange
 make_plot_3b = function(df, this_factor, col_vals, violin_sep = 0.4, 
@@ -362,8 +290,9 @@ make_plot_3b = function(df, this_factor, col_vals, violin_sep = 0.4,
     scale_color_manual(values = col_vals) +
     scale_y_continuous(n.breaks = 3) +
     theme(legend.position = leg_pos,
-          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9),
           strip.text = element_text(size = 10),
+          legend.text=element_text(size=10),
           strip.background = element_rect(fill="white"),
           legend.byrow = TRUE) +
     xlab(NULL) + ylab(var_name) +
@@ -375,33 +304,33 @@ make_plot_3b = function(df, this_factor, col_vals, violin_sep = 0.4,
   
 }
 
-# Alpha factor
-# To make plot by parameter and rel_error (data_scen by color) geom linerange
-make_plot_3c = function(df, this_factor, this_factor2, col_vals, violin_sep = 0.4, 
-                        leg_pos = 'none', leg_title = NULL, leg_title2 = NULL, min_alpha = 0.25,
-                        var_name = 'Relative error') {
+
+# -------------------------------------------------------------------------
+# Make plot TS:
+
+make_plot_ts = function(df, this_factor, col_vals, 
+                        leg_pos = 'none', var_name = 'Relative error (%)') {
   
-  my_plot =  ggplot(df, aes(x=em_label, y=q50, colour={{this_factor}}, alpha={{this_factor2}})) +
-    geom_linerange(aes(ymin = q025, ymax = q975), position=position_dodge(violin_sep)) +
-    geom_pointrange(aes(ymin = q025, ymax = q975), 
-                    position=position_dodge(violin_sep), fatten = 3) +
+  my_plot =  ggplot(df, aes(x = year, y = q50)) +
+    geom_line(aes(color = {{this_factor}})) +
+    geom_ribbon(aes(ymin = q025, ymax = q975, fill = {{this_factor}}), alpha = 0.3) +
+    geom_hline(yintercept=0, color=1, linetype='dashed') +
+    # coord_cartesian(ylim = 50*c(-1, 1)) +
     scale_color_manual(values = col_vals) +
-    scale_alpha_discrete(range = c(min_alpha, 1)) +
-    scale_y_continuous(n.breaks = 4) +
+    scale_fill_manual(values = col_vals) +
+    ylab(var_name) + xlab('Simulated year') +
     theme(legend.position = leg_pos,
-          axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9.3),
+          axis.text.x = element_text(size = 9),
           strip.text = element_text(size = 10),
-          strip.background = element_rect(fill="white"),
-          legend.byrow = TRUE) +
-    xlab(NULL) + ylab(var_name) +
-    facet_grid(par2 ~ om_label, labeller = 'label_parsed', scales = 'free_y')
-  
-  if(!is.null(leg_title)) my_plot = my_plot + guides(colour=guide_legend(title=leg_title))
-  if(!is.null(leg_title2)) my_plot = my_plot + guides(alpha=guide_legend(title=leg_title2))
+          legend.text=element_text(size=10),
+          strip.background = element_rect(fill="white")) +
+    facet_grid(em_label2 ~ om_label, labeller = 'label_parsed') +
+    guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
   
   return(my_plot)
   
 }
+
 
 
 # -------------------------------------------------------------------------
@@ -416,8 +345,10 @@ make_heatmap = function(df, this_factor, this_label, y_label,
     geom_tile(color = NA) +
     geom_text(aes(label = {{this_label}}), color = 'black', size = 3) +
     xlab(NULL) + ylab(NULL) +
-    theme(legend.position = 'none', axis.text.y = element_text(angle = 0, hjust = 1),
+    theme(legend.position = 'none', 
+          axis.text.y = element_text(angle = 0, hjust = 1),
           axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9),
+          strip.text = element_text(size = 10),
           strip.background = element_rect(fill="white")) +
     facet_grid(par2 ~ om_label, labeller = 'label_parsed')
 

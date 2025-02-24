@@ -54,7 +54,7 @@ index_paa_df = readRDS(file = file.path(output_folder, 'index_paa_results.RDS'))
 selex_df = readRDS(file = file.path(output_folder, 'sel_results.RDS'))
 # WAA re
 waare_df = readRDS(file = file.path(output_folder, 'waare_results.RDS'))
-# WAA re
+# Selex re
 selre_df = readRDS(file = file.path(output_folder, 'selre_results.RDS'))
 
 # -------------------------------------------------------------------------
@@ -73,8 +73,7 @@ tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit
                                                    labels = c('Traditional', 'Stepwise'))) 
 
 # Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation, Ecov_sim, 
-                               caal_samp, age_selex) %>%
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
   dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                    q50 = quantile(rel_error, probs = 0.5)*re_mult,
                    q975 = quantile(rel_error, probs = 0.975)*re_mult)
@@ -103,8 +102,7 @@ tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
                                                labels = c('Traditional', 'Stepwise'))) 
 
 # Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation, Ecov_sim, 
-                               caal_samp, age_selex) %>%
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
   dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                    q50 = quantile(rel_error, probs = 0.5)*re_mult,
                    q975 = quantile(rel_error, probs = 0.975)*re_mult)
@@ -126,45 +124,36 @@ temp = ts_df %>% dplyr::group_by(paa_generation, scenario, par, year, data_scen,
                   Ecov_sim, method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
 
-# Select filter:
-sel_var = 'SSB' # Rec, SSB, F
+# Plot TS by variable:
+all_vars = c('Rec', 'SSB', 'F')
+for(i in seq_along(all_vars)) {
 
-######
-# Set EM and OM labels:
-temp2 = set_labels(temp, conv_level = max_grad)
-# Filter first 100 reps:
-temp2 = filter_iter(temp2)
-# Select variable to plot:
-temp2 = temp2 %>% dplyr::filter(par == sel_var)
-# Make em label:
-temp2$em_label2 = factor(temp2$em_label, labels = c("WEm", expression(WNP*"-"*iid), 
-                                                    expression(WNP*"-"*2*"D"),
-                                                    expression(WNP*"-"*3*"D")))
-temp2 = temp2 %>% mutate(paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
-                                                labels = c('Traditional', 'Stepwise'))) 
+  sel_var = all_vars[i]
+  # Set EM and OM labels:
+  temp2 = set_labels(temp, conv_level = max_grad)
+  # Filter first 100 reps:
+  temp2 = filter_iter(temp2)
+  # Select variable to plot:
+  temp2 = temp2 %>% dplyr::filter(par == sel_var)
+  # Make em label:
+  temp2$em_label2 = factor(temp2$em_label, labels = c("WEm", expression(WNP*"-"*iid), 
+                                                      expression(WNP*"-"*2*"D"),
+                                                      expression(WNP*"-"*3*"D")))
+  temp2 = temp2 %>% mutate(paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
+                                                  labels = c('Traditional', 'Stepwise'))) 
+  
+  # Prepare data for geom linerage plot:
+  plot_dat = temp2 %>% group_by(paa_generation, em_label2, year, om_label) %>%
+    dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
+                     q50 = quantile(rel_error, probs = 0.5)*re_mult,
+                     q975 = quantile(rel_error, probs = 0.975)*re_mult)
+  
+  # Make plot:
+  p1 = make_plot_ts(plot_dat, paa_generation, col_vals = colpal1, leg_pos = 'bottom')
+  ggsave(filename = file.path(ts_folder_plot, paste0(paste('main', 'ts', sel_var, sep = '-'), fig_type)), 
+         plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
-# Prepare data for geom linerage plot:
-plot_dat = temp2 %>% group_by(paa_generation, em_label2, year, om_label) %>%
-  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
-                   q50 = quantile(rel_error, probs = 0.5)*re_mult,
-                   q975 = quantile(rel_error, probs = 0.975)*re_mult)
-
-# Make plot:
-p1 = ggplot(plot_dat, aes(x = year, y = q50)) +
-  geom_line(aes(color = paa_generation)) +
-  geom_ribbon(aes(ymin = q025, ymax = q975, fill = paa_generation), alpha = 0.3) +
-  geom_hline(yintercept=0, color=1, linetype='dashed') +
-  # coord_cartesian(ylim = 50*c(-1, 1)) +
-  scale_color_manual(values = colpal1) +
-  scale_fill_manual(values = colpal1) +
-  ylab('Relative error (%)') + xlab('Simulated year') +
-  theme(legend.position = 'bottom',
-        strip.background = element_rect(fill="white")) +
-  facet_grid(em_label2 ~ om_label, labeller = 'label_parsed') +
-  guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
-ggsave(filename = file.path(ts_folder_plot, paste0(paste('main', 'ts', sel_var, sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
-
+}
 
 # -------------------------------------------------------------------------
 # WAA plots:
@@ -182,8 +171,7 @@ tmp_df = tmp_df %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10),
                                                    labels = c('Traditional', 'Stepwise'))) 
 
 # Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, age, om_label, paa_generation, Ecov_sim, 
-                               caal_samp, age_selex) %>%
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
   dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                    q50 = quantile(rel_error, probs = 0.5)*re_mult,
                    q975 = quantile(rel_error, probs = 0.975)*re_mult)
@@ -192,7 +180,7 @@ plot_dat = tmp_df %>% group_by(em_label, par2, age, om_label, paa_generation, Ec
 p1 = make_plot_1b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
 ggsave(filename = file.path(save_folder, paste0(paste('main', 'waa', sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 150, units = 'mm', dpi = img_res)
+       plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
@@ -211,8 +199,7 @@ tmp_df = tmp_df %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10),
                                                    labels = c('Traditional', 'Stepwise'))) 
 
 # Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, age, om_label, paa_generation, Ecov_sim, 
-                               caal_samp, age_selex) %>%
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
   dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                    q50 = quantile(rel_error, probs = 0.5)*re_mult,
                    q975 = quantile(rel_error, probs = 0.975)*re_mult)
@@ -221,7 +208,7 @@ plot_dat = tmp_df %>% group_by(em_label, par2, age, om_label, paa_generation, Ec
 p1 = make_plot_1b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
 ggsave(filename = file.path(save_folder, paste0(paste('main', 'caa', sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 150, units = 'mm', dpi = img_res)
+       plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
@@ -239,9 +226,8 @@ tmp_df = tmp_df %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10),
                            paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
                                                    labels = c('Traditional', 'Stepwise'))) 
 
-# Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, age, om_label, paa_generation, Ecov_sim, 
-                               caal_samp, age_selex) %>%
+# Prepare data for geom linerange plot:
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
   dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                    q50 = quantile(rel_error, probs = 0.5)*re_mult,
                    q975 = quantile(rel_error, probs = 0.975)*re_mult)
@@ -250,7 +236,7 @@ plot_dat = tmp_df %>% group_by(em_label, par2, age, om_label, paa_generation, Ec
 p1 = make_plot_1b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
 ggsave(filename = file.path(save_folder, paste0(paste('main', 'iaa', sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 150, units = 'mm', dpi = img_res)
+       plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
@@ -277,7 +263,7 @@ temp = temp %>% mutate(par2 = factor(par, levels = paste0('par', 1:4),
                                                 expression(rho[year]), expression(rho[cohort]))))
 
 # Prepare data for geom linerage plot:
-plot_dat = temp %>% group_by(em_label, par2, paa_generation, om_label, Ecov_sim, data_scen, caal_samp, age_selex) %>%
+plot_dat = temp %>% group_by(em_label, par2, paa_generation, om_label) %>%
   dplyr::summarise(q025 = quantile(est, probs = 0.025, na.rm = T), q50 = quantile(est, probs = 0.5, na.rm = T),
                    q975 = quantile(est, probs = 0.975, na.rm = T))
 plot_dat = plot_dat %>% dplyr::filter(!(em_label == 'WEm'))
@@ -290,7 +276,56 @@ ggsave(filename = file.path(save_folder, paste0(paste('main', 'waare', sep = '-'
        plot = p1, width = img_width, height = 150, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
-# Selex RE parameters:
+# Selex parameters:
+temp = selex_df
+# Set EM and OM labels:
+temp = set_labels(temp, conv_level = max_grad)
+# Filter first 100 reps:
+temp = filter_iter(temp)
+# Set par labels:
+temp = temp %>% mutate(paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
+                                               labels = c('Traditional', 'Stepwise'))) 
+
+# Set par labels:
+temp = temp %>% mutate(par2 = factor(fleet, levels = 1:2, 
+                                     labels = c(expression(beta[1*","*f]), expression(beta[1*","*s]))))
+
+# Prepare data for geom linerage plot:
+plot_dat = temp %>% group_by(em_label, par2, paa_generation, om_label) %>%
+  dplyr::summarise(q025 = quantile(par1, probs = 0.025, na.rm = T), 
+                   q50 = quantile(par1, probs = 0.5, na.rm = T),
+                   q975 = quantile(par1, probs = 0.975, na.rm = T))
+
+# Make plot:
+p1 = make_plot_3b(plot_dat, paa_generation, violin_sep = 0.4, 
+                  leg_pos = 'bottom', leg_title = '', col_vals = colpal1,
+                  var_name = 'Value')
+ggsave(filename = file.path(save_folder, paste0(paste('main', 'sel-const', sep = '-'), fig_type)), 
+       plot = p1, width = img_width, height = 130, units = 'mm', dpi = img_res)
+
+
+# -------------------------------------------------------------------------
+# Selex + sel RE parameters (only varying):
+
+# Selex pars:
+temp = selex_df %>% dplyr::filter(growth_var > 0)
+# Set EM and OM labels:
+temp = set_labels(temp, selex_type = 'varying', conv_level = max_grad)
+# Filter first 100 reps:
+temp = filter_iter(temp)
+# Set par labels:
+temp = temp %>% mutate(paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
+                                               labels = c('Traditional', 'Stepwise'))) 
+# Set par labels:
+temp = temp %>% mutate(par2 = factor(fleet, levels = 1:2, 
+                                     labels = c(expression(beta[1*","*f]), expression(beta[1*","*s]))))
+# Prepare data for geom linerage plot:
+plot_dat1 = temp %>% group_by(em_label, par2, paa_generation, om_label) %>%
+  dplyr::summarise(q025 = quantile(par1, probs = 0.025, na.rm = T), 
+                   q50 = quantile(par1, probs = 0.5, na.rm = T),
+                   q975 = quantile(par1, probs = 0.975, na.rm = T))
+
+# sel RE pars:
 temp = selre_df %>% dplyr::filter(growth_var > 0)
 # Set EM and OM labels:
 temp = set_labels(temp, selex_type = 'varying', conv_level = max_grad)
@@ -299,19 +334,20 @@ temp = filter_iter(temp)
 # Set par labels:
 temp = temp %>% mutate(paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
                                                labels = c('Traditional', 'Stepwise'))) 
-
 # Set par labels:
 temp = temp %>% mutate(par2 = factor(par, levels = paste0('par', 1:2), 
                                      labels = c(expression(sigma[beta[1*","*f]]), expression(sigma[beta[1*","*s]]))))
-
 # Prepare data for geom linerage plot:
-plot_dat = temp %>% group_by(em_label, par2, paa_generation, om_label, Ecov_sim, data_scen, caal_samp, age_selex) %>%
+plot_dat2 = temp %>% group_by(em_label, par2, paa_generation, om_label) %>%
   dplyr::summarise(q025 = quantile(est, probs = 0.025, na.rm = T), q50 = quantile(est, probs = 0.5, na.rm = T),
                    q975 = quantile(est, probs = 0.975, na.rm = T))
+
+# Merge:
+plot_dat = bind_rows(plot_dat1, plot_dat2)
 
 # Make plot:
 p1 = make_plot_3b(plot_dat, paa_generation, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', col_vals = colpal1,
                   var_name = 'Value')
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'selre', sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 130, units = 'mm', dpi = img_res)
+ggsave(filename = file.path(save_folder, paste0(paste('main', 'sel-vary', sep = '-'), fig_type)), 
+       plot = p1, width = img_width, height = 180, units = 'mm', dpi = img_res)
