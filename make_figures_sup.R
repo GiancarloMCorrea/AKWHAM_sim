@@ -101,8 +101,8 @@ OM1 [label = 'Time invariant', fillcolor = Pink];
 OM3 [label = 'Variability in L\U2081: \n simulated from EBS or \n MAB', fillcolor = Pink];
 OM2 [label = 'Variability in k/L\u221e: \n simulated from EBS or \n MAB', fillcolor = Pink];
 
-DAT1 [label = 'Age sampling: \n random (RS) or \n length-stratified (LSS)', fillcolor = DarkSeaGreen];
-DAT2 [label = 'Age sampling: \n random (RS) or \n length-stratified (LSS)', fillcolor = DarkSeaGreen];
+DAT1 [label = 'Age sampling: \n RS or LSS', fillcolor = DarkSeaGreen];
+DAT2 [label = 'Age sampling: \n RS or LSS', fillcolor = DarkSeaGreen];
 
 EM1 [label =  'Random effects on WAA: \n WEm \n WNP-iid \n WNP-2D \n WNP-3D', fillcolor = Beige];
 EM2 [label =  'Random effects on WAA: \n WEm \n WNP-iid \n WNP-2D \n WNP-3D', fillcolor = Beige];
@@ -119,9 +119,11 @@ EM3 [label =  'Selectivity: \n constant (Const) or \n time-varying (Vary)', fill
 {OM1} -> {DAT1}[style=dashed];
 {OM2 OM3} -> {DAT2}[style=dashed];
 DAT1 -> {EM1}[style=dashed];
-DAT2 -> {EM2 EM3}[style=dashed];
+DAT2 -> {EM2}[style=dashed];
 OM1 -> {EM1};
-{OM2 OM3} -> {EM2 EM3};
+{OM2 OM3} -> {EM2};
+EM2 -> EM3[dir=both];
+EM2 -> EM3[dir=both, style=dashed];
 
 }", engine = "dot")
 
