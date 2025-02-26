@@ -386,20 +386,29 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'iter-st
 # Sup figure: Impact of length-based selectivity and sampling
 
 om_sim1 = readRDS(file = 'sample_data/om_sample/om_sample_37.RDS')
-phi_mat = om_sim1$rep$jan1_phi_mat[,,11] # only first year
-rownames(phi_mat) = lengths_base
-colnames(phi_mat) = ages_base
-phi_df = reshape2::melt(phi_mat, varnames = c('len', 'age'))
-laa_df = phi_df %>% group_by(age) %>% filter(value == max(value)) %>% 
+
+phi_mat1 = om_sim1$rep$catch_phi_mat[,,11] # only first year
+rownames(phi_mat1) = lengths_base
+colnames(phi_mat1) = ages_base
+phi_df1 = reshape2::melt(phi_mat1, varnames = c('len', 'age'))
+
+phi_mat2 = om_sim1$rep$jan1_phi_mat[,,11] # only first year
+rownames(phi_mat2) = lengths_base
+colnames(phi_mat2) = ages_base
+phi_df2 = reshape2::melt(phi_mat2, varnames = c('len', 'age'))
+
+laa_df1 = phi_df1 %>% group_by(age) %>% filter(value == max(value)) %>% 
+            mutate(ypos = value + 0.03)
+laa_df2 = phi_df2 %>% group_by(age) %>% filter(value == max(value)) %>% 
             mutate(ypos = value + 0.03)
 sel_df1 = data.frame(len = lengths_base, value = om_sim1$rep$selAL[[1]][1,], type = 'Fishery')
 sel_df2 = data.frame(len = lengths_base, value = om_sim1$rep$selAL[[2]][1,], type = 'Survey')
 
 p1 = ggplot() +
   geom_rect(data = sel_df1, aes(xmin = len, xmax = len+2, ymin = 0, 
-                                ymax = max(phi_df$value) + 0.05, fill=value), alpha = 0.75) +
-  geom_line(data = phi_df, aes(x = len, y = value, group = factor(age))) +
-  geom_text(data = laa_df, aes(x = len, y = ypos, label = age), size = 4) +
+                                ymax = max(phi_df1$value) + 0.05, fill=value), alpha = 0.75) +
+  geom_line(data = phi_df1, aes(x = len, y = value, group = factor(age))) +
+  geom_text(data = laa_df1, aes(x = len, y = ypos, label = age), size = 4) +
   scale_fill_gradientn(colours = rev(terrain.colors(7))) +
   xlab('Length (cm)') + ylab('Proportion') +
   theme_classic() +
@@ -407,9 +416,9 @@ p1 = ggplot() +
   ggtitle('Fishery')
 p2 = ggplot() +
   geom_rect(data = sel_df2, aes(xmin = len, xmax = len+2, ymin = 0, 
-                                ymax = max(phi_df$value) + 0.05, fill=value), alpha = 0.75) +
-  geom_line(data = phi_df, aes(x = len, y = value, group = factor(age))) +
-  geom_text(data = laa_df, aes(x = len, y = ypos, label = age), size = 4) +
+                                ymax = max(phi_df2$value) + 0.05, fill=value), alpha = 0.75) +
+  geom_line(data = phi_df2, aes(x = len, y = value, group = factor(age))) +
+  geom_text(data = laa_df2, aes(x = len, y = ypos, label = age), size = 4) +
   scale_fill_gradientn(colours = rev(terrain.colors(7))) +
   xlab('Length (cm)') + ylab('Proportion') +
   theme_classic() +

@@ -33,9 +33,9 @@ h_par = 0.8 # steepness
 
 # Selectivity ------------------------------------------------------
 agesel_based = list(model = c("logistic", "logistic"),
-                    initial_pars = list(c(3.5, 0.2), c(1.5, 0.2)))
+                    initial_pars = list(c(3.5, 0.4), c(1.5, 0.225)))
 lensel_based = list(model = c("len-logistic", "len-logistic"),
-                    initial_pars = list(c(41, 3), c(17, 3)))
+                    initial_pars = list(c(45, 3), c(17, 3)))
 
 # Ecov information ------------------------------------------------------
 
