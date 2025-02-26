@@ -245,8 +245,8 @@ for(i in 1:NROW(df.scenario)){
   #if(df.scenario$method[i] == 'growth' & df.scenario$growth_var[i] > 0) em_inputs[[i]]$random = 'LAA_re'
   #if(df.scenario$method[i] == 'Ecov' & df.scenario$growth_var[i] > 0) em_inputs[[i]]$random = 'Ecov_re' 
   # if(df.scenario$age_selex[i] == 'varying') {
-  #   em_inputs[[i]]$map$sel_repars = factor(rep(NA, times = length(em_inputs[[i]]$map$sel_repars)))
-  #   em_inputs[[i]]$par$sel_repars[,1] = log(0.15) # fixed
+  #   em_inputs[[i]]$map$selpars_re = factor(c(1:n_years_base, rep(NA, times = n_years_base),
+  #                                            (n_years_base+1):(2*n_years_base), rep(NA, times = n_years_base)))
   # }
 
 }
