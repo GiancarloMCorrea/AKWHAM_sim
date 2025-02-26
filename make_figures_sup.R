@@ -9,6 +9,7 @@ library(fields)
 require(DiagrammeR)
 library(scales)
 require(DiagrammeRsvg)
+require(gridExtra)
 require(rsvg)
 require(wesanderson)
 library(RColorBrewer)
@@ -383,46 +384,38 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'iter-st
 
 # -------------------------------------------------------------------------
 # Sup figure: Impact of length-based selectivity and sampling
-# 
-# year = 1 #select year to plot
-# om_sim = readRDS(file = 'inputs/om_sample/om_sample_1.RDS')
-# 
-# fish_lengths = om_sim$input$data$lengths
-# n_years = om_sim$input$data$n_years_model
-# n_ages = om_sim$input$data$n_ages
-# 
-# this_dist = t(om_sim$rep$NAA[year,] * t(om_sim$rep$jan1_phi_mat[,,year]))
-# rownames(this_dist) = fish_lengths
-# colnames(this_dist) = 1:n_ages
-# df1 = melt(this_dist, varnames = c('len', 'age'))
-# df1 = df1 %>% mutate(type = 'Population')
-# 
-# this_dist = om_sim$rep$pred_CAAL[year, 1, ,]
-# rownames(this_dist) = fish_lengths
-# colnames(this_dist) = 1:n_ages
-# df2 = melt(this_dist, varnames = c('len', 'age'))
-# df2 = df2 %>% mutate(type = 'Fishery')
-# 
-# this_dist = om_sim$rep$pred_IAAL[year, 1, ,]
-# rownames(this_dist) = fish_lengths
-# colnames(this_dist) = 1:n_ages
-# df3 = melt(this_dist, varnames = c('len', 'age'))
-# df3 = df3 %>% mutate(type = 'Survey')
-# 
-# df_plot = rbind(df1, df2, df3)
-# df_plot$type = factor(df_plot$type, levels = c('Population', 'Fishery', 'Survey'))
-# mean_plot = df_plot %>% 
-#   dplyr::group_by(age, type) %>%
-#   dplyr::summarise(mean_len = weighted.mean(x = len, w = value))
-# 
-# figs3 = ggplot(df_plot, aes(x=len, y=value)) +
-#   geom_line() +
-#   xlab('Length (cm)') +
-#   ylab('Abundance') +
-#   geom_vline(data = mean_plot, aes(xintercept = mean_len), color = 'red') +
-#   facet_grid(type ~ factor(age), scales = 'free_y') +
-#   theme(legend.position = 'none',
-#         axis.text.y=element_blank(),
-#         axis.ticks.y=element_blank())
-# ggsave(filename = 'plots/Figure_S3.jpg', plot = figs3, 
-#        width = 190 , height = 90, units = 'mm', dpi = 500)
+
+om_sim1 = readRDS(file = 'sample_data/om_sample/om_sample_37.RDS')
+phi_mat = om_sim1$rep$jan1_phi_mat[,,11] # only first year
+rownames(phi_mat) = lengths_base
+colnames(phi_mat) = ages_base
+phi_df = reshape2::melt(phi_mat, varnames = c('len', 'age'))
+laa_df = phi_df %>% group_by(age) %>% filter(value == max(value)) %>% 
+            mutate(ypos = value + 0.03)
+sel_df1 = data.frame(len = lengths_base, value = om_sim1$rep$selAL[[1]][1,], type = 'Fishery')
+sel_df2 = data.frame(len = lengths_base, value = om_sim1$rep$selAL[[2]][1,], type = 'Survey')
+
+p1 = ggplot() +
+  geom_rect(data = sel_df1, aes(xmin = len, xmax = len+2, ymin = 0, 
+                                ymax = max(phi_df$value) + 0.05, fill=value), alpha = 0.75) +
+  geom_line(data = phi_df, aes(x = len, y = value, group = factor(age))) +
+  geom_text(data = laa_df, aes(x = len, y = ypos, label = age), size = 4) +
+  scale_fill_gradientn(colours = rev(terrain.colors(7))) +
+  xlab('Length (cm)') + ylab('Proportion') +
+  theme_classic() +
+  guides(fill = guide_colorbar(title = 'Selectivity')) +
+  ggtitle('Fishery')
+p2 = ggplot() +
+  geom_rect(data = sel_df2, aes(xmin = len, xmax = len+2, ymin = 0, 
+                                ymax = max(phi_df$value) + 0.05, fill=value), alpha = 0.75) +
+  geom_line(data = phi_df, aes(x = len, y = value, group = factor(age))) +
+  geom_text(data = laa_df, aes(x = len, y = ypos, label = age), size = 4) +
+  scale_fill_gradientn(colours = rev(terrain.colors(7))) +
+  xlab('Length (cm)') + ylab('Proportion') +
+  theme_classic() +
+  guides(fill = guide_colorbar(title = 'Selectivity')) +
+  ggtitle('Survey')
+
+p3 = grid.arrange(p1, p2)
+ggsave(filename = file.path(save_folder, paste0('Figure_selex', fig_type)), plot = p3,
+       width = img_width*0.75 , height = 150, units = 'mm', dpi = img_res)

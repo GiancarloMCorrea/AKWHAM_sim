@@ -308,13 +308,12 @@ make_plot_3b = function(df, this_factor, col_vals, violin_sep = 0.4,
 # Make plot TS:
 
 make_plot_ts = function(df, this_factor, col_vals, 
-                        leg_pos = 'none', var_name = 'Relative error (%)') {
+                        leg_pos = 'none', var_name = 'Relative error (%)', yLim = NULL) {
   
   my_plot =  ggplot(df, aes(x = year, y = q50)) +
     geom_line(aes(color = {{this_factor}})) +
     geom_ribbon(aes(ymin = q025, ymax = q975, fill = {{this_factor}}), alpha = 0.3) +
     geom_hline(yintercept=0, color=1, linetype='dashed') +
-    # coord_cartesian(ylim = 50*c(-1, 1)) +
     scale_color_manual(values = col_vals) +
     scale_fill_manual(values = col_vals) +
     ylab(var_name) + xlab('Simulated year') +
@@ -325,6 +324,8 @@ make_plot_ts = function(df, this_factor, col_vals,
           strip.background = element_rect(fill="white")) +
     facet_grid(em_label2 ~ om_label, labeller = 'label_parsed') +
     guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
+  
+  if(!is.null(yLim)) my_plot = my_plot + coord_cartesian(ylim = yLim) 
   
   return(my_plot)
   
