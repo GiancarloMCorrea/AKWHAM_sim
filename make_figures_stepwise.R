@@ -61,7 +61,7 @@ paa_gen_approach = 'stepwise'
 # -------------------------------------------------------------------------
 
 # Convergence rates:
-n_sim = 50 # number of iterations run per scenario.
+n_sim = 70 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 paa_gen_approach = paa_gen_approach
@@ -242,7 +242,7 @@ temp = set_labels(temp, caal_type = c('random', 'strat'),
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
-temp = temp %>% dplyr::filter(age %in% c(1:3, 9:10)) %>%
+temp = temp %>% dplyr::filter(age %in% c(2:4, 9:10)) %>%
           mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
 temp = temp %>% mutate(y_label = paste(caal_samp, Ecov_sim, age_selex, sep = '/'))
 

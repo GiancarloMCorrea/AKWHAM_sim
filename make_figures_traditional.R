@@ -62,7 +62,7 @@ paa_gen_approach = 'traditional'
 # -------------------------------------------------------------------------
 
 # Convergence rates:
-n_sim = 50 # number of iterations run per scenario.
+n_sim = 70 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach)
@@ -195,7 +195,8 @@ for(i in seq_along(all_vars)) {
                      q975 = quantile(rel_error, probs = 0.975)*re_mult)
   
   # Make plot:
-  p1 = make_plot_ts(plot_dat, Ecov_sim, col_vals = colpal1, leg_pos = 'bottom')
+  if(sel_var == 'Rec') { yLim = c(-50, 50) } else { yLim = NULL }
+  p1 = make_plot_ts(plot_dat, Ecov_sim, col_vals = colpal1, leg_pos = 'bottom', yLim = yLim)
   ggsave(filename = file.path(ts_folder_plot, paste0(paste(paa_gen_approach, 'ts', sel_var, sep = '-'), fig_type)), 
          plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
   
@@ -247,7 +248,7 @@ temp = set_labels(temp, ecov_type = c('stationary', 'trend'),
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
-temp = temp %>% dplyr::filter(age %in% c(1:3, 9:10)) %>% 
+temp = temp %>% dplyr::filter(age %in% c(2:4, 9:10)) %>% 
   mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
 # Define y label
 temp = temp %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
