@@ -61,7 +61,7 @@ paa_gen_approach = 'stepwise'
 # -------------------------------------------------------------------------
 
 # Convergence rates:
-n_sim = 70 # number of iterations run per scenario.
+n_sim = 100 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 paa_gen_approach = paa_gen_approach
