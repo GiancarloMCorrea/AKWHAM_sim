@@ -334,7 +334,7 @@ output_folder = 'outputs'
 max_grad = 1e-04
 min_alpha = 0.35
 ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))
-paa_gen_approach = 'stepwise'
+paa_gen_approach = 'traditional'
 
 this_age_selex = c('fixed', 'varying') # fixed or varying
 this_caal_samp = c('random') # random or strat
