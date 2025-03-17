@@ -192,7 +192,8 @@ for(i in seq_along(all_vars)) {
                      q975 = quantile(rel_error, probs = 0.975)*re_mult)
   
   # Make plot:
-  p1 = make_plot_ts(plot_dat, Ecov_sim, col_vals = colpal1, leg_pos = 'bottom')
+  if(sel_var == 'Rec') { yLim = c(-50, 50) } else { yLim = NULL }
+  p1 = make_plot_ts(plot_dat, Ecov_sim, col_vals = colpal1, leg_pos = 'bottom', yLim=yLim)
   ggsave(filename = file.path(ts_folder_plot, paste0(paste(paa_gen_approach, 'ts', sel_var, sep = '-'), fig_type)), 
          plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
   

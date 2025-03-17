@@ -157,7 +157,7 @@ for(i in seq_along(all_vars)) {
 }
 
 # -------------------------------------------------------------------------
-# WAA plots:
+# WAA plots (averaged):
 temp = waa_df %>% dplyr::group_by(scenario, age, paa_generation, data_scen, Ecov_sim, 
                                   caal_samp, age_selex, re_method, method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
