@@ -33,6 +33,9 @@ re_mult = 100
 # color scale for EBS and MAB:
 colpal1 = wesanderson::wes_palettes$GrandBudapest1[3:4]
 
+# color scale for RS and LSS:
+colpal2 = wesanderson::wes_palettes$Darjeeling1[1:2]
+
 # Convergence level:
 max_grad = 1e-04
 
@@ -100,11 +103,9 @@ paa_gen_approach = 'stepwise'
 # PAR plot:
 # Prepare data
 temp = par_df %>% dplyr::filter(par %in% c('logit_q', 'mean_rec_pars', 'log_NAA_sigma'),
-                                growth_var > 0)
-
-tmp_df = temp %>% dplyr::filter(paa_generation == paa_gen_approach)
+                                growth_var > 0, paa_generation == paa_gen_approach)
 # Set EM and OM labels:
-tmp_df = set_labels(tmp_df, caal_type = c('random', 'strat'), 
+tmp_df = set_labels(temp, caal_type = c('random', 'strat'), 
                     selex_type = c('fixed', 'varying'), 
                     ecov_type = c('stationary', 'trend'), conv_level = max_grad)
 # Filter first X reps:
@@ -128,14 +129,13 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'par', s
 # -------------------------------------------------------------------------
 # avg TS plot:
 # Prepare data
-temp = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
+temp = ts_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>% 
+        dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
                                  caal_samp, age_selex, re_method, method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
-temp = temp %>% dplyr::filter(growth_var > 0)
 
-tmp_df = temp %>% dplyr::filter(paa_generation == paa_gen_approach)
 # Set EM and OM labels:
-tmp_df = set_labels(tmp_df, caal_type = c('random', 'strat'), 
+tmp_df = set_labels(temp, caal_type = c('random', 'strat'), 
                     selex_type = c('fixed', 'varying'), 
                     ecov_type = c('stationary', 'trend'), conv_level = max_grad)
 # Filter first X reps:
@@ -163,19 +163,22 @@ ts_folder_plot = file.path(save_folder, 'ts_plots')
 dir.create(ts_folder_plot, showWarnings = FALSE)
 
 # Sort data:
-temp = ts_df %>% dplyr::group_by(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
+temp = ts_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>% 
+        dplyr::group_by(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
                                  Ecov_sim, method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
-temp = temp %>% dplyr::filter(paa_generation == paa_gen_approach)
-temp = temp %>% dplyr::filter(growth_var > 0)
 
+# Select selectivity type
+this_ecov = 'stationary'
 # Plot TS by variable:
 all_vars = c('Rec', 'SSB', 'F')
 for(i in seq_along(all_vars)) {
   
   sel_var = all_vars[i]
   # Set EM and OM labels:
-  temp2 = set_labels(temp, ecov_type = c('stationary', 'trend'), 
+  temp2 = set_labels(temp, ecov_type = this_ecov, 
+                     caal_type = c('random', 'strat'),
+                     selex_type = c('fixed', 'varying'),
                      conv_level = max_grad)
   # Filter first 100 reps:
   temp2 = filter_iter(temp2)
@@ -186,26 +189,39 @@ for(i in seq_along(all_vars)) {
                                                       expression(WNP*"-"*2*"D"),
                                                       expression(WNP*"-"*3*"D")))
   # Prepare data for geom linerage plot:
-  plot_dat = temp2 %>% group_by(Ecov_sim, em_label2, year, om_label) %>%
+  plot_dat = temp2 %>% group_by(caal_samp, age_selex, em_label2, year, om_label) %>%
     dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                      q50 = quantile(rel_error, probs = 0.5)*re_mult,
                      q975 = quantile(rel_error, probs = 0.975)*re_mult)
   
   # Make plot:
-  if(sel_var == 'Rec') { yLim = c(-50, 50) } else { yLim = NULL }
-  p1 = make_plot_ts(plot_dat, Ecov_sim, col_vals = colpal1, leg_pos = 'bottom', yLim=yLim)
-  ggsave(filename = file.path(ts_folder_plot, paste0(paste(paa_gen_approach, 'ts', sel_var, sep = '-'), fig_type)), 
-         plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
+  if(sel_var == 'Rec') { yLim = c(-50, 50) } else { yLim = c(-30, 30) }
+  p1 = ggplot(plot_dat, aes(x = year, y = q50)) +
+    geom_line(aes(color = caal_samp)) +
+    geom_ribbon(aes(ymin = q025, ymax = q975, fill = caal_samp), alpha = 0.3) +
+    geom_hline(yintercept=0, color=1, linetype='dashed') +
+    scale_color_manual(values = colpal2) +
+    scale_fill_manual(values = colpal2) +
+    coord_cartesian(ylim = yLim) +
+    ylab('Relative error (%)') + xlab('Simulated year') +
+    theme(legend.position = 'bottom',
+          axis.text.x = element_text(size = 9),
+          strip.text = element_text(size = 10),
+          legend.text=element_text(size=10),
+          strip.background = element_rect(fill="white")) +
+    facet_nested(em_label2 ~ om_label+age_selex, labeller = 'label_parsed') +
+    guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
+  ggsave(filename = file.path(ts_folder_plot, paste0(paste(paa_gen_approach, 'ts', sel_var, this_ecov, sep = '-'), fig_type)), 
+         plot = p1, width = img_width, height = 200, units = 'mm', dpi = img_res)
   
 }
 
 # -------------------------------------------------------------------------
-# WAA info:
-temp = waa_df %>% filter(paa_generation == paa_gen_approach) %>%
+# WAA info (averaged):
+temp = waa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
-temp = temp %>% dplyr::filter(growth_var > 0)
 
 # Set EM and OM labels:
 temp = set_labels(temp, caal_type = c('random', 'strat'), 
@@ -229,12 +245,67 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'waa', s
        plot = p3, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
+# WAA info (per year):
+ts_folder_plot = file.path(save_folder, 'ts_plots', 'waa')
+dir.create(ts_folder_plot, showWarnings = FALSE)
+
+temp = waa_df %>% filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
+  dplyr::group_by(scenario, age, year, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
+                  method, growth_var, im) %>% 
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+
+# Select selectivity type
+this_ecov = 'stationary'
+# Plot TS by variable:
+all_vars = as.character(1:10)
+for(i in seq_along(all_vars)) {
+  
+  sel_var = all_vars[i]
+  # Set EM and OM labels:
+  temp2 = set_labels(temp, ecov_type = this_ecov, 
+                     caal_type = c('random', 'strat'),
+                     selex_type = c('fixed', 'varying'),
+                     conv_level = max_grad)
+  # Filter first 100 reps:
+  temp2 = filter_iter(temp2)
+  # Select variable to plot:
+  temp2 = temp2 %>% dplyr::filter(age == sel_var)
+  # Make em label:
+  temp2$em_label2 = factor(temp2$em_label, labels = c("WEm", expression(WNP*"-"*iid), 
+                                                      expression(WNP*"-"*2*"D"),
+                                                      expression(WNP*"-"*3*"D")))
+  # Prepare data for geom linerage plot:
+  plot_dat = temp2 %>% group_by(caal_samp, age_selex, em_label2, year, om_label) %>%
+    dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
+                     q50 = quantile(rel_error, probs = 0.5)*re_mult,
+                     q975 = quantile(rel_error, probs = 0.975)*re_mult)
+  
+  # Make plot:
+  p1 = ggplot(plot_dat, aes(x = year, y = q50)) +
+    geom_line(aes(color = caal_samp)) +
+    geom_ribbon(aes(ymin = q025, ymax = q975, fill = caal_samp), alpha = 0.3) +
+    geom_hline(yintercept=0, color=1, linetype='dashed') +
+    scale_color_manual(values = colpal2) +
+    scale_fill_manual(values = colpal2) +
+    ylab('Relative error (%)') + xlab('Simulated year') +
+    theme(legend.position = 'bottom',
+          axis.text.x = element_text(size = 9),
+          strip.text = element_text(size = 10),
+          legend.text=element_text(size=10),
+          strip.background = element_rect(fill="white")) +
+    facet_nested(em_label2 ~ om_label+age_selex, labeller = 'label_parsed') +
+    guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
+  ggsave(filename = file.path(ts_folder_plot, paste0(paste(paa_gen_approach, 'tswaa', sel_var, this_ecov, sep = '-'), fig_type)), 
+         plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
+  
+}
+
+# -------------------------------------------------------------------------
 # Pred catch CAA info:
-temp = catch_paa_df %>% filter(paa_generation == paa_gen_approach) %>%
+temp = catch_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>%  
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
-temp = temp %>% dplyr::filter(growth_var > 0)
 
 # Set EM and OM labels:
 temp = set_labels(temp, caal_type = c('random', 'strat'), 
@@ -259,12 +330,68 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'caa', s
        plot = p3, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
+# CAA info (per year):
+ts_folder_plot = file.path(save_folder, 'ts_plots', 'caa')
+dir.create(ts_folder_plot, showWarnings = FALSE)
+
+temp = catch_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
+  dplyr::group_by(scenario, age, year, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
+                  method, growth_var, im) %>% 
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+
+# Select selectivity type
+this_ecov = 'stationary'
+# Plot TS by variable:
+all_vars = as.character(1:10)
+for(i in seq_along(all_vars)) {
+  
+  sel_var = all_vars[i]
+  # Set EM and OM labels:
+  temp2 = set_labels(temp, ecov_type = this_ecov, 
+                     caal_type = c('random', 'strat'),
+                     selex_type = c('fixed', 'varying'),
+                     conv_level = max_grad)
+  # Filter first 100 reps:
+  temp2 = filter_iter(temp2)
+  # Select variable to plot:
+  temp2 = temp2 %>% dplyr::filter(age == sel_var)
+  # Make em label:
+  temp2$em_label2 = factor(temp2$em_label, labels = c("WEm", expression(WNP*"-"*iid), 
+                                                      expression(WNP*"-"*2*"D"),
+                                                      expression(WNP*"-"*3*"D")))
+  # Prepare data for geom linerage plot:
+  plot_dat = temp2 %>% group_by(caal_samp, age_selex, em_label2, year, om_label) %>%
+    dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
+                     q50 = quantile(rel_error, probs = 0.5)*re_mult,
+                     q975 = quantile(rel_error, probs = 0.975)*re_mult)
+  
+  # Make plot:
+  p1 = ggplot(plot_dat, aes(x = year, y = q50)) +
+    geom_line(aes(color = caal_samp)) +
+    geom_ribbon(aes(ymin = q025, ymax = q975, fill = caal_samp), alpha = 0.3) +
+    geom_hline(yintercept=0, color=1, linetype='dashed') +
+    scale_color_manual(values = colpal2) +
+    scale_fill_manual(values = colpal2) +
+    ylab('Relative error (%)') + xlab('Simulated year') +
+    theme(legend.position = 'bottom',
+          axis.text.x = element_text(size = 9),
+          strip.text = element_text(size = 10),
+          legend.text=element_text(size=10),
+          strip.background = element_rect(fill="white")) +
+    facet_nested(em_label2 ~ om_label+age_selex, labeller = 'label_parsed') +
+    guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
+  ggsave(filename = file.path(ts_folder_plot, paste0(paste(paa_gen_approach, 'tscaa', sel_var, this_ecov, sep = '-'), fig_type)), 
+         plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
+  
+}
+
+
+# -------------------------------------------------------------------------
 # Pred catch IAA info:
-temp = index_paa_df %>% filter(paa_generation == paa_gen_approach) %>%
+temp = index_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>%  
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
-temp = temp %>% dplyr::filter(growth_var > 0)
 
 # Set EM and OM labels:
 temp = set_labels(temp, caal_type = c('random', 'strat'), 
@@ -287,3 +414,60 @@ plot_dat = plot_dat %>% mutate(box_label = paste0(bias, '(', precision, ')'))
 p3 = make_heatmap(df = plot_dat, this_factor = bias, this_label = box_label, y_label = y_label)
 ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'iaa', sep = '-'), fig_type)), 
        plot = p3, width = img_width, height = 210, units = 'mm', dpi = img_res)
+
+# -------------------------------------------------------------------------
+# IAA info (per year):
+ts_folder_plot = file.path(save_folder, 'ts_plots', 'iaa')
+dir.create(ts_folder_plot, showWarnings = FALSE)
+
+temp = index_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
+  dplyr::group_by(scenario, age, year, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
+                  method, growth_var, im) %>% 
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+
+# Select selectivity type
+this_ecov = 'trend'
+# Plot TS by variable:
+all_vars = as.character(1:10)
+for(i in seq_along(all_vars)) {
+  
+  sel_var = all_vars[i]
+  # Set EM and OM labels:
+  temp2 = set_labels(temp, ecov_type = this_ecov, 
+                     caal_type = c('random', 'strat'),
+                     selex_type = c('fixed', 'varying'),
+                     conv_level = max_grad)
+  # Filter first 100 reps:
+  temp2 = filter_iter(temp2)
+  # Select variable to plot:
+  temp2 = temp2 %>% dplyr::filter(age == sel_var)
+  # Make em label:
+  temp2$em_label2 = factor(temp2$em_label, labels = c("WEm", expression(WNP*"-"*iid), 
+                                                      expression(WNP*"-"*2*"D"),
+                                                      expression(WNP*"-"*3*"D")))
+  # Prepare data for geom linerage plot:
+  plot_dat = temp2 %>% group_by(caal_samp, age_selex, em_label2, year, om_label) %>%
+    dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
+                     q50 = quantile(rel_error, probs = 0.5)*re_mult,
+                     q975 = quantile(rel_error, probs = 0.975)*re_mult)
+  
+  # Make plot:
+  p1 = ggplot(plot_dat, aes(x = year, y = q50)) +
+    geom_line(aes(color = caal_samp)) +
+    geom_ribbon(aes(ymin = q025, ymax = q975, fill = caal_samp), alpha = 0.3) +
+    geom_hline(yintercept=0, color=1, linetype='dashed') +
+    scale_color_manual(values = colpal2) +
+    scale_fill_manual(values = colpal2) +
+    ylab('Relative error (%)') + xlab('Simulated year') +
+    theme(legend.position = 'bottom',
+          axis.text.x = element_text(size = 9),
+          strip.text = element_text(size = 10),
+          legend.text=element_text(size=10),
+          strip.background = element_rect(fill="white")) +
+    facet_nested(em_label2 ~ om_label+age_selex, labeller = 'label_parsed') +
+    guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
+  ggsave(filename = file.path(ts_folder_plot, paste0(paste(paa_gen_approach, 'tsiaa', sel_var, this_ecov, sep = '-'), fig_type)), 
+         plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
+  
+}
+

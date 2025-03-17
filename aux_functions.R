@@ -333,7 +333,6 @@ make_plot_ts = function(df, this_factor, col_vals,
 }
 
 
-
 # -------------------------------------------------------------------------
 
 make_heatmap = function(df, this_factor, this_label, y_label, 

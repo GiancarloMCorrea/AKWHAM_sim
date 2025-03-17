@@ -170,7 +170,6 @@ temp = ts_df %>% dplyr::group_by(paa_generation, scenario, par, year, data_scen,
                                  Ecov_sim, method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
 temp = temp %>% dplyr::filter(paa_generation == paa_gen_approach)
-temp = temp %>% dplyr::filter(growth_var > 0)
 
 # Plot TS by variable:
 all_vars = c('Rec', 'SSB', 'F')
