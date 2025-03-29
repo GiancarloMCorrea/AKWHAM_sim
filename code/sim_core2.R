@@ -124,14 +124,19 @@ if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
   to_obsvec = NULL
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_fleets) {
+      # Length sampling:
+      len_samp = sim_data$catch_pal[i,j,]*sim_data$catch_NeffL[j,i]
       if(this_scenario$caal_samp == 'random') {
-        # Random sampling:
-        len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$catch_pal[i,j,]) 
-        len_subsam = as.vector(len_subsam)
+        # Random sampling: 
+        len_samp_ind = rep(sim_data$lengths, times = len_samp)
+        len_subsamp_ind = sample(x = len_samp_ind, size = Nsamp_CAAL)
+        tbl_subsamp = table(len_subsamp_ind)
+        pos_id = match(as.numeric(names(tbl_subsamp)), sim_data$lengths)
+        len_subsam = numeric(length(len_samp))
+        len_subsam[pos_id] = as.vector(tbl_subsamp)
       }
       if(this_scenario$caal_samp == 'strat') {
         # Length-stratified sampling:
-        len_samp = sim_data$catch_pal[i,j,]*sim_data$catch_NeffL[j,i]
         len_subsam = numeric(length(len_samp)) # save CAAL Neff
         if(sum(len_samp) == Nsamp_CAAL) {
           len_subsam = len_samp
@@ -285,14 +290,18 @@ if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
   to_obsvec_paa = NULL
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_indices) {
+      len_samp = sim_data$index_pal[i,j,]*sim_data$index_NeffL[j,i]
       if(this_scenario$caal_samp == 'random') {
-        # Random sampling:
-        len_subsam = rmultinom(n = 1, size = Nsamp_CAAL, prob = sim_data$index_pal[i,j,]) 
-        len_subsam = as.vector(len_subsam)
+        # Random sampling: 
+        len_samp_ind = rep(sim_data$lengths, times = len_samp)
+        len_subsamp_ind = sample(x = len_samp_ind, size = Nsamp_CAAL)
+        tbl_subsamp = table(len_subsamp_ind)
+        pos_id = match(as.numeric(names(tbl_subsamp)), sim_data$lengths)
+        len_subsam = numeric(length(len_samp))
+        len_subsam[pos_id] = as.vector(tbl_subsamp)
       }
       if(this_scenario$caal_samp == 'strat') {
         # Length-stratified sampling:
-        len_samp = sim_data$index_pal[i,j,]*sim_data$index_NeffL[j,i]
         len_subsam = numeric(length(len_samp)) # save CAAL Neff
         if(sum(len_samp) == Nsamp_CAAL) {
           len_subsam = len_samp
