@@ -37,6 +37,8 @@ df.scenario = readRDS(here::here("inputs", "df.scenarios.RDS"))
 dir.create('sample_data', showWarnings = FALSE)
 dir.create(here::here('sample_data', 'om_sample'), showWarnings = FALSE)
 dir.create(here::here('sample_data', 'LAA_sample'), showWarnings = FALSE)
+dir.create(here::here('sample_data', 'ALK_sample'), showWarnings = FALSE)
+dir.create(here::here('sample_data', 'WAA_sample'), showWarnings = FALSE)
 dir.create(here::here('sample_data', 'LAApar_sample'), showWarnings = FALSE)
 
 # Create folder to save results:

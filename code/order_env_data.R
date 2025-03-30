@@ -1,5 +1,8 @@
 # Organize Env_time series data:
+require(forecast)
 source(here::here('code', 'config_params.R'))
+# Save ARIMA objects:
+arima_mod = list()
 
 # EBS Bottom temperature:
 # Obtained from https://github.com/afsc-gap-products/coldpool
@@ -16,6 +19,10 @@ stationary_df = stationary_df %>% dplyr::mutate(year_id = row_number(),
                                          type = 'stationary') %>%
   dplyr::select(year_id, var_std, type)
 
+# Fit ARIMA model:
+stat_mod = forecast::Arima(stationary_df$var_std, order = c(1,0,0))
+arima_mod[[1]] = stat_mod
+
 # MidAtlantic Bight:
 # Obtained from: https://github.com/NOAA-EDAB/ecodata
 # 1984-2023
@@ -31,6 +38,13 @@ trend_df = trend_df %>% dplyr::mutate(year_id = row_number(),
                                       type = 'trend') %>%
   dplyr::select(year_id, var_std, type)
 
+# Fit ARIMA model:
+trend_mod = forecast::Arima(trend_df$var_std, order = c(1,0,0), include.drift = TRUE)
+arima_mod[[2]] = trend_mod
+
+# Save models:
+names(arima_mod) = c('stationary', 'trend')
+save(arima_mod, file = 'env_data/arima_mod.RData')
 # Merge dfs and save:
 env_df = bind_rows(stationary_df, trend_df)
 saveRDS(env_df, file = 'env_data/env_sim.rds')

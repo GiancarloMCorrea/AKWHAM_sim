@@ -17,6 +17,7 @@ om_inputs <- readRDS(here::here("inputs", "om_inputs.RDS"))
 em_inputs <- readRDS(here::here("inputs", "em_inputs.RDS"))
 df.scenario <- readRDS(here::here("inputs", "df.scenarios.RDS"))
 env_data = readRDS(here::here("env_data", "env_sim.rds"))
+load(here::here("env_data", "arima_mod.RData"))
 seeds <- readRDS(here::here("inputs","seeds.RDS"))
 
 # Make data.frame summarizing scenario:
@@ -25,6 +26,7 @@ model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, thi
 this_dat_scen = match(this_scenario$data_scen, c('poor', 'rich'))
 this_paagen_scen = match(this_scenario$paa_generation, c('traditional', 'stepwise'))
 this_om_input = om_inputs[[this_scenario$growth_var + 1]][[this_paagen_scen]][[this_dat_scen]] # select the OM based on growth_var
+this_ecov_mod = arima_mod[[this_scenario$Ecov_sim]]
 
 #######################################################
 # Print scenario name:
@@ -75,6 +77,13 @@ sim_ecov = matrix(0, ncol = 1, nrow = n_years_base + n_years_burnin)
 sim_ecov[1:(n_years_burnin), 1] = rnorm(n = n_years_burnin, mean = 0, sd = 1) # mean = 0, sd = 1 for burn-in period
 sim_ecov[(n_years_burnin + 1):(n_years_base + n_years_burnin), 1] = sim_ts
 
+# # Simulate Ecov_sim from ARIMA model:
+# sim_ts = as.vector(simulate(this_ecov_mod, future=FALSE))
+# # Create input object:
+# sim_ecov = matrix(0, ncol = 1, nrow = n_years_base + n_years_burnin)
+# sim_ecov[1:(n_years_burnin), 1] = rnorm(n = n_years_burnin, mean = 0, sd = 1) # mean = 0, sd = 1 for burn-in period
+# sim_ecov[(n_years_burnin + 1):(n_years_base + n_years_burnin), 1] = sim_ts
+
 # Now replace the sim_ecov in the OM input:
 this_om_input$par$Ecov_re = sim_ecov
 
@@ -122,6 +131,8 @@ if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
 
   # Order to sort: year, fleet, len bin, age
   to_obsvec = NULL
+  save_alk = list()
+  alk_count = 1
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_fleets) {
       # Length sampling:
@@ -173,11 +184,31 @@ if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
       # Replace use/not use:
       sim_data$use_catch_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
       
+      # year-specific alk as data.frame to save it later:
+      this_alk = sim_data$catch_caal[i,j,,]
+      colnames(this_alk) = 1:sim_data$n_ages
+      rownames(this_alk) = sim_data$lengths
+      this_alk_df = reshape2::melt(this_alk, varnames = c('len', 'age'))
+      this_alk_df$year = j
+      this_alk_df$fleet = i
+      this_alk_df$fleet_type = 'fishery'
+      this_alk_df$growth_var = this_scenario$growth_var
+      this_alk_df$sim = simi
+      this_alk_df$ecov = this_scenario$Ecov_sim
+      this_alk_df$caal_samp = this_scenario$caal_samp
+      save_alk[[alk_count]] = this_alk_df
+      alk_count = alk_count + 1
+      
     } # fleet loop
   } # year loop
   
   # Now replace values CAAL in obsvec vector:
   sim_data$obsvec[sim_data$obs$type == 'catchcaal'] = to_obsvec
+  # Save ALK:
+  save_alk = dplyr::bind_rows(save_alk)
+  if(simi <= 10 & scenj %in% c(37:46)) {
+    saveRDS(save_alk, file = file.path(main_dir, "sample_data", 'ALK_sample', paste0("fishery_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+  }
   
   # Age comps calculation:
   # First, calculate average ALK across years to be used later:
@@ -252,6 +283,27 @@ if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
         } # ages loop
       } # fleet loop
     } # year loop
+    save_waa = list()
+    waa_count = 1
+    # Save year-specific waa obs:
+    for(i in sim_data$waa_pointer_fleets) {
+      this_waa = sim_data$waa[i,,]
+      colnames(this_waa) = 1:sim_data$n_ages
+      rownames(this_waa) = 1:sim_data$n_years_model
+      this_waa_df = reshape2::melt(this_waa, varnames = c('year', 'age'))
+      this_waa_df$waa_pointer = i
+      this_waa_df$growth_var = this_scenario$growth_var
+      this_waa_df$sim = simi
+      this_waa_df$ecov = this_scenario$Ecov_sim
+      this_waa_df$caal_samp = this_scenario$caal_samp
+      save_waa[[waa_count]] = this_waa_df
+      waa_count = waa_count + 1
+    }
+    # Save ALK:
+    save_waa = dplyr::bind_rows(save_waa)
+    if(simi <= 10 & scenj %in% c(37:46)) {
+      saveRDS(save_waa, file = file.path(main_dir, "sample_data", 'WAA_sample', paste0("fishery_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+    }
     
     # replace NA (waa obs) with average value:
     for(i in 1:sim_data$n_fleets) {
@@ -287,7 +339,8 @@ if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
   
   # Order to sort: year, fleet, len bin, age
   to_obsvec = NULL
-  to_obsvec_paa = NULL
+  save_alk = list()
+  alk_count = 1
   for(j in 1:sim_data$n_years_model) {
     for(i in 1:sim_data$n_indices) {
       len_samp = sim_data$index_pal[i,j,]*sim_data$index_NeffL[j,i]
@@ -338,12 +391,32 @@ if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
       # Replace use/not use:
       sim_data$use_index_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
       
+      # year-specific alk as data.frame to save it later:
+      this_alk = sim_data$index_caal[i,j,,]
+      colnames(this_alk) = 1:sim_data$n_ages
+      rownames(this_alk) = sim_data$lengths
+      this_alk_df = reshape2::melt(this_alk, varnames = c('len', 'age'))
+      this_alk_df$year = j
+      this_alk_df$fleet = i
+      this_alk_df$fleet_type = 'survey'
+      this_alk_df$growth_var = this_scenario$growth_var
+      this_alk_df$sim = simi
+      this_alk_df$ecov = this_scenario$Ecov_sim
+      this_alk_df$caal_samp = this_scenario$caal_samp
+      save_alk[[alk_count]] = this_alk_df
+      alk_count = alk_count + 1
+      
     } # fleet loop
   } # year loop
   
   # Now replace values CAAL in obsvec vector:
   sim_data$obsvec[sim_data$obs$type == 'indexcaal'] = to_obsvec
-
+  # Save ALK:
+  save_alk = dplyr::bind_rows(save_alk)
+  if(simi <= 10 & scenj %in% c(37:46)) {
+    saveRDS(save_alk, file = file.path(main_dir, "sample_data", 'ALK_sample', paste0("survey_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+  }
+  
   # Age comps calculation:
   # First, calculate average ALK across years to be used later:
   avg_alk = list(sim_data$n_indices)
@@ -418,6 +491,27 @@ if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
         } # ages loop
       } # fleet loop
     } # year loop
+    save_waa = list()
+    waa_count = 1
+    # Save year-specific waa obs:
+    for(i in sim_data$waa_pointer_indices) {
+      this_waa = sim_data$waa[i,,]
+      colnames(this_waa) = 1:sim_data$n_ages
+      rownames(this_waa) = 1:sim_data$n_years_model
+      this_waa_df = reshape2::melt(this_waa, varnames = c('year', 'age'))
+      this_waa_df$waa_pointer = i
+      this_waa_df$growth_var = this_scenario$growth_var
+      this_waa_df$sim = simi
+      this_waa_df$ecov = this_scenario$Ecov_sim
+      this_waa_df$caal_samp = this_scenario$caal_samp
+      save_waa[[waa_count]] = this_waa_df
+      waa_count = waa_count + 1
+    }
+    # Save ALK:
+    save_waa = dplyr::bind_rows(save_waa)
+    if(simi <= 10 & scenj %in% c(37:46)) {
+      saveRDS(save_waa, file = file.path(main_dir, "sample_data", 'WAA_sample', paste0("survey_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+    }
     
     # replace NA (waa obs) with average value:
     for(i in 1:sim_data$n_indices) {
