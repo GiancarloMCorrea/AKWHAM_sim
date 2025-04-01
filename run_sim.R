@@ -12,6 +12,7 @@ library(wham)
 require(doParallel)
 require(foreach)
 library(here)
+require(forecast)
 create_inputs = FALSE # want to create OM EM inputs? (just do it once)
 
 if(create_inputs) {
@@ -57,11 +58,11 @@ run_iter <- function(sim, scen){
 # -------------------------------------------------------------------------
 # Run in parallel several simulations for all scenarios
 these_scenarios = c(1:nrow(df.scenario))
-snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
+snowfall::sfInit(parallel=TRUE, cpus=3) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
     snowfall::sfExportAll()
-    trash <- snowfall::sfLapply(71:100, function(sim) run_iter(sim, sc))
+    trash <- snowfall::sfLapply(1:10, function(sim) run_iter(sim, sc))
 }
 snowfall::sfStop()
 

@@ -178,7 +178,7 @@ if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
         if(sum(sim_data$pred_CAAL[j,i,k,]) == 0) tmp_caal_sim = matrix(0, ncol = 1, nrow = sim_data$n_ages)
         else tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_CAAL[j,i,k,])
         # Save sim sampling:
-        to_obsvec = c(to_obsvec, tmp_caal_sim*sim_data$catch_caal_Neff[j,i,k])
+        to_obsvec = c(to_obsvec, tmp_caal_sim)
         if(sum(tmp_caal_sim) == 0) sim_data$catch_caal[i,j,k,] = 0
         else sim_data$catch_caal[i,j,k,] = tmp_caal_sim[,1]/sum(tmp_caal_sim[,1])
       } # len bin loop
@@ -186,7 +186,7 @@ if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
       sim_data$use_catch_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
       
       # year-specific alk as data.frame to save it later:
-      this_alk = sim_data$catch_caal[i,j,,]
+      this_alk = sweep(sim_data$catch_caal[i,j,,], 1, len_subsam, '*')
       colnames(this_alk) = 1:sim_data$n_ages
       rownames(this_alk) = sim_data$lengths
       this_alk_df = reshape2::melt(this_alk, varnames = c('len', 'age'))
@@ -385,7 +385,7 @@ if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
         if(sum(sim_data$pred_IAAL[j,i,k,]) == 0) tmp_caal_sim = matrix(0, ncol = 1, nrow = sim_data$n_ages)
         else tmp_caal_sim = rmultinom(n = 1, size = len_subsam[k], prob = sim_data$pred_IAAL[j,i,k,])
         # Save sim sampling:
-        to_obsvec = c(to_obsvec, tmp_caal_sim*sim_data$index_caal_Neff[j,i,k])
+        to_obsvec = c(to_obsvec, tmp_caal_sim)
         if(sum(tmp_caal_sim) == 0) sim_data$index_caal[i,j,k,] = 0
         else sim_data$index_caal[i,j,k,] = tmp_caal_sim[,1]/sum(tmp_caal_sim[,1])
       } # len bin loop
@@ -393,7 +393,7 @@ if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
       sim_data$use_index_caal[j,i,] = ifelse(test = len_subsam > 0, yes = 1, no = 0)
       
       # year-specific alk as data.frame to save it later:
-      this_alk = sim_data$index_caal[i,j,,]
+      this_alk = sweep(sim_data$index_caal[i,j,,], 1, len_subsam, '*')
       colnames(this_alk) = 1:sim_data$n_ages
       rownames(this_alk) = sim_data$lengths
       this_alk_df = reshape2::melt(this_alk, varnames = c('len', 'age'))

@@ -32,6 +32,8 @@ img_width = 170
 
 # color scale for EBS and MAB:
 colpal1 = wesanderson::wes_palettes$GrandBudapest1[3:4]
+# color scale for RS and LSS:
+colpal2 = wesanderson::wes_palettes$Darjeeling1[1:2]
 
 # -------------------------------------------------------------------------
 # Make diagram stepwise sampling process:
@@ -428,3 +430,88 @@ p2 = ggplot() +
 p3 = grid.arrange(p1, p2)
 ggsave(filename = file.path(save_folder, paste0('Figure_selex', fig_type)), plot = p3,
        width = img_width*0.75 , height = 150, units = 'mm', dpi = img_res)
+
+# -------------------------------------------------------------------------
+# Sup figure: Number of fish sampled ALK by strategy:
+
+all_files = list.files(path = 'sample_data/ALK_sample')
+# Read sim data (growth var present):
+all_df = list()
+for(k in seq_along(all_files)) {
+  all_df[[k]] = readRDS(file = file.path('sample_data/ALK_sample', all_files[k]))
+}
+all_df = dplyr::bind_rows(all_df)
+
+# Aggregate by age:
+tmp_df = all_df %>% dplyr::filter(fleet_type == 'survey', year > 10) %>% 
+            dplyr::group_by(age, growth_var, sim, ecov, caal_samp) %>% 
+            dplyr::summarise(n_fish = sum(value))
+# Average over sims:
+tmp_df = tmp_df %>% dplyr::group_by(age, growth_var, ecov, caal_samp) %>% 
+            dplyr::summarise(n_fish = mean(n_fish))
+# Define labels:
+tmp_df = tmp_df %>% mutate(om_label = factor(growth_var, levels = 0:2,
+                                         labels = c('Time~invariant', Variability~"in"~k*"/"*L[infinity], 
+                                                    expression(Variability~"in"~L[1])))) %>%
+              mutate(ecov = if_else(growth_var == 0, 'none', ecov)) %>% 
+              mutate(ecov = factor(ecov, levels = c('stationary','trend', 'none'), 
+                       labels = c('EBS', 'MAB', 'None'))) %>%
+              mutate(caal_samp = factor(caal_samp, levels = c('random', 'strat'), 
+                                          labels = c('RS', 'LSS')))
+
+# Make plot:
+p1 = ggplot(tmp_df, aes(x = factor(age), y = n_fish)) +
+  geom_bar(aes(color = caal_samp, fill = caal_samp), 
+           stat = "identity", position = "dodge", width = 0.5) +
+  scale_color_manual(values = colpal2) +
+  scale_fill_manual(values = colpal2) +
+  ylab('Number of fish in age subsample') + xlab('Age') +
+  theme(legend.position = 'bottom',
+        axis.text.x = element_text(size = 9),
+        strip.text = element_text(size = 10),
+        legend.text=element_text(size=10),
+        strip.background = element_rect(fill="white")) +
+  facet_grid(ecov ~ om_label, labeller = 'label_parsed', scales = "free_y") +
+  guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
+ggsave(filename = file.path(save_folder, paste0('Figure_alksamp', fig_type)), plot = p1,
+       width = img_width , height = 150, units = 'mm', dpi = img_res)
+
+
+# -------------------------------------------------------------------------
+# Sup figure: observed mean weight at age data before imputation
+
+all_files = list.files(path = 'sample_data/WAA_sample')
+# Read sim data (growth var present):
+all_df = list()
+for(k in seq_along(all_files)) {
+  all_df[[k]] = readRDS(file = file.path('sample_data/WAA_sample', all_files[k]))
+}
+all_df = dplyr::bind_rows(all_df)
+
+# Aggregate by age:
+tmp_df = all_df %>% dplyr::filter(waa_pointer == 2, sim == 1, year > 10) %>% 
+  mutate(wt = value, year = year - 10)
+# Define labels:
+tmp_df = tmp_df %>% mutate(om_label = factor(growth_var, levels = 0:2,
+                                             labels = c('Time~invariant', Variability~"in"~k*"/"*L[infinity], 
+                                                        expression(Variability~"in"~L[1])))) %>%
+  mutate(ecov = if_else(growth_var == 0, 'none', ecov)) %>% 
+  mutate(ecov = factor(ecov, levels = c('stationary','trend', 'none'), 
+                       labels = c('EBS', 'MAB', 'None'))) %>%
+  mutate(caal_samp = factor(caal_samp, levels = c('random', 'strat'), 
+                            labels = c('RS', 'LSS')))
+
+# Make plot:
+p1 = ggplot(data = tmp_df, aes(x = year, y = factor(age), fill = wt)) +
+  geom_tile(color = NA) +
+  scale_fill_viridis_c() +
+  xlab('Simulated year') + ylab('Age') +
+  scale_x_continuous(breaks = seq(from = 10, to = 40, by = 10)) +
+  theme(legend.position = 'bottom', 
+        axis.text.y = element_text(angle = 0, hjust = 1),
+        strip.text = element_text(size = 10),
+        strip.background = element_rect(fill="white")) +
+  facet_nested(caal_samp ~ om_label+ecov, labeller = 'label_parsed') +
+  guides(fill=guide_legend(title='Obs mean weight'))
+ggsave(filename = file.path(save_folder, paste0('Figure_waasamp', fig_type)), plot = p1,
+       width = img_width , height = 130, units = 'mm', dpi = img_res)
