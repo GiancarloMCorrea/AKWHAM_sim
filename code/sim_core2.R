@@ -2,6 +2,7 @@
 args = commandArgs(trailingOnly=TRUE)
 simi = as.integer(args[1])
 scenj = as.integer(args[2])
+do_fit = FALSE
 
 # Set WD
 main_dir = here::here() 
@@ -615,28 +616,30 @@ if(this_scenario$method == 'WAA') {
 EM_input$par$log_N1_pars = log(sim_data$NAA[n_years_burnin+1,])
 
 #######################################################
-# Run WHAM without sdreport first:
-fit <- tryCatch(fit_wham(EM_input, do.sdrep=F, do.osa=F, do.retro=F, do.proj=F, MakeADFun.silent=TRUE),
-                error = function(e) conditionMessage(e))
-
-# fit$rep[grep('nll',names(fit$rep))] %>% lapply(sum) %>% unlist
-# Deal with issues fitting EM to non-matching OM data
-# empty elements below can be used to summarize convergence information
-if(!'err' %in% names(fit) & class(fit) != "character"){
-  res$model$optimized <- TRUE
-  res$fit <- fit[c("wham_version", "TMB_version", "opt", "final_gradient", "runtime", "rep")]
-  empars <- data.frame(par=names(res$fit$opt$par), value=res$fit$opt$par)%>%
-    dplyr::filter(!grepl(x=par,'F_devs'))
-  empars$par2 <- sapply(unique(empars$par), function(x) {
-    y <- which(empars$par==x)
-    if(length(y)==1) return(x)
-    x <- paste(x, 1:length(y), sep='_')
-    return(x)
-  }) %>% unlist
-  res$empars <- empars
+if(do_fit) {
+  # Run WHAM without sdreport first:
+  fit <- tryCatch(fit_wham(EM_input, do.sdrep=F, do.osa=F, do.retro=F, do.proj=F, MakeADFun.silent=TRUE),
+                  error = function(e) conditionMessage(e))
+  
+  # fit$rep[grep('nll',names(fit$rep))] %>% lapply(sum) %>% unlist
+  # Deal with issues fitting EM to non-matching OM data
+  # empty elements below can be used to summarize convergence information
+  if(!'err' %in% names(fit) & class(fit) != "character"){
+    res$model$optimized <- TRUE
+    res$fit <- fit[c("wham_version", "TMB_version", "opt", "final_gradient", "runtime", "rep")]
+    empars <- data.frame(par=names(res$fit$opt$par), value=res$fit$opt$par)%>%
+      dplyr::filter(!grepl(x=par,'F_devs'))
+    empars$par2 <- sapply(unique(empars$par), function(x) {
+      y <- which(empars$par==x)
+      if(length(y)==1) return(x)
+      x <- paste(x, 1:length(y), sep='_')
+      return(x)
+    }) %>% unlist
+    res$empars <- empars
+  }
+  
+  # Save EM results:
+  rds.fn = file.path(out_dir, paste0("scenario", scenj), paste0("sim", simi, ".RDS"))
+  saveRDS(res, file = rds.fn)
+  cat(paste0("END Scenario: ", scenj, " Sim: ", simi, "\n"))
 }
-
-# Save EM results:
-rds.fn = file.path(out_dir, paste0("scenario", scenj), paste0("sim", simi, ".RDS"))
-saveRDS(res, file = rds.fn)
-cat(paste0("END Scenario: ", scenj, " Sim: ", simi, "\n"))
