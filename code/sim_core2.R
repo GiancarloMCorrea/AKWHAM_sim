@@ -23,7 +23,7 @@ seeds <- readRDS(here::here("inputs","seeds.RDS"))
 
 # Make data.frame summarizing scenario:
 this_scenario <- data.frame(df.scenario[scenj, ])
-model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=FALSE, this_scenario)
+model <- cbind(im = simi, scenario = scenj, optimized=FALSE, sdreport=TRUE, this_scenario)
 this_dat_scen = match(this_scenario$data_scen, c('poor', 'rich'))
 this_paagen_scen = match(this_scenario$paa_generation, c('traditional', 'stepwise'))
 this_om_input = om_inputs[[this_scenario$growth_var + 1]][[this_paagen_scen]][[this_dat_scen]] # select the OM based on growth_var
@@ -618,7 +618,7 @@ EM_input$par$log_N1_pars = log(sim_data$NAA[n_years_burnin+1,])
 #######################################################
 if(do_fit) {
   # Run WHAM without sdreport first:
-  fit <- tryCatch(fit_wham(EM_input, do.sdrep=F, do.osa=F, do.retro=F, do.proj=F, MakeADFun.silent=TRUE),
+  fit <- tryCatch(fit_wham(EM_input, do.sdrep=T, do.osa=F, do.retro=F, do.proj=F, MakeADFun.silent=TRUE),
                   error = function(e) conditionMessage(e))
   
   # fit$rep[grep('nll',names(fit$rep))] %>% lapply(sum) %>% unlist
@@ -626,7 +626,7 @@ if(do_fit) {
   # empty elements below can be used to summarize convergence information
   if(!'err' %in% names(fit) & class(fit) != "character"){
     res$model$optimized <- TRUE
-    res$fit <- fit[c("wham_version", "TMB_version", "opt", "final_gradient", "runtime", "rep")]
+    res$fit <- fit[c("wham_version", "na_sdrep", "TMB_version", "opt", "final_gradient", "runtime", "rep")]
     empars <- data.frame(par=names(res$fit$opt$par), value=res$fit$opt$par)%>%
       dplyr::filter(!grepl(x=par,'F_devs'))
     empars$par2 <- sapply(unique(empars$par), function(x) {

@@ -67,15 +67,18 @@ paa_gen_approach = 'stepwise'
 n_sim = 100 # number of iterations run per scenario.
 
 # Set EM and OM labels:
-paa_gen_approach = paa_gen_approach
-tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach)
+tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach,
+                                  par == 'logit_q') # filter any parameter
 temp = set_labels(tmp_df, caal_type = c('random', 'strat'), 
                   selex_type = c('fixed', 'varying'), 
                   ecov_type = c('stationary', 'trend'),
                   remove_conv = FALSE)
 temp = temp %>% mutate(Ecov_sim = if_else(growth_var == 0, 'None', Ecov_sim))
+# Create convergence column:
+temp = temp %>% mutate(converged = if_else(maxgrad < max_grad & !na_sdrep, TRUE, FALSE))
+# Summarise
 conv_df = temp %>% group_by(em_label, om_label, Ecov_sim, caal_samp, age_selex) %>%
-            dplyr::summarise(n_conv = length(unique(maxgrad) < max_grad)) %>%
+            dplyr::summarise(n_conv = sum(converged)) %>%
             dplyr::mutate(n_tot = n_sim) %>%
             dplyr::mutate(conv_rate = (n_conv/n_tot)*100)
 # OUTPUT TABLE WITH SCENARIO LABELS

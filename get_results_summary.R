@@ -66,7 +66,9 @@ for(k in seq_along(scenario_names)) {
                         truth = tail(rep_i$truth$F[,1], n = n_years_base))
         ts_df <- bind_rows(ssb, f, recruits) %>% bind_cols(rep_i$model) %>%
                           mutate(rel_error = (est-truth)/truth, abs_error = est-truth,
-                          sim = as.factor(im), maxgrad = get_maxgrad(rep_i))
+                          sim = as.factor(im), maxgrad = get_maxgrad(rep_i),
+                          convergence = rep_i$fit$opt$convergence,
+                          na_sdrep = rep_i$fit$na_sdrep)
         # PARAMETERS ----------------------------------
         # 1) Main parameters:
         pars <- merge(rep_i$ompars, rep_i$empars, by='par2') %>%
@@ -103,7 +105,9 @@ for(k in seq_along(scenario_names)) {
         # # Merge all parameters:
         par_df <- pars %>% bind_cols(rep_i$model) %>%
                       mutate(rel_error = (est-truth)/truth, abs_error = est-truth,
-                              sim = as.factor(im),  maxgrad = get_maxgrad(rep_i))
+                              sim = as.factor(im),  maxgrad = get_maxgrad(rep_i),
+                             convergence = rep_i$fit$opt$convergence,
+                             na_sdrep = rep_i$fit$na_sdrep)
 
         # WAA TIME SERIES
         waa <- list()
@@ -115,7 +119,9 @@ for(k in seq_along(scenario_names)) {
         }
         waa_df <- waa %>% bind_rows() %>%
           mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
-                 sim=as.factor(im),  maxgrad=get_maxgrad(rep_i))
+                 sim=as.factor(im),  maxgrad=get_maxgrad(rep_i),
+                 convergence = rep_i$fit$opt$convergence,
+                 na_sdrep = rep_i$fit$na_sdrep)
 
         # Pred catch paa TIME SERIES
         catch_paa <- list()
@@ -127,7 +133,9 @@ for(k in seq_along(scenario_names)) {
         }
         catch_paa_df <- catch_paa %>% bind_rows() %>%
           mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
-                 sim=as.factor(im),  maxgrad=get_maxgrad(rep_i))
+                 sim=as.factor(im),  maxgrad=get_maxgrad(rep_i),
+                 convergence = rep_i$fit$opt$convergence,
+                 na_sdrep = rep_i$fit$na_sdrep)
         
         # Pred index paa TIME SERIES
         index_paa <- list()
@@ -139,23 +147,31 @@ for(k in seq_along(scenario_names)) {
         }
         index_paa_df <- index_paa %>% bind_rows() %>%
           mutate(rel_error=(est-truth)/truth, abs_error=est-truth,
-                 sim=as.factor(im),  maxgrad=get_maxgrad(rep_i))
+                 sim=as.factor(im),  maxgrad=get_maxgrad(rep_i),
+                 convergence = rep_i$fit$opt$convergence,
+                 na_sdrep = rep_i$fit$na_sdrep)
         
         # Selectivity values (only EM estimates)
         sel_df = data.frame(par1 = c(rep_i$fit$rep$selpars[[1]][,1], rep_i$fit$rep$selpars[[2]][,1]),
                             fleet = rep(c(1,2), each = nrow(rep_i$fit$rep$selpars[[1]])),
                             year = rep(1:nyears, times = 2)) %>% bind_cols(rep_i$model) %>%
-                  mutate(sim=as.factor(im), maxgrad=get_maxgrad(rep_i))
+                  mutate(sim=as.factor(im), maxgrad=get_maxgrad(rep_i),
+                         convergence = rep_i$fit$opt$convergence,
+                         na_sdrep = rep_i$fit$na_sdrep)
         
         # Selectivity RE par values:
         selre_df = data.frame(est = exp(as.vector(rep_i$fit$rep$sel_repars[,1])), 
                             par = c('par1','par2')) %>% bind_cols(rep_i$model) %>%
-          mutate(sim=as.factor(im), maxgrad=get_maxgrad(rep_i))
+          mutate(sim=as.factor(im), maxgrad=get_maxgrad(rep_i),
+                 convergence = rep_i$fit$opt$convergence,
+                 na_sdrep = rep_i$fit$na_sdrep)
         
         # RE effects
         waare_df = data.frame(est = as.vector(rep_i$fit$rep$WAA_repars[1,]), 
                               par = c('par1','par2','par3','par4')) %>% bind_cols(rep_i$model) %>%
-                      mutate(sim=as.factor(im), maxgrad=get_maxgrad(rep_i))
+                      mutate(sim=as.factor(im), maxgrad=get_maxgrad(rep_i),
+                             convergence = rep_i$fit$opt$convergence,
+                             na_sdrep = rep_i$fit$na_sdrep)
         
       } # conditional if optimized 
       
