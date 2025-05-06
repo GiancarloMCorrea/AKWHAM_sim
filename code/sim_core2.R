@@ -2,7 +2,7 @@
 args = commandArgs(trailingOnly=TRUE)
 simi = as.integer(args[1])
 scenj = as.integer(args[2])
-do_fit = FALSE
+do_fit = TRUE
 
 # Set WD
 main_dir = here::here() 

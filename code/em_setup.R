@@ -37,18 +37,22 @@ gf_Q = list(initial_q = Q_base,
             q_upper = rep(10, times = length(Q_base)), 
             prior_sd = rep(NA, times = length(Q_base)))
 # NAA configuration
-# gf_NAA_re = list(N1_pars = rep(N1_base, times = length(ages_base)), # will be replaced later
-#                 sigma = "rec", #random about mean
-#                 cor = "iid", #random effects are independent
-#                 recruit_model = 2,
-#                 N1_model = 0) # age-specific
+
+# SRR: iid
 gf_NAA_re = list(N1_pars = rep(N1_base, times = length(ages_base)), # will be replaced later
-                 sigma = "rec", #random about mean
-                 cor = "iid", #random effects are independent
-                 recruit_model = 3, # BH SR relationship
-                 use_steepness = TRUE,
-                 recruit_pars = c(h_par, N1_base), # steepness and R0
-                 N1_model = 0) # age-specific
+                sigma = "rec", #random about mean
+                cor = "iid", #random effects are independent
+                recruit_model = 2,
+                recruit_pars = N1_base,
+                N1_model = 0) # age-specific
+# SRR: BH
+# gf_NAA_re = list(N1_pars = rep(N1_base, times = length(ages_base)), # will be replaced later
+#                  sigma = "rec", #random about mean
+#                  cor = "iid", #random effects are independent
+#                  recruit_model = 3, # BH SR relationship
+#                  use_steepness = TRUE,
+#                  recruit_pars = c(h_par, N1_base), # steepness and R0
+#                  N1_model = 0) # age-specific
 # Ecov configuration:
 gf_ecov <- list(
   label = "Ecov_sim",
@@ -238,7 +242,7 @@ for(i in 1:NROW(df.scenario)){
   em_inputs[[i]]$par$log_NAA_sigma = log(sigma_R)
   #em_inputs[[i]]$map$log_NAA_sigma <- factor(NA) # Fix NAA sigma
   em_inputs[[i]]$map$log_N1_pars <- factor(rep(NA, times = length(ages_base))) # Fix N1 pars
-  em_inputs[[i]]$map$mean_rec_pars <- factor(c(NA, 1)) # Fix steepness
+  # em_inputs[[i]]$map$mean_rec_pars <- factor(c(NA, 1)) # Fix steepness
   # Define random variable:
   #em_inputs[[i]]$random = NULL # default for EWAA
   #if(df.scenario$method[i] == 'WAA') em_inputs[[i]]$random = 'WAA_re'

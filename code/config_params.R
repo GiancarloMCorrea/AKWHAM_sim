@@ -29,7 +29,6 @@ mat_base_age = c(3, 3.5) # a and b parameters age maturity
 # Initial abundance and sigmaR -------------------------------------------------------
 N1_base = 1e+05 # Initial Recruitment and mean recruitment over time period
 sigma_R = 0.6 # sigma R recruitment
-h_par = 0.8 # steepness
 
 # Selectivity ------------------------------------------------------
 agesel_based = list(model = c("logistic", "logistic"),

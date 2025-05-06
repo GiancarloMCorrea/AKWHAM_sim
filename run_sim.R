@@ -13,7 +13,7 @@ require(doParallel)
 require(foreach)
 library(here)
 require(forecast)
-create_inputs = FALSE # want to create OM EM inputs? (just do it once)
+create_inputs = TRUE # want to create OM EM inputs? (just do it once)
 
 if(create_inputs) {
   # Create Scenario and seeds DF (only do it once):

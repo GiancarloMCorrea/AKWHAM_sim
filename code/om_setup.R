@@ -35,19 +35,22 @@ gf_Q = list(initial_q = Q_base,
             q_upper = rep(10, times = length(Q_base)), 
             prior_sd = rep(NA, times = length(Q_base)))
 # Recruitment pars:
-# gf_NAA_re = list(N1_pars = c(N1_base, 0),
-#                 sigma = "rec", #random about mean
-#                 cor = "iid", #random effects are independent
-#                 recruit_model = 2,
-#                 recruit_pars = N1_base, # mean recruitment
-#                 N1_model = 1) #defined above from naa_om_inputs
+
+# SRR: iid
 gf_NAA_re = list(N1_pars = c(N1_base, 0),
-                 sigma = "rec", #random about mean
-                 cor = "iid", #random effects are independent
-                 recruit_model = 3, # BH SR relationship
-                 use_steepness = TRUE,
-                 recruit_pars = c(h_par, N1_base), # steepness and R0
-                 N1_model = 1) #defined above from naa_om_inputs
+                sigma = "rec", #random about mean
+                cor = "iid", #random effects are independent
+                recruit_model = 2,
+                recruit_pars = N1_base, # mean recruitment
+                N1_model = 1) #defined above from naa_om_inputs
+# SRR: BH
+# gf_NAA_re = list(N1_pars = c(N1_base, 0),
+#                  sigma = "rec", #random about mean
+#                  cor = "iid", #random effects are independent
+#                  recruit_model = 3, # BH SR relationship
+#                  use_steepness = TRUE,
+#                  recruit_pars = c(h_par, N1_base), # steepness and R0
+#                  N1_model = 1) #defined above from naa_om_inputs
 # Ecov pars:
 gf_ecov <- list(
   label = "Ecov_sim",
