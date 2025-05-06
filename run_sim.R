@@ -29,7 +29,6 @@ if(create_inputs) {
 rm(list=ls())
 # Read main dir again
 out_dir = here::here('results') # folder where all simulations will be saved. preferably out of GitHub folder
-main_dir = getwd()
 
 # Read objects to be used in sim_core2.R
 df.scenario = readRDS(here::here("inputs", "df.scenarios.RDS"))
