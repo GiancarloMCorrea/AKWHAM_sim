@@ -3,5 +3,7 @@
 .RData
 .Ruserdata
 .RDataTmp
+.RDataTmp1
 outputs/
 results/
+sample_data/
