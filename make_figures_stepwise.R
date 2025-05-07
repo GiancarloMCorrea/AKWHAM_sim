@@ -64,7 +64,7 @@ paa_gen_approach = 'stepwise'
 # -------------------------------------------------------------------------
 
 # Convergence rates:
-n_sim = 100 # number of iterations run per scenario.
+n_sim = 110 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach,
@@ -75,7 +75,7 @@ temp = set_labels(tmp_df, caal_type = c('random', 'strat'),
                   remove_conv = FALSE)
 temp = temp %>% mutate(Ecov_sim = if_else(growth_var == 0, 'None', Ecov_sim))
 # Create convergence column:
-temp = temp %>% mutate(converged = if_else(maxgrad < max_grad & !na_sdrep, TRUE, FALSE))
+temp = temp %>% mutate(converged = if_else(maxgrad < max_grad & !na_sdrep & convergence == 0, TRUE, FALSE))
 # Summarise
 conv_df = temp %>% group_by(em_label, om_label, Ecov_sim, caal_samp, age_selex) %>%
             dplyr::summarise(n_conv = sum(converged)) %>%
@@ -115,7 +115,7 @@ tmp_df = set_labels(temp, caal_type = c('random', 'strat'),
 tmp_df = filter_iter(tmp_df)
 # Set par labels:
 tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_NAA_sigma'),
-                                         labels = c(expression(R[0]), 'Q', expression(sigma[R]))) # expression(N["1,1"]) 'F[1]'
+                                         labels = c(expression(bar(R)), 'Q', expression(sigma[R]))) # expression(N["1,1"]) 'F[1]'
 )
 tmp_df = tmp_df %>% mutate(y_label = paste(caal_samp, Ecov_sim, age_selex, sep = '/'))
 
@@ -135,7 +135,8 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'par', s
 temp = ts_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>% 
         dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
                                  caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, caal_type = c('random', 'strat'), 
@@ -169,7 +170,8 @@ dir.create(ts_folder_plot, showWarnings = FALSE)
 temp = ts_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>% 
         dplyr::group_by(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
                                  Ecov_sim, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Select selectivity type
 this_ecov = 'stationary'
@@ -224,7 +226,8 @@ for(i in seq_along(all_vars)) {
 temp = waa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Set EM and OM labels:
 temp = set_labels(temp, caal_type = c('random', 'strat'), 
@@ -255,7 +258,8 @@ dir.create(ts_folder_plot, showWarnings = FALSE)
 temp = waa_df %>% filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, year, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Select selectivity type
 this_ecov = 'stationary'
@@ -308,7 +312,8 @@ for(i in seq_along(all_vars)) {
 temp = catch_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>%  
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Set EM and OM labels:
 temp = set_labels(temp, caal_type = c('random', 'strat'), 
@@ -340,7 +345,8 @@ dir.create(ts_folder_plot, showWarnings = FALSE)
 temp = catch_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, year, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Select selectivity type
 this_ecov = 'stationary'
@@ -394,7 +400,8 @@ for(i in seq_along(all_vars)) {
 temp = index_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>%  
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Set EM and OM labels:
 temp = set_labels(temp, caal_type = c('random', 'strat'), 
@@ -426,7 +433,8 @@ dir.create(ts_folder_plot, showWarnings = FALSE)
 temp = index_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, year, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Select selectivity type
 this_ecov = 'trend'

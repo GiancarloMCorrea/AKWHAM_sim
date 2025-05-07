@@ -26,6 +26,8 @@ par_results = list()
 waa_results = list()
 catch_paa_results = list()
 index_paa_results = list()
+sel_fish_results = list()
+sel_surv_results = list()
 sel_results = list()
 selre_results = list()
 waare_results = list()
@@ -45,6 +47,8 @@ for(k in seq_along(scenario_names)) {
       waa_df = NULL
       catch_paa_df = NULL
       index_paa_df = NULL
+      sel_fish_df = NULL
+      sel_surv_df = NULL
       sel_df = NULL
       selre_df = NULL
       waare_df = NULL
@@ -151,7 +155,31 @@ for(k in seq_along(scenario_names)) {
                  convergence = rep_i$fit$opt$convergence,
                  na_sdrep = rep_i$fit$na_sdrep)
         
-        # Selectivity values (only EM estimates)
+        # Selex values TIME SERIES: fishery
+        selex <- list()
+        for(year in 1:nyears) { 
+          selex[[year]] <- data.frame(age=1:nages, year=year,
+                                    est=rep_i$fit$rep$selAA[[1]][year,]) %>%
+                            bind_cols(rep_i$model)
+        }
+        sel_fish_df <- selex %>% bind_rows() %>%
+          mutate(sim=as.factor(im),  maxgrad=get_maxgrad(rep_i),
+                 convergence = rep_i$fit$opt$convergence,
+                 na_sdrep = rep_i$fit$na_sdrep)
+        
+        # Selex values TIME SERIES: survey
+        selex <- list()
+        for(year in 1:nyears) { 
+          selex[[year]] <- data.frame(age=1:nages, year=year,
+                                      est=rep_i$fit$rep$selAA[[2]][year,]) %>%
+            bind_cols(rep_i$model)
+        }
+        sel_surv_df <- selex %>% bind_rows() %>%
+          mutate(sim=as.factor(im),  maxgrad=get_maxgrad(rep_i),
+                 convergence = rep_i$fit$opt$convergence,
+                 na_sdrep = rep_i$fit$na_sdrep)
+        
+        # Selectivity parameter values (only EM estimates)
         sel_df = data.frame(par1 = c(rep_i$fit$rep$selpars[[1]][,1], rep_i$fit$rep$selpars[[2]][,1]),
                             fleet = rep(c(1,2), each = nrow(rep_i$fit$rep$selpars[[1]])),
                             year = rep(1:nyears, times = 2)) %>% bind_cols(rep_i$model) %>%
@@ -180,6 +208,8 @@ for(k in seq_along(scenario_names)) {
       waa_results[[countList]] = waa_df
       catch_paa_results[[countList]] = catch_paa_df
       index_paa_results[[countList]] = index_paa_df
+      sel_fish_results[[countList]] = sel_fish_df
+      sel_surv_results[[countList]] = sel_surv_df
       sel_results[[countList]] = sel_df
       selre_results[[countList]] = selre_df
       waare_results[[countList]] = waare_df
@@ -198,6 +228,8 @@ par_results = dplyr::bind_rows(par_results)
 waa_results = dplyr::bind_rows(waa_results)
 catch_paa_results = dplyr::bind_rows(catch_paa_results)
 index_paa_results = dplyr::bind_rows(index_paa_results)
+sel_fish_results = dplyr::bind_rows(sel_fish_results)
+sel_surv_results = dplyr::bind_rows(sel_surv_results)
 sel_results = dplyr::bind_rows(sel_results)
 selre_results = dplyr::bind_rows(selre_results)
 waare_results = dplyr::bind_rows(waare_results)
@@ -208,6 +240,8 @@ saveRDS(par_results, file.path(output_folder, 'par_results.RDS'))
 saveRDS(waa_results, file.path(output_folder, 'waa_results.RDS'))
 saveRDS(catch_paa_results, file.path(output_folder, 'catch_paa_results.RDS'))
 saveRDS(index_paa_results, file.path(output_folder, 'index_paa_results.RDS'))
+saveRDS(sel_fish_results, file.path(output_folder, 'sel_fish_results.RDS'))
+saveRDS(sel_surv_results, file.path(output_folder, 'sel_surv_results.RDS'))
 saveRDS(sel_results, file.path(output_folder, 'sel_results.RDS'))
 saveRDS(selre_results, file.path(output_folder, 'selre_results.RDS'))
 saveRDS(waare_results, file.path(output_folder, 'waare_results.RDS'))

@@ -191,7 +191,7 @@ set_labels = function(df, selex_type = 'fixed', caal_type = 'random',
                       remove_conv = TRUE, conv_level = 1e-04) {
   
   temp = df
-  if(remove_conv) temp = temp %>% filter(maxgrad < conv_level & !na_sdrep) # convergent replicates
+  if(remove_conv) temp = temp %>% filter(maxgrad < conv_level & !na_sdrep & convergence == 0) # convergent replicates
   temp = temp %>% filter(age_selex %in% selex_type)
   temp = temp %>% filter(caal_samp %in% caal_type)
   temp = temp %>% filter(data_scen %in% data_type)

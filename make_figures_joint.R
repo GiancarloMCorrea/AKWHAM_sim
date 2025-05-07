@@ -68,7 +68,7 @@ tmp_df = set_labels(temp, conv_level = max_grad)
 tmp_df = filter_iter(tmp_df)
 # Set par labels:
 tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_NAA_sigma'),
-                                         labels = c(expression(R[0]), 'Q', expression(sigma[R]))), # expression(N["1,1"]) 'F[1]'
+                                         labels = c(expression(bar(R)), 'Q', expression(sigma[R]))), # expression(N["1,1"]) 'F[1]'
                            paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
                                                    labels = c('Traditional', 'Stepwise'))) 
 
@@ -89,7 +89,8 @@ ggsave(filename = file.path(save_folder, paste0(paste('main', 'par', sep = '-'),
 # average TS plot
 temp = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
                                   caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, conv_level = max_grad)
@@ -122,7 +123,8 @@ dir.create(ts_folder_plot, showWarnings = FALSE)
 # Sort data:
 temp = ts_df %>% dplyr::group_by(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
                   Ecov_sim, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Plot TS by variable:
 all_vars = c('Rec', 'SSB', 'F')
@@ -160,7 +162,8 @@ for(i in seq_along(all_vars)) {
 # WAA plots (averaged):
 temp = waa_df %>% dplyr::group_by(scenario, age, paa_generation, data_scen, Ecov_sim, 
                                   caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, conv_level = max_grad)
@@ -188,7 +191,8 @@ ggsave(filename = file.path(save_folder, paste0(paste('main', 'waa', sep = '-'),
 # CAA plots:
 temp = catch_paa_df %>% dplyr::group_by(scenario, age, paa_generation, data_scen, Ecov_sim, 
                                   caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, conv_level = max_grad)
@@ -216,7 +220,8 @@ ggsave(filename = file.path(save_folder, paste0(paste('main', 'caa', sep = '-'),
 # IAA plots:
 temp = index_paa_df %>% dplyr::group_by(scenario, age, paa_generation, data_scen, Ecov_sim, 
                                         caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad)) # median over the years
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, conv_level = max_grad)
