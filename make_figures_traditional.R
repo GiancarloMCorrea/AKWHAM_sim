@@ -171,11 +171,11 @@ ts_folder_plot = file.path(save_folder, 'ts_plots')
 dir.create(ts_folder_plot, showWarnings = FALSE)
 
 # Sort data:
-temp = ts_df %>% dplyr::group_by(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
+temp = ts_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>% 
+  dplyr::group_by(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
                                  Ecov_sim, method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
                    na_sdrep = unique(na_sdrep), convergence = unique(convergence))
-temp = temp %>% dplyr::filter(paa_generation == paa_gen_approach)
 
 # Plot TS by variable:
 all_vars = c('Rec', 'SSB', 'F')
@@ -210,12 +210,11 @@ for(i in seq_along(all_vars)) {
 
 # -------------------------------------------------------------------------
 # WAA info:
-temp = waa_df %>% filter(paa_generation == paa_gen_approach) %>%
+temp = waa_df %>% filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>% 
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
                    na_sdrep = unique(na_sdrep), convergence = unique(convergence))
-temp = temp %>% dplyr::filter(growth_var > 0)
 
 # Set EM and OM labels:
 temp = set_labels(temp, ecov_type = c('stationary', 'trend'), 
@@ -241,12 +240,11 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'waa', s
 
 # -------------------------------------------------------------------------
 # Pred catch CAA info:
-temp = catch_paa_df %>% filter(paa_generation == paa_gen_approach) %>%
+temp = catch_paa_df %>% filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>%  
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
                    na_sdrep = unique(na_sdrep), convergence = unique(convergence))
-temp = temp %>% dplyr::filter(growth_var > 0)
 
 # Set EM and OM labels:
 temp = set_labels(temp, ecov_type = c('stationary', 'trend'), 
@@ -273,12 +271,11 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'caa', s
 
 # -------------------------------------------------------------------------
 # Pred catch IAA info:
-temp = index_paa_df %>% filter(paa_generation == paa_gen_approach) %>%
+temp = index_paa_df %>% filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>%  
   dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
                    na_sdrep = unique(na_sdrep), convergence = unique(convergence))
-temp = temp %>% dplyr::filter(growth_var > 0)
 
 # Set EM and OM labels:
 temp = set_labels(temp, ecov_type = c('stationary', 'trend'), 

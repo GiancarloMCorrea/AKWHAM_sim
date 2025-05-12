@@ -336,7 +336,7 @@ output_folder = 'outputs'
 max_grad = 1e-04
 min_alpha = 0.35
 ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))
-paa_gen_approach = 'traditional'
+paa_gen_approach = 'stepwise'
 
 this_age_selex = c('fixed', 'varying') # fixed or varying
 this_caal_samp = c('random') # random or strat
@@ -346,7 +346,8 @@ this_ecov = c('stationary', 'trend')
 temp = ts_df %>% filter(paa_generation == paa_gen_approach) %>%
   dplyr::group_by(scenario, par, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
                   method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad))
+  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad),
+                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 temp = temp %>% dplyr::filter(par == 'SSB')
 # Set EM and OM labels:
 temp = set_labels(temp, selex_type = this_age_selex, caal_type = this_caal_samp, 

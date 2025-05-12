@@ -170,11 +170,11 @@ dir.create(ts_folder_plot, showWarnings = FALSE)
 temp = ts_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>% 
         dplyr::group_by(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
                                  Ecov_sim, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
+        dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
+                         na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Select selectivity type
-this_ecov = 'stationary'
+this_ecov = 'trend'
 # Plot TS by variable:
 all_vars = c('Rec', 'SSB', 'F')
 for(i in seq_along(all_vars)) {
@@ -262,7 +262,7 @@ temp = waa_df %>% filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
                    na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Select selectivity type
-this_ecov = 'stationary'
+this_ecov = 'trend'
 # Plot TS by variable:
 all_vars = as.character(1:10)
 for(i in seq_along(all_vars)) {
@@ -349,7 +349,7 @@ temp = catch_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_
                    na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Select selectivity type
-this_ecov = 'stationary'
+this_ecov = 'trend'
 # Plot TS by variable:
 all_vars = as.character(1:10)
 for(i in seq_along(all_vars)) {
@@ -437,7 +437,7 @@ temp = index_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_
                    na_sdrep = unique(na_sdrep), convergence = unique(convergence))
 
 # Select selectivity type
-this_ecov = 'trend'
+this_ecov = 'stationary'
 # Plot TS by variable:
 all_vars = as.character(1:10)
 for(i in seq_along(all_vars)) {
