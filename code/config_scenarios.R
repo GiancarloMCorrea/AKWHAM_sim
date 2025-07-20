@@ -141,4 +141,3 @@ set.seed(8675309)
 seeds = sample(x = (-1e9):(1e9), size = 1000, replace = FALSE) # max number of replicates per scenario: 1000, but will only use 100 or 150
 saveRDS(seeds, file.path(write.dir,"seeds.RDS"))
 seeds = readRDS(file.path(write.dir,"seeds.RDS"))
-

@@ -6,19 +6,21 @@ do_fit = TRUE
 
 # Set WD
 main_dir = here::here() 
-out_dir = here::here('results') # folder where all simulations will be saved. 
+load(here::here("inputs", "this_sp.RData")) # load chosen sp
+out_dir = here::here(file.path('results', this_sp)) # folder where all simulations will be saved. 
 
 # Load required libraries:
 library(wham)
 library(dplyr)
 source(here::here("code", "make_om_plots.R"))
-source(here::here("code", "config_params.R"))
+if(this_sp == 'cod') source(file.path('code', "config_params_cod.R"))
+if(this_sp == 'haddock') source(file.path('code', "config_params_haddock.R"))
 # Read inputs:
-om_inputs <- readRDS(here::here("inputs", "om_inputs.RDS"))
-em_inputs <- readRDS(here::here("inputs", "em_inputs.RDS"))
+om_inputs <- readRDS(here::here("inputs", this_sp, "om_inputs.RDS"))
+em_inputs <- readRDS(here::here("inputs", this_sp, "em_inputs.RDS"))
 df.scenario <- readRDS(here::here("inputs", "df.scenarios.RDS"))
-env_data = readRDS(here::here("env_data", "env_sim.rds"))
-load(here::here("env_data", "arima_mod.RData"))
+env_data = readRDS(here::here("env_data", this_sp, "env_sim.rds"))
+load(here::here("env_data", this_sp, "arima_mod.RData"))
 seeds <- readRDS(here::here("inputs","seeds.RDS"))
 
 # Make data.frame summarizing scenario:
@@ -95,9 +97,9 @@ om <- fit_wham(this_om_input, do.fit = FALSE, MakeADFun.silent = TRUE)
 set.seed(seeds[simi])
 sim_data <- om$simulate(complete=TRUE)
 if(simi == 1 & scenj %in% c(1:5, 37:39, 43:44)) {
-  saveRDS(object = om, file = file.path(main_dir, "sample_data", 'om_sample', paste0("om_sample_", scenj, ".RDS"))) # Save OM data to make plots later
-  if(this_scenario$paa_generation == 'traditional') make_plot_traditional(sim_data, scenj, main_dir) # Make plot
-  if(this_scenario$paa_generation == 'stepwise') make_plot_stepwise(sim_data, scenj, main_dir) # Make plot
+  saveRDS(object = om, file = file.path(main_dir, "sample_data", this_sp, 'om_sample', paste0("om_sample_", scenj, ".RDS"))) # Save OM data to make plots later
+  if(this_scenario$paa_generation == 'traditional') make_plot_traditional(sim_data, scenj, file.path(main_dir, 'plots/config', this_sp)) # Make plot
+  if(this_scenario$paa_generation == 'stepwise') make_plot_stepwise(sim_data, scenj, file.path(main_dir, 'plots/config', this_sp)) # Make plot
 }
 if(simi <= 10 & scenj %in% c(1:5)) { # LAA variability by Ecov type. Only 10 iterations
   # Simulated LAA in jan 1:
@@ -108,7 +110,7 @@ if(simi <= 10 & scenj %in% c(1:5)) { # LAA variability by Ecov type. Only 10 ite
   this_df$growth_var = this_scenario$growth_var
   this_df$sim = simi
   this_df$ecov = this_scenario$Ecov_sim
-  saveRDS(object = this_df, file = file.path(main_dir, "sample_data", 'LAA_sample', paste0("sample_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+  saveRDS(object = this_df, file = file.path(main_dir, "sample_data", this_sp, 'LAA_sample', paste0("sample_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
   # Simulate growth parameters:
   this_par = sim_data$LAA_par[,1,]
   colnames(this_par) = c('k', 'Linf', 'L1')
@@ -117,7 +119,7 @@ if(simi <= 10 & scenj %in% c(1:5)) { # LAA variability by Ecov type. Only 10 ite
   this_df$growth_var = this_scenario$growth_var
   this_df$sim = simi
   this_df$ecov = this_scenario$Ecov_sim
-  saveRDS(object = this_df, file = file.path(main_dir, "sample_data", 'LAApar_sample', paste0("sample_", scenj, '-', simi, ".RDS"))) # Save sim parameters to make plots later
+  saveRDS(object = this_df, file = file.path(main_dir, "sample_data", this_sp, 'LAApar_sample', paste0("sample_", scenj, '-', simi, ".RDS"))) # Save sim parameters to make plots later
 }
 
 # CAAL sampling: ----------------------------------------------
@@ -208,7 +210,7 @@ if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
   # Save ALK:
   save_alk = dplyr::bind_rows(save_alk)
   if(simi <= 10 & scenj %in% c(37:46)) {
-    saveRDS(save_alk, file = file.path(main_dir, "sample_data", 'ALK_sample', paste0("fishery_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+    saveRDS(save_alk, file = file.path(main_dir, "sample_data", this_sp, 'ALK_sample', paste0("fishery_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
   }
   
   # Age comps calculation:
@@ -303,7 +305,7 @@ if(this_scenario$catch_data == 'caal' | this_scenario$catch_data == 'paa') {
     # Save ALK:
     save_waa = dplyr::bind_rows(save_waa)
     if(simi <= 10 & scenj %in% c(37:46)) {
-      saveRDS(save_waa, file = file.path(main_dir, "sample_data", 'WAA_sample', paste0("fishery_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+      saveRDS(save_waa, file = file.path(main_dir, "sample_data", this_sp, 'WAA_sample', paste0("fishery_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
     }
     
     # replace NA (waa obs) with average value:
@@ -415,7 +417,7 @@ if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
   # Save ALK:
   save_alk = dplyr::bind_rows(save_alk)
   if(simi <= 10 & scenj %in% c(37:46)) {
-    saveRDS(save_alk, file = file.path(main_dir, "sample_data", 'ALK_sample', paste0("survey_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+    saveRDS(save_alk, file = file.path(main_dir, "sample_data", this_sp, 'ALK_sample', paste0("survey_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
   }
   
   # Age comps calculation:
@@ -511,7 +513,7 @@ if(this_scenario$index_data == 'caal' | this_scenario$index_data == 'paa') {
     # Save ALK:
     save_waa = dplyr::bind_rows(save_waa)
     if(simi <= 10 & scenj %in% c(37:46)) {
-      saveRDS(save_waa, file = file.path(main_dir, "sample_data", 'WAA_sample', paste0("survey_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
+      saveRDS(save_waa, file = file.path(main_dir, "sample_data", this_sp, 'WAA_sample', paste0("survey_", scenj, '-', simi, ".RDS"))) # Save sim LAA to make plots later
     }
     
     # replace NA (waa obs) with average value:

@@ -3,7 +3,8 @@
 # Create OM WHAM inputs 
 
 # Load auxiliary functions:
-source(file.path('code', "config_params.R"))
+if(this_sp == 'cod') source(file.path('code', "config_params_cod.R"))
+if(this_sp == 'haddock') source(file.path('code', "config_params_haddock.R"))
 source(file.path('code', "make_basic_info.R"))
 source(file.path('code', "make_om.R"))
 source(file.path('code', "set_simulation_options.R"))
@@ -175,4 +176,5 @@ for(i in 1:length(growth_scenarios)) {
 } # growth var
 
 # Save OM inputs:
-saveRDS(om_inputs, file.path(write.dir, "om_inputs.RDS"))
+dir.create(file.path(write.dir, this_sp), showWarnings = FALSE, recursive = TRUE)
+saveRDS(om_inputs, file.path(write.dir, this_sp, "om_inputs.RDS"))

@@ -1,11 +1,11 @@
 # Function to make plot OM:
-make_plot_traditional = function(om_toPlot, i, main_dir) {
+make_plot_traditional = function(om_toPlot, i, plot_dir) {
   these_years = om_toPlot$year1_model:(om_toPlot$year1_model + om_toPlot$n_years_model - 1)
   these_ages = 1:om_toPlot$n_ages
   these_lengths = om_toPlot$lengths
   # Biology
-  dir.create(file.path(main_dir, 'plots/config'), recursive = T, showWarnings = FALSE)
-  jpeg(filename = file.path(main_dir, 'plots/config', paste0('Scenario_', i,'.jpg')), width = 220, 
+  dir.create(plot_dir, recursive = T, showWarnings = FALSE)
+  jpeg(filename = file.path(plot_dir, paste0('Scenario_', i,'.jpg')), width = 220, 
        height = 120, units = 'mm', res = 500)
   par(mfrow = c(3,4))
   par(mar = c(2,4,1,1))
@@ -43,13 +43,13 @@ make_plot_traditional = function(om_toPlot, i, main_dir) {
 }
 
 # Function to make plot OM:
-make_plot_stepwise = function(om_toPlot, i, main_dir) {
+make_plot_stepwise = function(om_toPlot, i, plot_dir) {
   these_years = om_toPlot$year1_model:(om_toPlot$year1_model + om_toPlot$n_years_model - 1)
   these_ages = 1:om_toPlot$n_ages
   these_lengths = om_toPlot$lengths
   # Biology
-  dir.create(file.path(main_dir, 'plots/config'), recursive = T, showWarnings = FALSE)
-  jpeg(filename = file.path(main_dir, 'plots/config', paste0('Scenario_', i,'.jpg')), width = 220, 
+  dir.create(plot_dir, recursive = T, showWarnings = FALSE)
+  jpeg(filename = file.path(plot_dir, paste0('Scenario_', i,'.jpg')), width = 220, 
        height = 120, units = 'mm', res = 500)
   par(mfrow = c(3,4))
   par(mar = c(2,4,1,1))

@@ -13,8 +13,14 @@ require(doParallel)
 require(foreach)
 library(here)
 require(forecast)
-create_inputs = FALSE # want to create OM EM inputs? (just do it once)
+create_inputs = TRUE # want to create OM EM inputs? (just do it once)
 
+# -------------------------------------------------------------------------
+# IMPORTANT: Define species: cod or haddock
+this_sp = 'haddock' # or 'haddock'
+save(this_sp, file = 'inputs/this_sp.RData')
+
+# -------------------------------------------------------------------------
 if(create_inputs) {
   # Create Scenario and seeds DF (only do it once):
   source(here::here("code", "config_scenarios.R"))
@@ -27,19 +33,21 @@ if(create_inputs) {
 # -------------------------------------------------------------------------
 # Clear workspace
 rm(list=ls())
+load(file = 'inputs/this_sp.RData') # load chosen sp
 # Read main dir again
-out_dir = here::here('results') # folder where all simulations will be saved. preferably out of GitHub folder
+dir.create(file.path('results', this_sp), showWarnings = FALSE, recursive = TRUE)
+out_dir = file.path('results', this_sp) # folder where all simulations will be saved. preferably out of GitHub folder
 
 # Read objects to be used in sim_core2.R
 df.scenario = readRDS(here::here("inputs", "df.scenarios.RDS"))
 
 # Create folder to save sample data:
-dir.create('sample_data', showWarnings = FALSE)
-dir.create(here::here('sample_data', 'om_sample'), showWarnings = FALSE)
-dir.create(here::here('sample_data', 'LAA_sample'), showWarnings = FALSE)
-dir.create(here::here('sample_data', 'ALK_sample'), showWarnings = FALSE)
-dir.create(here::here('sample_data', 'WAA_sample'), showWarnings = FALSE)
-dir.create(here::here('sample_data', 'LAApar_sample'), showWarnings = FALSE)
+dir.create(file.path('sample_data', this_sp), showWarnings = FALSE, recursive = TRUE)
+dir.create(here::here('sample_data', this_sp, 'om_sample'), showWarnings = FALSE)
+dir.create(here::here('sample_data', this_sp, 'LAA_sample'), showWarnings = FALSE)
+dir.create(here::here('sample_data', this_sp, 'ALK_sample'), showWarnings = FALSE)
+dir.create(here::here('sample_data', this_sp, 'WAA_sample'), showWarnings = FALSE)
+dir.create(here::here('sample_data', this_sp, 'LAApar_sample'), showWarnings = FALSE)
 
 # Create folder to save results:
 for(k in 1:nrow(df.scenario)) {

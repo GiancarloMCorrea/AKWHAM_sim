@@ -3,7 +3,8 @@
 # Create EM WHAM inputs 
 
 # Load auxiliary functions:
-source(file.path('code', "config_params.R"))
+if(this_sp == 'cod') source(file.path('code', "config_params_cod.R"))
+if(this_sp == 'haddock') source(file.path('code', "config_params_haddock.R"))
 source(file.path('code', "make_basic_info.R"))
 source(file.path('code', "set_simulation_options.R"))
 
@@ -255,4 +256,4 @@ for(i in 1:NROW(df.scenario)){
 
 }
 
-saveRDS(em_inputs, file.path("inputs", "em_inputs.RDS")) 
+saveRDS(em_inputs, file.path("inputs", this_sp, "em_inputs.RDS")) 

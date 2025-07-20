@@ -1,6 +1,7 @@
 # Organize Env_time series data:
 require(forecast)
-source(here::here('code', 'config_params.R'))
+if(this_sp == 'cod') source(file.path('code', "config_params_cod.R"))
+if(this_sp == 'haddock') source(file.path('code', "config_params_haddock.R"))
 # Save ARIMA objects:
 arima_mod = list()
 
@@ -43,8 +44,9 @@ trend_mod = forecast::Arima(trend_df$var_std, order = c(1,0,0), include.drift = 
 arima_mod[[2]] = trend_mod
 
 # Save models:
+dir.create(file.path('env_data', this_sp), showWarnings = FALSE, recursive = TRUE)
 names(arima_mod) = c('stationary', 'trend')
-save(arima_mod, file = 'env_data/arima_mod.RData')
+save(arima_mod, file = file.path('env_data', this_sp, 'arima_mod.RData'))
 # Merge dfs and save:
 env_df = bind_rows(stationary_df, trend_df)
-saveRDS(env_df, file = 'env_data/env_sim.rds')
+saveRDS(env_df, file = file.path('env_data', this_sp, 'env_sim.rds'))
