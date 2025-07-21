@@ -17,7 +17,7 @@ F_max = 0.45
 Q_base = 1
 
 # Growth ------------------------------------------------------------------
-G_base = c(0.26, 50, 18, 3, 10) # K, Linf, L1, SD1, SDA
+G_base = c(0.26, 50, 18, 2.5, 7) # K, Linf, L1, SD1, SDA
 
 # LW relationship ---------------------------------------------------------
 LW_base = c(exp(-11.06), 2.82) # a and b parameters LW
@@ -40,7 +40,7 @@ lensel_based = list(model = c("len-logistic", "len-logistic"),
 
 Ecov_re_sig = c(0) # Ecov process error SD (this will be exp() in WHAM)
 Ecov_re_cor <- c(0.3) # Ecov process error autocorrelation: in WHAM: -1 + 2/(1 + exp(-phi))
-Ecov_effect <- c(0.2, -0.1, 0.1) # Effect on growth parameter (Beta, parameter-specific: k, Linf, L1)
+Ecov_effect <- c(0.3, -0.15, 0.1) # Effect on growth parameter (Beta, parameter-specific: k, Linf, L1)
 # K and Linf have negatively correlated variability
 Ecov_trend = c(0, 0.03)
 # When ecov trend positive, year when this trend will start to be simulated:
