@@ -9,15 +9,17 @@ theme_set(theme_bw())
 
 # Clean workspace
 rm(list = ls())
+this_sp = 'haddock' # 'haddock' or 'cod'
 
 # Call aux functions
 source('aux_functions.R')
 
 # Save plot folder:
-save_folder = 'plots'
+save_folder = file.path('plots', this_sp)
+dir.create(save_folder, showWarnings = FALSE, recursive = TRUE)
 
 # Output folder:
-output_folder = 'outputs'
+output_folder = file.path('outputs', this_sp)
 
 # Read scenarios df
 df.scenario = readRDS('inputs/df.scenarios.RDS')
@@ -64,7 +66,7 @@ paa_gen_approach = 'stepwise'
 # -------------------------------------------------------------------------
 
 # Convergence rates:
-n_sim = 110 # number of iterations run per scenario.
+n_sim = 10 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach,
@@ -322,7 +324,7 @@ temp = set_labels(temp, caal_type = c('random', 'strat'),
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
-temp = temp %>% dplyr::filter(age %in% c(2:4, 9:10)) %>%
+temp = temp %>% dplyr::filter(age %in% c(1:5)) %>%
           mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
 temp = temp %>% mutate(y_label = paste(caal_samp, Ecov_sim, age_selex, sep = '/'))
 
@@ -410,7 +412,7 @@ temp = set_labels(temp, caal_type = c('random', 'strat'),
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
-temp = temp %>% dplyr::filter(age %in% c(1:3, 9:10)) %>%
+temp = temp %>% dplyr::filter(age %in% c(1:5)) %>%
   mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
 temp = temp %>% mutate(y_label = paste(caal_samp, Ecov_sim, age_selex, sep = '/'))
 

@@ -6,18 +6,20 @@ theme_set(theme_bw())
 
 # Clean workspace
 rm(list = ls())
+this_sp = 'haddock' # 'haddock' or 'cod'
 
 # Aux function ------------------------------------------------------------
 source('aux_functions.R')
-source(file.path('code', 'config_params.R'))
+if(this_sp == 'cod') source(file.path('code', "config_params_cod.R"))
+if(this_sp == 'haddock') source(file.path('code', "config_params_haddock.R"))
 
 # Folder where simulations are saved:
-out_dir = 'results'
+out_dir = file.path('results', this_sp)
 
 # Some important parameters:
 waapos = 2 # Only survey waa
-output_folder = 'outputs'
-dir.create(output_folder)
+output_folder = file.path('outputs', this_sp)
+dir.create(output_folder, recursive = TRUE, showWarnings = FALSE)
 
 # Create objects
 scenario_names = list.files(path = out_dir)

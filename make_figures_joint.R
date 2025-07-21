@@ -9,15 +9,17 @@ theme_set(theme_bw())
 
 # Clean workspace
 rm(list = ls())
+this_sp = 'haddock' # 'haddock' or 'cod'
 
 # Call aux functions
 source('aux_functions.R')
 
 # Save plot folder:
-save_folder = 'plots'
+save_folder = file.path('plots', this_sp)
+dir.create(save_folder, showWarnings = FALSE, recursive = TRUE)
 
 # Output folder:
-output_folder = 'outputs'
+output_folder = file.path('outputs', this_sp)
 
 # Read scenarios df
 df.scenario = readRDS('inputs/df.scenarios.RDS')
