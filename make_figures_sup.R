@@ -20,7 +20,6 @@ rm(list = ls())
 
 # Call aux functions
 source('aux_functions.R')
-source(file.path('code', 'config_params.R'))
 seeds = readRDS(file.path("inputs","seeds.RDS"))
 df.scenarios = readRDS(file.path("inputs","df.scenarios.RDS"))
 
@@ -144,158 +143,174 @@ diag2 %>% export_svg %>% charToRaw %>%
 # Image > Scale Image, and change resolution (px/in) to 500
 
 # -------------------------------------------------------------------------
-# Supp figure: selectivity, phi matrix, F trajectory
+# Supp figure: selectivity, phi matrix, F trajectory by life history
 
-fish_lengths = lengths_base
-n_years = n_years_base+n_years_burnin
-om_sim1 = readRDS(file = 'sample_data/om_sample/om_sample_1.RDS')
-om_sim2 = readRDS(file = 'sample_data/om_sample/om_sample_37.RDS')
-env_data = readRDS(file = 'env_data/env_sim.rds')
+# Collect cod information:
+source(file.path('code', 'config_params_cod.R'))
+fish_lengths_cod = lengths_base
+ages_cod = ages_base
+n_years_cod = n_years_base+n_years_burnin
+n_years_burn_cod = n_years_burnin
+F_max_cod = F_max
+om_sim1_cod = readRDS(file = 'sample_data/cod/om_sample/om_sample_1.RDS')
+om_sim2_cod = readRDS(file = 'sample_data/cod/om_sample/om_sample_37.RDS')
+# Collect haddock information:
+source(file.path('code', 'config_params_haddock.R'))
+fish_lengths_had = lengths_base
+ages_had = ages_base
+n_years_had = n_years_base+n_years_burnin
+n_years_burn_had = n_years_burnin
+F_max_had = F_max
+om_sim1_had = readRDS(file = 'sample_data/haddock/om_sample/om_sample_1.RDS')
+om_sim2_had = readRDS(file = 'sample_data/haddock/om_sample/om_sample_37.RDS')
+
+# Make plot:
 cex_lab = 0.8
-
 png(filename = 'plots/Figure_config.png', width = 170, height = 210, units = 'mm', res = 400)
-par(mfrow = c(3,2))
+par(mfrow = c(4,2))
 
-# Selectivity (age based, traditional):
-fish_sel = om_sim1$rep$selAL[[1]][1,]
-surv_sel = om_sim1$rep$selAL[[2]][1,]
-par(mar = c(3,3.5,0.8,0.5))
-plot(ages_base, fish_sel, type = 'l', xlab = '', ylab = '', ylim = c(0,1))
-lines(ages_base, surv_sel, lty = 2)
-text(x = 1, y = 1, labels = "A", xpd = NA, cex = 1.5)
+# Selectivity cod (age based):
+fish_sel = om_sim1_cod$rep$selAL[[1]][1,]
+surv_sel = om_sim1_cod$rep$selAL[[2]][1,]
+par(mar = c(3,3.5,1.5,0.5))
+plot(ages_cod, fish_sel, type = 'l', xlab = '', ylab = '', ylim = c(0,1))
+lines(ages_cod, surv_sel, lty = 2)
+# text(x = 1, y = 1, labels = "A", xpd = NA, cex = 1.5)
 mtext(text = 'Age (years)', side = 1, line = 2, cex = cex_lab)
-mtext(text = 'Selectivity', side = 2, line = 2.25, cex = cex_lab)
+mtext(text = 'Selectivity (Traditional)', side = 2, line = 2.25, cex = cex_lab)
+title(main = 'Cod', cex.main = 1.5)
 legend('bottomright', legend = c('Fishery', 'Survey'), lty = c(1,2), lwd = 1, bty = 'n')
 
-# Selectivity (size based, stepwise):
-fish_sel = om_sim2$rep$selAL[[1]][1,]
-surv_sel = om_sim2$rep$selAL[[2]][1,]
+# Selectivity haddock (age based):
+fish_sel = om_sim1_had$rep$selAL[[1]][1,]
+surv_sel = om_sim1_had$rep$selAL[[2]][1,]
+par(mar = c(3,3.5,1.5,0.5))
+plot(ages_had, fish_sel, type = 'l', xlab = '', ylab = '', ylim = c(0,1))
+lines(ages_had, surv_sel, lty = 2)
+mtext(text = 'Age (years)', side = 1, line = 2, cex = cex_lab)
+mtext(text = '', side = 2, line = 2.25, cex = cex_lab)
+title(main = 'Haddock', cex.main = 1.5)
+legend('bottomright', legend = c('Fishery', 'Survey'), lty = c(1,2), lwd = 1, bty = 'n')
+
+
+# Selectivity cod (size based):
+fish_sel = om_sim2_cod$rep$selAL[[1]][1,]
+surv_sel = om_sim2_cod$rep$selAL[[2]][1,]
 par(mar = c(3,3.5,0.8,0.5))
-plot(fish_lengths, fish_sel, type = 'l', xlab = '', ylab = '', ylim = c(0,1))
-lines(fish_lengths, surv_sel, lty = 2)
-text(x = 2, y = 1, labels = "B", xpd = NA, cex = 1.5)
+plot(fish_lengths_cod, fish_sel, type = 'l', xlab = '', ylab = '', ylim = c(0,1))
+lines(fish_lengths_cod, surv_sel, lty = 2)
 mtext(text = 'Length (cm)', side = 1, line = 2, cex = cex_lab)
-mtext(text = 'Selectivity', side = 2, line = 2.25, cex = cex_lab)
+mtext(text = 'Selectivity (Stepwise)', side = 2, line = 2.25, cex = cex_lab)
 legend('bottomright', legend = c('Fishery', 'Survey'), lty = c(1,2), lwd = 1, bty = 'n')
 
-# Fishery mortality
-f_vector = om_sim1$rep$F[,1]
+# Selectivity haddock (size based):
+fish_sel = om_sim2_had$rep$selAL[[1]][1,]
+surv_sel = om_sim2_had$rep$selAL[[2]][1,]
 par(mar = c(3,3.5,0.8,0.5))
-plot(NA, NA, xlab = '', ylab = '', xlim = c(1, n_years),
-     ylim = c(0, F_max))
-polygon(x = c(-10, 10, 10, -10, -10), y = c(-1, -1, 1, 1, -1), col = 'grey', border = NA)
+plot(fish_lengths_had, fish_sel, type = 'l', xlab = '', ylab = '', ylim = c(0,1))
+lines(fish_lengths_had, surv_sel, lty = 2)
+mtext(text = 'Length (cm)', side = 1, line = 2, cex = cex_lab)
+mtext(text = '', side = 2, line = 2.25, cex = cex_lab)
+legend('bottomright', legend = c('Fishery', 'Survey'), lty = c(1,2), lwd = 1, bty = 'n')
+
+# Fishery mortality Cod
+f_vector = om_sim1_cod$rep$F[,1]
+par(mar = c(3,3.5,0.8,0.5))
+plot(NA, NA, xlab = '', ylab = '', xlim = c(1, n_years_cod),
+     ylim = c(0, F_max_cod))
+polygon(x = c(-10, n_years_burn_cod, n_years_burn_cod, -10, -10), y = c(-1, -1, 1, 1, -1), col = 'grey', border = NA)
 lines(1:length(f_vector), f_vector)
-text(x = 1, y = F_max, labels = "C", xpd = NA, cex = 1.5)
 mtext(text = 'Simulated years', side = 1, line = 2, cex = cex_lab)
 mtext(text = 'Fishing mortality (F)', side = 2, line = 2.25, cex = cex_lab)
 box()
 
-# Ecov time series: EBS
+# Fishery mortality Haddock
+f_vector = om_sim1_had$rep$F[,1]
 par(mar = c(3,3.5,0.8,0.5))
-plot(NA, NA, xlab = '', ylab = '', 
-     ylim = c(-3,3), xlim = c(1, n_years))
-polygon(x = c(-10, 10, 10, -10, -10), y = c(-10, -10, 10, 10, -10), col = 'grey', border = NA)
-ts_1 = env_data %>% dplyr::filter(type == 'stationary')
-lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5, col = colpal1[1]) # double check with sim_core.R
-trend = lm(var_std ~ year_id, data = ts_1)
-lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
-text(x = 1, y = 3, labels = "D", xpd = NA, cex = 1.5)
+plot(NA, NA, xlab = '', ylab = '', xlim = c(1, n_years_had),
+     ylim = c(0, F_max_had))
+polygon(x = c(-10, n_years_burn_had, n_years_burn_had, -10, -10), y = c(-1, -1, 1, 1, -1), col = 'grey', border = NA)
+lines(1:length(f_vector), f_vector)
 mtext(text = 'Simulated years', side = 1, line = 2, cex = cex_lab)
-mtext(text = 'EBS index', side = 2, line = 2.25, cex = cex_lab)
+mtext(text = '', side = 2, line = 2.25, cex = cex_lab)
 box()
 
-# Ecov time series: MAB
-par(mar = c(3,3.5,0.8,0.5))
-plot(NA, NA, xlab = '', ylab = '', 
-     ylim = c(-3,3), xlim = c(1, n_years))
-polygon(x = c(-10, 10, 10, -10, -10), y = c(-10, -10, 10, 10, -10), col = 'grey', border = NA)
-ts_1 = env_data %>% dplyr::filter(type == 'trend')
-lines(1:n_years, c(rnorm(n = n_years_burnin, mean = 0, sd = 1), ts_1$var_std), lwd = 0.5, col = colpal1[2]) # double check with sim_core.R
-trend = lm(var_std ~ year_id, data = ts_1)
-lines((n_years_burnin+1):n_years, predict(trend), lwd = 0.5, lty = 2)
-text(x = 1, y = 3, labels = "E", xpd = NA, cex = 1.5)
-mtext(text = 'Simulated years', side = 1, line = 2, cex = cex_lab)
-mtext(text = 'MAB index', side = 2, line = 2.25, cex = cex_lab)
-box()
-
-# Phi matrix
-phi_matrix = om_sim1$rep$jan1_phi_mat[,,1]
+# Phi matrix Cod
+phi_matrix = om_sim1_cod$rep$jan1_phi_mat[,,1]
 par(mar = c(6,3.5,0.8,0.5))
 image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = '', 
       main = NULL)
 axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
-axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths)), labels = fish_lengths)
+axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths_cod)), 
+     labels = fish_lengths_cod)
 fields::image.plot(t(phi_matrix), add=T, horizontal = TRUE,
-                   col = rev(viridis::viridis(100)), legend.mar = 3.5)
+                   col = rev(viridis::viridis(100)), legend.mar = 5)
 mtext(text = 'Age', side = 1, line = 2, cex = cex_lab)
 mtext(text = 'Length (cm)', side = 2, line = 2.25, cex = cex_lab)
-text(x = 0.04, y = 1, labels = "F", xpd = NA, cex = 1.5)
 box()
 
+# Phi matrix Haddock
+phi_matrix = om_sim1_had$rep$jan1_phi_mat[,,1]
+par(mar = c(6,3.5,0.8,0.5))
+image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = '', 
+      main = NULL)
+axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
+axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths_had)), 
+     labels = fish_lengths_had)
+fields::image.plot(t(phi_matrix), add=T, horizontal = TRUE,
+                   col = rev(viridis::viridis(100)), legend.mar = 5)
+mtext(text = 'Age', side = 1, line = 2, cex = cex_lab)
+mtext(text = '', side = 2, line = 2.25, cex = cex_lab)
+box()
 
 dev.off()
 
-# # -------------------------------------------------------------------------
-# # Supp figure: simulated environmental time series:
-# 
-# n_sim = 10 # number of replicates to plot
-# n_years = 55
-# 
-# save_stationary = matrix(0, ncol= n_sim, nrow = n_years)
-# save_trend = save_stationary
-# # Stationary time series:
-# for(iter in 1:n_sim) {
-#   
-#   set.seed(seeds[iter])
-#   ecov_error = rnorm(n_years, mean = 0, sd = exp(Ecov_re_sig))
-#   alpha = 0
-#   beta = Ecov_trend[1] # trend
-#   theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
-#   sim_ecov = 0
-#   for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
-#   sim_ecov = scale(sim_ecov)
-#   save_stationary[,iter] = sim_ecov[,1]
-#   
-#   # # Nonstationary time series:
-#   # set.seed(seeds[iter])
-#   # ecov_error = rnorm(n_years, mean = 0, sd = exp(Ecov_re_sig))
-#   # alpha = 0
-#   # beta = Ecov_trend[2] # trend
-#   # theta = -1 + 2/(1 + exp(-Ecov_re_cor)) # as in WHAM
-#   # sim_ecov = 0
-#   # for(i in 2:length(ecov_error)) sim_ecov[i] = alpha+beta*i+theta*sim_ecov[i-1] + ecov_error[i]
-#   # sim_ecov = scale(sim_ecov)
-#   # save_trend[,iter] = sim_ecov[,1]
-#   
-# }
-# 
-# df1 = melt(save_stationary, varnames = c('year', 'iter'))
-# df1 = df1 %>% mutate(type = 'Stationary')
-# # df2 = melt(save_trend, varnames = c('year', 'iter'))
-# # df2 = df2 %>% mutate(type = 'Trend')
-# 
-# df_plot = df1
-# 
-# figs1 = ggplot(df_plot, aes(x=year, y=value, group = factor(iter))) +
-#   geom_vline( xintercept = 10, linetype = 'dashed') +
-#   geom_line(aes(color = factor(type)), alpha = 0.5) +
-#   xlab('Simulated year') +
-#   ylab('Simulated environmental covariate') +
-#   theme(legend.position = 'none') +
-#   facet_wrap(. ~ factor(type)) 
-# ggsave(filename = 'plots/Figure_S1.jpg', plot = figs1, 
-#        width = 190 , height = 90, units = 'mm', dpi = 500)
-# 
+
+# -------------------------------------------------------------------------
+# Plot EBS and MAB indices:
+
+# Read only cod info:
+env_data = readRDS(file = 'env_data/cod/env_sim.rds')
+source(file.path('code', 'config_params_cod.R'))
+n_years = n_years_base
+
+png(filename = 'plots/Figure_ecov.png', width = 100, height = 160, units = 'mm', res = 400)
+
+par(mfrow = c(2,1))
+# Ecov time series: EBS
+par(mar = c(3,3.5,0.8,0.5))
+plot(NA, NA, xlab = '', ylab = '', ylim = c(-3,3), xlim = c(1, n_years))
+ts_1 = env_data %>% dplyr::filter(type == 'stationary')
+lines(1:n_years, ts_1$var_std, lwd = 0.5, col = colpal1[1]) # double check with sim_core.R
+trend = lm(var_std ~ year_id, data = ts_1)
+lines(1:n_years, predict(trend), lwd = 0.5, lty = 2)
+mtext(text = 'Simulated years', side = 1, line = 2, cex = 1)
+mtext(text = 'EBS index', side = 2, line = 2.25, cex = 1)
+box()
+# Ecov time series: MAB
+par(mar = c(3,3.5,0.8,0.5))
+plot(NA, NA, xlab = '', ylab = '', ylim = c(-3,3), xlim = c(1, n_years))
+ts_1 = env_data %>% dplyr::filter(type == 'trend')
+lines(1:n_years, ts_1$var_std, lwd = 0.5, col = colpal1[2]) # double check with sim_core.R
+trend = lm(var_std ~ year_id, data = ts_1)
+lines(1:n_years, predict(trend), lwd = 0.5, lty = 2)
+mtext(text = 'Simulated years', side = 1, line = 2, cex = 1)
+mtext(text = 'MAB index', side = 2, line = 2.25, cex = 1)
+box()
+
+dev.off()
+
 # -------------------------------------------------------------------------
 # Supp figure: simulated variability in LAA:
 # WARNING: you need to run the previous plot (Ecov sim)
 
-all_files = list.files(path = 'sample_data/LAA_sample')
-
+this_sp = 'cod' # cod or haddock
+this_path = file.path('sample_data', this_sp, 'LAA_sample')
+all_files = list.files(path = this_path)
 # Read sim data (growth var present):
 all_df = list()
 for(k in seq_along(all_files)) {
-  all_df[[k]] = readRDS(file = file.path('sample_data/LAA_sample', all_files[k]))
+  all_df[[k]] = readRDS(file = file.path(this_path, all_files[k]))
 }
 all_df = dplyr::bind_rows(all_df)
 
@@ -322,7 +337,7 @@ figs2 = ggplot(merged_df, aes(x=year, y=value, group = factor(i_group), color = 
         legend.text = element_text(size = 10)) +
   guides(color = guide_legend(title = NULL)) +
   facet_nested(age ~ om_label, scales = 'free_y', labeller = 'label_parsed')
-ggsave(filename = 'plots/Figure_LAA.png', plot = figs2,
+ggsave(filename = file.path('plots', this_sp, 'Figure_LAA.png'), plot = figs2,
        width = 170 , height = 210, units = 'mm', dpi = 500)
 
 
@@ -332,11 +347,12 @@ ggsave(filename = 'plots/Figure_LAA.png', plot = figs2,
 # TS data:
 
 # Specify these values (see main plot script)
-output_folder = 'outputs'
+this_sp = 'haddock' # cod or haddock
+output_folder = file.path('outputs', this_sp)
 max_grad = 1e-04
 min_alpha = 0.35
 ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))
-paa_gen_approach = 'stepwise'
+paa_gen_approach = 'traditional'
 
 this_age_selex = c('fixed', 'varying') # fixed or varying
 this_caal_samp = c('random') # random or strat
@@ -382,31 +398,34 @@ p1 = ggplot(plot_dat, aes(x = cum_im, y = cum_re*100)) +
   guides(color=guide_legend(title=NULL),
          linetype=guide_legend(title=NULL)
          )
-ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'iter-stability', sep = '-'), fig_type)), plot = p1,
+ggsave(filename = file.path(save_folder, this_sp, paste0(paste(paa_gen_approach, 'iter-stability', sep = '-'), fig_type)), plot = p1,
        width = img_width , height = 210, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # Sup figure: Impact of length-based selectivity and sampling
 
-om_sim1 = readRDS(file = 'sample_data/om_sample/om_sample_37.RDS')
-
+# For cod:
+om_sim1 = readRDS(file = 'sample_data/cod/om_sample/om_sample_37.RDS')
+source(file.path('code', 'config_params_cod.R'))
+# Phi1 df:
 phi_mat1 = om_sim1$rep$catch_phi_mat[,,11] # only first year
 rownames(phi_mat1) = lengths_base
 colnames(phi_mat1) = ages_base
 phi_df1 = reshape2::melt(phi_mat1, varnames = c('len', 'age'))
-
+# Phi2 df:
 phi_mat2 = om_sim1$rep$jan1_phi_mat[,,11] # only first year
 rownames(phi_mat2) = lengths_base
 colnames(phi_mat2) = ages_base
 phi_df2 = reshape2::melt(phi_mat2, varnames = c('len', 'age'))
-
+# LAA df:
 laa_df1 = phi_df1 %>% group_by(age) %>% filter(value == max(value)) %>% 
-            mutate(ypos = value + 0.03)
+            mutate(ypos = value + 0.03) %>% group_by(age) %>% summarise_all(mean)
 laa_df2 = phi_df2 %>% group_by(age) %>% filter(value == max(value)) %>% 
-            mutate(ypos = value + 0.03)
+            mutate(ypos = value + 0.03) %>% group_by(age) %>% summarise_all(mean)
+# Sel df:
 sel_df1 = data.frame(len = lengths_base, value = om_sim1$rep$selAL[[1]][1,], type = 'Fishery')
 sel_df2 = data.frame(len = lengths_base, value = om_sim1$rep$selAL[[2]][1,], type = 'Survey')
-
+# Make plot:
 p1 = ggplot() +
   geom_rect(data = sel_df1, aes(xmin = len, xmax = len+2, ymin = 0, 
                                 ymax = max(phi_df1$value) + 0.05, fill=value), alpha = 0.75) +
@@ -415,8 +434,8 @@ p1 = ggplot() +
   scale_fill_gradientn(colours = rev(terrain.colors(7))) +
   xlab('Length (cm)') + ylab('Proportion') +
   theme_classic() +
-  guides(fill = guide_colorbar(title = 'Selectivity')) +
-  ggtitle('Fishery')
+  theme(legend.position = 'none') +
+  ggtitle('Fishery (Cod)')
 p2 = ggplot() +
   geom_rect(data = sel_df2, aes(xmin = len, xmax = len+2, ymin = 0, 
                                 ymax = max(phi_df2$value) + 0.05, fill=value), alpha = 0.75) +
@@ -425,21 +444,67 @@ p2 = ggplot() +
   scale_fill_gradientn(colours = rev(terrain.colors(7))) +
   xlab('Length (cm)') + ylab('Proportion') +
   theme_classic() +
-  guides(fill = guide_colorbar(title = 'Selectivity')) +
-  ggtitle('Survey')
+  theme(legend.position = 'none') +
+  ggtitle('Survey (Cod)')
 
-p3 = grid.arrange(p1, p2)
-ggsave(filename = file.path(save_folder, paste0('Figure_selex', fig_type)), plot = p3,
-       width = img_width*0.75 , height = 150, units = 'mm', dpi = img_res)
+# For haddock:
+om_sim1 = readRDS(file = 'sample_data/haddock/om_sample/om_sample_37.RDS')
+source(file.path('code', 'config_params_haddock.R'))
+# Phi1 df:
+phi_mat1 = om_sim1$rep$catch_phi_mat[,,11] # only first year
+rownames(phi_mat1) = lengths_base
+colnames(phi_mat1) = ages_base
+phi_df1 = reshape2::melt(phi_mat1, varnames = c('len', 'age'))
+# Phi2 df:
+phi_mat2 = om_sim1$rep$jan1_phi_mat[,,11] # only first year
+rownames(phi_mat2) = lengths_base
+colnames(phi_mat2) = ages_base
+phi_df2 = reshape2::melt(phi_mat2, varnames = c('len', 'age'))
+# LAA df:
+laa_df1 = phi_df1 %>% group_by(age) %>% filter(value == max(value)) %>% 
+  mutate(ypos = value + 0.03) %>% group_by(age) %>% summarise_all(mean)
+laa_df2 = phi_df2 %>% group_by(age) %>% filter(value == max(value)) %>% 
+  mutate(ypos = value + 0.03) %>% group_by(age) %>% summarise_all(mean)
+# Sel df:
+sel_df1 = data.frame(len = lengths_base, value = om_sim1$rep$selAL[[1]][1,], type = 'Fishery')
+sel_df2 = data.frame(len = lengths_base, value = om_sim1$rep$selAL[[2]][1,], type = 'Survey')
+# Make plot:
+p3 = ggplot() +
+  geom_rect(data = sel_df1, aes(xmin = len, xmax = len+2, ymin = 0, 
+                                ymax = max(phi_df1$value) + 0.05, fill=value), alpha = 0.75) +
+  geom_line(data = phi_df1, aes(x = len, y = value, group = factor(age))) +
+  geom_text(data = laa_df1, aes(x = len, y = ypos, label = age), size = 4) +
+  scale_fill_gradientn(colours = rev(terrain.colors(7))) +
+  xlab('Length (cm)') + ylab('Proportion') +
+  theme_classic() +
+  theme(legend.position = 'none') +
+  ggtitle('Fishery (Haddock)')
+p4 = ggplot() +
+  geom_rect(data = sel_df2, aes(xmin = len, xmax = len+2, ymin = 0, 
+                                ymax = max(phi_df2$value) + 0.05, fill=value), alpha = 0.75) +
+  geom_line(data = phi_df2, aes(x = len, y = value, group = factor(age))) +
+  geom_text(data = laa_df2, aes(x = len, y = ypos, label = age), size = 4) +
+  scale_fill_gradientn(colours = rev(terrain.colors(7))) +
+  xlab('Length (cm)') + ylab('Proportion') +
+  theme_classic() +
+  theme(legend.position = 'none') +
+  ggtitle('Survey (Haddock)')
+
+# Merge plots:
+p5 = grid.arrange(p1, p3, p2, p4)
+ggsave(filename = file.path(save_folder, paste0('Figure_selex', fig_type)), plot = p5,
+       width = img_width , height = 150, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # Sup figure: Number of fish sampled ALK by strategy:
 
-all_files = list.files(path = 'sample_data/ALK_sample')
+this_sp = 'haddock' # cod or haddock
+this_path = file.path('sample_data', this_sp, 'ALK_sample')
+all_files = list.files(path = this_path)
 # Read sim data (growth var present):
 all_df = list()
 for(k in seq_along(all_files)) {
-  all_df[[k]] = readRDS(file = file.path('sample_data/ALK_sample', all_files[k]))
+  all_df[[k]] = readRDS(file = file.path(this_path, all_files[k]))
 }
 all_df = dplyr::bind_rows(all_df)
 
@@ -474,18 +539,20 @@ p1 = ggplot(tmp_df, aes(x = factor(age), y = n_fish)) +
         strip.background = element_rect(fill="white")) +
   facet_grid(ecov ~ om_label, labeller = 'label_parsed', scales = "free_y") +
   guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
-ggsave(filename = file.path(save_folder, paste0('Figure_alksamp', fig_type)), plot = p1,
+ggsave(filename = file.path(save_folder, this_sp, paste0('Figure_alksamp', fig_type)), plot = p1,
        width = img_width , height = 150, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
 # Sup figure: observed mean weight at age data before imputation
 
-all_files = list.files(path = 'sample_data/WAA_sample')
+this_sp = 'haddock' # cod or haddock
+this_path = file.path('sample_data', this_sp, 'WAA_sample')
+all_files = list.files(path = this_path)
 # Read sim data (growth var present):
 all_df = list()
 for(k in seq_along(all_files)) {
-  all_df[[k]] = readRDS(file = file.path('sample_data/WAA_sample', all_files[k]))
+  all_df[[k]] = readRDS(file = file.path(this_path, all_files[k]))
 }
 all_df = dplyr::bind_rows(all_df)
 
@@ -520,5 +587,5 @@ p1 = ggplot(tmp_df, aes(x = factor(age), y = n_na)) +
         strip.background = element_rect(fill="white")) +
   facet_grid(ecov ~ om_label, labeller = 'label_parsed', scales = "free_y") +
   guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
-ggsave(filename = file.path(save_folder, paste0('Figure_waasamp', fig_type)), plot = p1,
+ggsave(filename = file.path(save_folder, this_sp, paste0('Figure_waasamp', fig_type)), plot = p1,
        width = img_width , height = 150, units = 'mm', dpi = img_res)

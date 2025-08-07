@@ -61,10 +61,13 @@ waare_df = readRDS(file = file.path(output_folder, 'waare_results.RDS'))
 # Traditional approach ----------------------------------------------------
 paa_gen_approach = 'traditional'
 
+# Select ages to plot averaged:
+sel_ages = c(1:4, (max(waa_df$age)-1):max(waa_df$age))
+
 # -------------------------------------------------------------------------
 
 # Convergence rates:
-n_sim = 10 # number of iterations run per scenario.
+n_sim = 110 # number of iterations run per scenario.
 
 # Set EM and OM labels:
 tmp_df = par_df %>% dplyr::filter(paa_generation == paa_gen_approach,
@@ -136,15 +139,12 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'par', s
 # -------------------------------------------------------------------------
 # avg TS plot:
 # Prepare data
-temp = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
-                                 caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
-temp = temp %>% dplyr::filter(growth_var > 0)
+temp = ts_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>% 
+  dplyr::select(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
+                  Ecov_sim, method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence)
 
-tmp_df = temp %>% dplyr::filter(paa_generation == paa_gen_approach)
 # Set EM and OM labels:
-tmp_df = set_labels(tmp_df, ecov_type = c('stationary', 'trend'), 
+tmp_df = set_labels(temp, ecov_type = c('stationary', 'trend'), 
                     selex_type = c('fixed', 'varying'), 
                     conv_level = max_grad)
 # Filter first X reps:
@@ -157,9 +157,12 @@ tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
 tmp_df = tmp_df %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
 
 # Plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, om_label, y_label) %>%
-  dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult),
-                   precision = round(sd(rel_error)*re_mult))
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, y_label, year) %>%
+  dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
+                   precision = sd(rel_error)*re_mult) %>%
+  group_by(em_label, par2, om_label, y_label) %>%
+  dplyr::summarise(bias = round(mean(bias)),
+                   precision = round(mean(precision)))
 plot_dat = plot_dat %>% mutate(box_label = paste0(bias, '(', precision, ')'))
 
 p3 = make_heatmap(df = plot_dat, this_factor = bias, this_label = box_label, y_label = y_label)
@@ -174,11 +177,8 @@ dir.create(ts_folder_plot, showWarnings = FALSE)
 
 # Sort data:
 temp = ts_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>% 
-  dplyr::group_by(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
-                                 Ecov_sim, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
-
+  dplyr::select(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
+                                 Ecov_sim, method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence) 
 # Plot TS by variable:
 all_vars = c('Rec', 'SSB', 'F')
 for(i in seq_along(all_vars)) {
@@ -213,10 +213,8 @@ for(i in seq_along(all_vars)) {
 # -------------------------------------------------------------------------
 # WAA info:
 temp = waa_df %>% filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
-  dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
-                  method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
+  dplyr::select(scenario, age, year, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
+                  method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence) 
 
 # Set EM and OM labels:
 temp = set_labels(temp, ecov_type = c('stationary', 'trend'), 
@@ -225,15 +223,18 @@ temp = set_labels(temp, ecov_type = c('stationary', 'trend'),
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
-temp = temp %>% dplyr::filter(age %in% c(1:3, 9:10)) %>% 
-          mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
+temp = temp %>% dplyr::filter(age %in% sel_ages) %>% 
+          mutate(par2 = factor(age, levels = sel_ages, labels = sel_ages))
 # Define y label
 temp = temp %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
 
 # Prepare data for geom linerage plot:
-plot_dat = temp %>% group_by(em_label, par2, om_label, y_label) %>%
-  dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult),
-                   precision = round(sd(rel_error)*re_mult))
+plot_dat = temp %>% group_by(em_label, par2, om_label, y_label, year) %>%
+  dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
+                   precision = sd(rel_error)*re_mult) %>%
+  group_by(em_label, par2, om_label, y_label) %>%
+  dplyr::summarise(bias = round(mean(bias)),
+                   precision = round(mean(precision)))
 plot_dat = plot_dat %>% mutate(box_label = paste0(bias, '(', precision, ')'))
 
 p3 = make_heatmap(df = plot_dat, this_factor = bias, this_label = box_label, y_label = y_label)
@@ -242,11 +243,9 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'waa', s
 
 # -------------------------------------------------------------------------
 # Pred catch CAA info:
-temp = catch_paa_df %>% filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
-  dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
-                  method, growth_var, im) %>%  
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
+temp = catch_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
+  dplyr::select(scenario, age, year, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
+                  method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence) 
 
 # Set EM and OM labels:
 temp = set_labels(temp, ecov_type = c('stationary', 'trend'), 
@@ -255,15 +254,18 @@ temp = set_labels(temp, ecov_type = c('stationary', 'trend'),
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
-temp = temp %>% dplyr::filter(age %in% c(2:4, 9:10)) %>% 
-  mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
+temp = temp %>% dplyr::filter(age %in% sel_ages) %>% 
+  mutate(par2 = factor(age, levels = sel_ages, labels = sel_ages))
 # Define y label
 temp = temp %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
 
 # Prepare data for plot:
-plot_dat = temp %>% group_by(em_label, par2, om_label, y_label) %>%
-  dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult),
-                   precision = round(sd(rel_error)*re_mult))
+plot_dat = temp %>% group_by(em_label, par2, om_label, y_label, year) %>%
+  dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
+                   precision = sd(rel_error)*re_mult) %>%
+  group_by(em_label, par2, om_label, y_label) %>%
+  dplyr::summarise(bias = round(mean(bias)),
+                   precision = round(mean(precision)))
 plot_dat = plot_dat %>% mutate(box_label = paste0(bias, '(', precision, ')'))
 
 # Make plot:
@@ -273,11 +275,9 @@ ggsave(filename = file.path(save_folder, paste0(paste(paa_gen_approach, 'caa', s
 
 # -------------------------------------------------------------------------
 # Pred catch IAA info:
-temp = index_paa_df %>% filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
-  dplyr::group_by(scenario, age, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
-                  method, growth_var, im) %>%  
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
+temp = index_paa_df %>% dplyr::filter(growth_var > 0, paa_generation == paa_gen_approach) %>%
+  dplyr::select(scenario, age, year, data_scen, Ecov_sim, caal_samp, age_selex, re_method, 
+                  method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence)
 
 # Set EM and OM labels:
 temp = set_labels(temp, ecov_type = c('stationary', 'trend'), 
@@ -286,15 +286,18 @@ temp = set_labels(temp, ecov_type = c('stationary', 'trend'),
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
-temp = temp %>% dplyr::filter(age %in% c(1:3, 9:10)) %>% 
-  mutate(par2 = factor(age, levels = 1:10, labels = 1:10))
+temp = temp %>% dplyr::filter(age %in% sel_ages) %>% 
+  mutate(par2 = factor(age, levels = sel_ages, labels = sel_ages))
 # Define y label
 temp = temp %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
 
 # Prepare data for plot:
-plot_dat = temp %>% group_by(em_label, par2, om_label, y_label) %>%
-  dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult),
-                   precision = round(sd(rel_error)*re_mult))
+plot_dat = temp %>% group_by(em_label, par2, om_label, y_label, year) %>%
+  dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
+                   precision = sd(rel_error)*re_mult) %>%
+  group_by(em_label, par2, om_label, y_label) %>%
+  dplyr::summarise(bias = round(mean(bias)),
+                   precision = round(mean(precision)))
 plot_dat = plot_dat %>% mutate(box_label = paste0(bias, '(', precision, ')'))
 
 # Make plot:

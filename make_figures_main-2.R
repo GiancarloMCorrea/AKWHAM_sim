@@ -9,17 +9,16 @@ theme_set(theme_bw())
 
 # Clean workspace
 rm(list = ls())
-this_sp = 'haddock' # 'haddock' or 'cod'
 
 # Call aux functions
 source('aux_functions.R')
 
-# Save plot folder:
-save_folder = file.path('plots', this_sp)
-dir.create(save_folder, showWarnings = FALSE, recursive = TRUE)
+# These plots will be done by species. Select species:
+this_sp = 'haddock' # cod or haddock
 
-# Output folder:
-output_folder = file.path('outputs', this_sp)
+# Save plot folder:
+save_folder = 'plots'
+dir.create(save_folder, showWarnings = FALSE, recursive = TRUE)
 
 # Read scenarios df
 df.scenario = readRDS('inputs/df.scenarios.RDS')
@@ -31,7 +30,6 @@ img_width = 170
 
 # Color palettes
 colpal1 = viridisLite::viridis(n = 6)[c(1,4)]
-colpal2 = brewer.pal(n = 9, name = 'YlGnBu')[c(1,5,9)]
 
 # Convergence level:
 max_grad = 1e-04
@@ -42,96 +40,32 @@ re_mult = 100
 # -------------------------------------------------------------------------
 # Read output files -------------------------------------------------------
 
-# TS data:
-ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))
-# par data:
-par_df = readRDS(file = file.path(output_folder, 'par_results.RDS'))
-# WAA data:
-waa_df = readRDS(file = file.path(output_folder, 'waa_results.RDS'))
-# Catch pred paa
-catch_paa_df = readRDS(file = file.path(output_folder, 'catch_paa_results.RDS'))
-# Index pred paa
-index_paa_df = readRDS(file = file.path(output_folder, 'index_paa_results.RDS'))
-# Selex
-selex_df = readRDS(file = file.path(output_folder, 'sel_results.RDS'))
-# WAA re
-waare_df = readRDS(file = file.path(output_folder, 'waare_results.RDS'))
-# Selex re
-selre_df = readRDS(file = file.path(output_folder, 'selre_results.RDS'))
-
-# -------------------------------------------------------------------------
-# PAR plot
-# Select parameters:
-temp = par_df %>% dplyr::filter(par %in% c('logit_q', 'mean_rec_pars', 'log_NAA_sigma')) # 'log_F1', 'log_N1_pars'
-
-# Set EM and OM labels:
-tmp_df = set_labels(temp, conv_level = max_grad)
-# Filter first X reps:
-tmp_df = filter_iter(tmp_df)
-# Set par labels:
-tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_NAA_sigma'),
-                                         labels = c(expression(bar(R)), 'Q', expression(sigma[R]))), # expression(N["1,1"]) 'F[1]'
-                           paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
-                                                   labels = c('Traditional', 'Stepwise'))) 
-
-# Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
-  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
-                   q50 = quantile(rel_error, probs = 0.5)*re_mult,
-                   q975 = quantile(rel_error, probs = 0.975)*re_mult)
-
-# Make plot:
-p1 = make_plot_1b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
-                  leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'par', sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 150, units = 'mm', dpi = img_res)
-
-
-# -------------------------------------------------------------------------
-# average TS plot
-temp = ts_df %>% dplyr::group_by(scenario, par, paa_generation, data_scen, Ecov_sim, 
-                                  caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
-
-# Set EM and OM labels:
-tmp_df = set_labels(temp, conv_level = max_grad)
-# Filter first X reps:
-tmp_df = filter_iter(tmp_df)
-# Set par labels:
-tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
-                                     labels = c('SSB', 'R', 'F')), # expression(N["1,1"]) 'F[1]'
-                       paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
-                                               labels = c('Traditional', 'Stepwise'))) 
-
-# Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
-  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
-                   q50 = quantile(rel_error, probs = 0.5)*re_mult,
-                   q975 = quantile(rel_error, probs = 0.975)*re_mult)
-
-# Make plot:
-p1 = make_plot_1b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
-                  leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'avg-ts', sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 150, units = 'mm', dpi = img_res)
+# Read for cod:
+output_folder = file.path('outputs', this_sp)
+ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))  # TS data
+waa_df = readRDS(file = file.path(output_folder, 'waa_results.RDS')) # WAA data
+catch_paa_df = readRDS(file = file.path(output_folder, 'catch_paa_results.RDS')) # Catch pred paa
+index_paa_df = readRDS(file = file.path(output_folder, 'index_paa_results.RDS')) # Index pred paa
+selex_df = readRDS(file = file.path(output_folder, 'sel_results.RDS')) # Selex
+waare_df = readRDS(file = file.path(output_folder, 'waare_results.RDS')) # WAA re
+selre_df = readRDS(file = file.path(output_folder, 'selre_results.RDS')) # Selex re
 
 # -------------------------------------------------------------------------
 # TS plot (by year, for ALL scenarios):
-# Do it variable by variable: F, R, SSB
-ts_folder_plot = file.path(save_folder, 'ts_plots')
+# Do it variable by variable: F, R, SSB and by Species:
+save_tmp_folder = file.path(save_folder, tolower(this_sp))
+ts_folder_plot = file.path(save_tmp_folder, 'ts_plots')
 dir.create(ts_folder_plot, showWarnings = FALSE)
 
 # Sort data:
-temp = ts_df %>% dplyr::group_by(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
-                  Ecov_sim, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence))
+temp = ts_df %>% 
+  dplyr::select(paa_generation, scenario, par, year, data_scen, caal_samp, age_selex, re_method, 
+                Ecov_sim, method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence)
 
 # Plot TS by variable:
 all_vars = c('Rec', 'SSB', 'F')
 for(i in seq_along(all_vars)) {
-
+  
   sel_var = all_vars[i]
   # Set EM and OM labels:
   temp2 = set_labels(temp, conv_level = max_grad)
@@ -144,119 +78,133 @@ for(i in seq_along(all_vars)) {
                                                       expression(WNP*"-"*2*"D"),
                                                       expression(WNP*"-"*3*"D")))
   temp2 = temp2 %>% mutate(paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
-                                                  labels = c('Traditional', 'Stepwise'))) 
+                                                   labels = c('Traditional', 'Stepwise'))) 
   
   # Prepare data for geom linerage plot:
   plot_dat = temp2 %>% group_by(paa_generation, em_label2, year, om_label) %>%
     dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                      q50 = quantile(rel_error, probs = 0.5)*re_mult,
-                     q975 = quantile(rel_error, probs = 0.975)*re_mult)
+                     q975 = quantile(rel_error, probs = 0.975)*re_mult) 
   
   # Make plot:
   if(sel_var == 'Rec') { yLim = c(-50, 50) } else { yLim = NULL }
   p1 = make_plot_ts(plot_dat, paa_generation, col_vals = colpal1, leg_pos = 'bottom', yLim = yLim)
   ggsave(filename = file.path(ts_folder_plot, paste0(paste('main', 'ts', sel_var, sep = '-'), fig_type)), 
          plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
-
+  
 }
 
 # -------------------------------------------------------------------------
 # WAA plots (averaged):
-temp = waa_df %>% dplyr::group_by(scenario, age, paa_generation, data_scen, Ecov_sim, 
-                                  caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
+save_tmp_folder = file.path(save_folder, tolower(this_sp))
+
+temp = waa_df %>% 
+  dplyr::select(scenario, age, paa_generation, data_scen, Ecov_sim, year,
+                caal_samp, age_selex, re_method, method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence) 
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, conv_level = max_grad)
 # Filter first X reps:
 tmp_df = filter_iter(tmp_df)
 # Set par labels:
-tmp_df = tmp_df %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10),
+tmp_df = tmp_df %>% mutate(par2 = factor(age, levels = 1:max(tmp_df$age), labels = 1:max(tmp_df$age)),
                            paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
                                                    labels = c('Traditional', 'Stepwise'))) 
 
 # Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation, year) %>%
   dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                    q50 = quantile(rel_error, probs = 0.5)*re_mult,
-                   q975 = quantile(rel_error, probs = 0.975)*re_mult)
+                   q975 = quantile(rel_error, probs = 0.975)*re_mult) %>%
+  group_by(em_label, par2, om_label, paa_generation) %>%
+  dplyr::summarise(q025 = mean(q025), q50 = mean(q50), q975 = mean(q975))
 
 # Make plot:
-p1 = make_plot_1b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
+p1 = make_plot_2b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'waa', sep = '-'), fig_type)), 
+ggsave(filename = file.path(save_tmp_folder, paste0(paste('main', 'waa', sep = '-'), fig_type)), 
        plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
 # CAA plots:
-temp = catch_paa_df %>% dplyr::group_by(scenario, age, paa_generation, data_scen, Ecov_sim, 
-                                  caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
+save_tmp_folder = file.path(save_folder, tolower(this_sp))
+
+temp = catch_paa_df %>% 
+  dplyr::select(scenario, age, paa_generation, data_scen, Ecov_sim, year,
+                caal_samp, age_selex, re_method, method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence) 
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, conv_level = max_grad)
 # Filter first X reps:
 tmp_df = filter_iter(tmp_df)
 # Set par labels:
-tmp_df = tmp_df %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10),
+tmp_df = tmp_df %>% mutate(par2 = factor(age, levels = 1:max(tmp_df$age), labels = 1:max(tmp_df$age)),
                            paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
                                                    labels = c('Traditional', 'Stepwise'))) 
 
 # Prepare data for geom linerage plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation, year) %>%
   dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                    q50 = quantile(rel_error, probs = 0.5)*re_mult,
-                   q975 = quantile(rel_error, probs = 0.975)*re_mult)
+                   q975 = quantile(rel_error, probs = 0.975)*re_mult) %>%
+  group_by(em_label, par2, om_label, paa_generation) %>%
+  dplyr::summarise(q025 = mean(q025), q50 = mean(q50), q975 = mean(q975))
 
 # Make plot:
-p1 = make_plot_1b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
+p1 = make_plot_2b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'caa', sep = '-'), fig_type)), 
+ggsave(filename = file.path(save_tmp_folder, paste0(paste('main', 'caa', sep = '-'), fig_type)), 
        plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
 # IAA plots:
-temp = index_paa_df %>% dplyr::group_by(scenario, age, paa_generation, data_scen, Ecov_sim, 
-                                        caal_samp, age_selex, re_method, method, growth_var, im) %>% 
-  dplyr::summarise(rel_error = median(rel_error), maxgrad = median(maxgrad), 
-                   na_sdrep = unique(na_sdrep), convergence = unique(convergence)) # median over the years
+save_tmp_folder = file.path(save_folder, tolower(this_sp))
+
+temp = index_paa_df %>% 
+  dplyr::select(scenario, age, paa_generation, data_scen, Ecov_sim, year,
+                caal_samp, age_selex, re_method, method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence) 
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, conv_level = max_grad)
 # Filter first X reps:
 tmp_df = filter_iter(tmp_df)
 # Set par labels:
-tmp_df = tmp_df %>% mutate(par2 = factor(age, levels = 1:10, labels = 1:10),
+tmp_df = tmp_df %>% mutate(par2 = factor(age, levels = 1:max(tmp_df$age), labels = 1:max(tmp_df$age)),
                            paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
                                                    labels = c('Traditional', 'Stepwise'))) 
 
 # Prepare data for geom linerange plot:
-plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation) %>%
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, paa_generation, year) %>%
   dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
                    q50 = quantile(rel_error, probs = 0.5)*re_mult,
-                   q975 = quantile(rel_error, probs = 0.975)*re_mult)
+                   q975 = quantile(rel_error, probs = 0.975)*re_mult) %>%
+  group_by(em_label, par2, om_label, paa_generation) %>%
+  dplyr::summarise(q025 = mean(q025), q50 = mean(q50), q975 = mean(q975))
 
 # Make plot:
-p1 = make_plot_1b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
+p1 = make_plot_2b(plot_dat, paa_generation, y_break = 0.2, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', alpha_level = 1, col_vals = colpal1)
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'iaa', sep = '-'), fig_type)), 
+ggsave(filename = file.path(save_tmp_folder, paste0(paste('main', 'iaa', sep = '-'), fig_type)), 
        plot = p1, width = img_width, height = 210, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
 # WAA RE parameters:
-temp = waare_df
+save_tmp_folder = file.path(save_folder, tolower(this_sp))
+
+temp = waare_df %>% 
+  dplyr::select(scenario, par, paa_generation, data_scen, Ecov_sim,
+                caal_samp, age_selex, re_method, method, growth_var, im, est, maxgrad, na_sdrep, convergence) 
+
 # Set EM and OM labels:
 temp = set_labels(temp, conv_level = max_grad)
 # Filter first 100 reps:
 temp = filter_iter(temp)
 # Set par labels:
 temp = temp %>% mutate(paa_generation = factor(paa_generation, levels = c('traditional', 'stepwise'),
-                                                   labels = c('Traditional', 'Stepwise'))) 
+                                               labels = c('Traditional', 'Stepwise'))) 
 
 # Specify NA when meaningless parameter value:
 temp = temp %>% mutate(est = if_else(method == 'WEm', NA, est))
@@ -280,12 +228,17 @@ plot_dat = plot_dat %>% dplyr::filter(!(em_label == 'WEm'))
 p1 = make_plot_3b(plot_dat, paa_generation, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', col_vals = colpal1,
                   var_name = 'Value')
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'waare', sep = '-'), fig_type)), 
+ggsave(filename = file.path(save_tmp_folder, paste0(paste('main', 'waare', sep = '-'), fig_type)), 
        plot = p1, width = img_width, height = 150, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # Selex parameters:
-temp = selex_df
+save_tmp_folder = file.path(save_folder, tolower(this_sp))
+
+temp = selex_df %>% 
+  dplyr::select(scenario, fleet, par1, paa_generation, data_scen, Ecov_sim, year,
+                caal_samp, age_selex, re_method, method, growth_var, im, maxgrad, na_sdrep, convergence) 
+
 # Set EM and OM labels:
 temp = set_labels(temp, conv_level = max_grad)
 # Filter first 100 reps:
@@ -308,12 +261,13 @@ plot_dat = temp %>% group_by(em_label, par2, paa_generation, om_label) %>%
 p1 = make_plot_3b(plot_dat, paa_generation, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', col_vals = colpal1,
                   var_name = 'Value')
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'sel-const', sep = '-'), fig_type)), 
+ggsave(filename = file.path(save_tmp_folder, paste0(paste('main', 'sel-const', sep = '-'), fig_type)), 
        plot = p1, width = img_width, height = 130, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
 # Selex + sel RE parameters (only varying):
+save_tmp_folder = file.path(save_folder, tolower(this_sp))
 
 # Selex pars:
 temp = selex_df %>% dplyr::filter(growth_var > 0)
@@ -328,10 +282,12 @@ temp = temp %>% mutate(paa_generation = factor(paa_generation, levels = c('tradi
 temp = temp %>% mutate(par2 = factor(fleet, levels = 1:2, 
                                      labels = c(expression(beta[1*","*f]), expression(beta[1*","*s]))))
 # Prepare data for geom linerage plot:
-plot_dat1 = temp %>% group_by(em_label, par2, paa_generation, om_label) %>%
+plot_dat1 = temp %>% group_by(em_label, par2, paa_generation, om_label, year) %>%
   dplyr::summarise(q025 = quantile(par1, probs = 0.025, na.rm = T), 
                    q50 = quantile(par1, probs = 0.5, na.rm = T),
-                   q975 = quantile(par1, probs = 0.975, na.rm = T))
+                   q975 = quantile(par1, probs = 0.975, na.rm = T)) %>%
+  group_by(em_label, par2, om_label, paa_generation) %>%
+  dplyr::summarise(q025 = mean(q025), q50 = mean(q50), q975 = mean(q975))
 
 # sel RE pars:
 temp = selre_df %>% dplyr::filter(growth_var > 0)
@@ -357,5 +313,5 @@ plot_dat = bind_rows(plot_dat1, plot_dat2)
 p1 = make_plot_3b(plot_dat, paa_generation, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', col_vals = colpal1,
                   var_name = 'Value')
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'sel-vary', sep = '-'), fig_type)), 
+ggsave(filename = file.path(save_tmp_folder, paste0(paste('main', 'sel-vary', sep = '-'), fig_type)), 
        plot = p1, width = img_width, height = 180, units = 'mm', dpi = img_res)

@@ -10,37 +10,37 @@ n_fisheries = 1
 n_indices = 1
 
 # Mortality -------------------------------------------------------
-M_base = 0.35
-F_max = 0.35
+M_base = 0.45
+F_max = 0.45
 
 # Catchability ------------------------------------------------------------
 Q_base = 1
 
 # Growth ------------------------------------------------------------------
-G_base = c(0.2, 90, 10, 2, 8) # K, Linf, L1, SD1, SDA
+G_base = c(0.2, 99, 20, 4, 7) # K, Linf, L1, SD1, SDA
 
 # LW relationship ---------------------------------------------------------
-LW_base = c(exp(-12.1), 3.2) # a and b parameters LW
+LW_base = c(exp(-12.09), 3.13) # a and b parameters LW
 
 # Maturity relationship ---------------------------------------------------------
-mat_base_len = c(0.3, 41) # a and b parameters len maturity
-mat_base_age = c(3, 3.5) # a and b parameters age maturity
+mat_base_len = c(0.3, 55) # a and b parameters len maturity
+mat_base_age = c(3, 4) # a and b parameters age maturity
 
 # Initial abundance and sigmaR -------------------------------------------------------
 N1_base = 1e+05 # Initial Recruitment and mean recruitment over time period
-sigma_R = 0.6 # sigma R recruitment
+sigma_R = 0.4 # sigma R recruitment
 
 # Selectivity ------------------------------------------------------
 agesel_based = list(model = c("logistic", "logistic"),
-                    initial_pars = list(c(3.5, 0.4), c(1.5, 0.225)))
+                    initial_pars = list(c(4, 0.4), c(1.5, 0.225)))
 lensel_based = list(model = c("len-logistic", "len-logistic"),
-                    initial_pars = list(c(45, 3), c(17, 3)))
+                    initial_pars = list(c(55, 3), c(27.5, 3)))
 
 # Ecov information ------------------------------------------------------
 
 Ecov_re_sig = c(0) # Ecov process error SD (this will be exp() in WHAM)
 Ecov_re_cor <- c(0.3) # Ecov process error autocorrelation: in WHAM: -1 + 2/(1 + exp(-phi))
-Ecov_effect <- c(0.3, -0.15, 0.25) # Effect on growth parameter (Beta, parameter-specific: k, Linf, L1)
+Ecov_effect <- c(0.3, -0.15, 0.1) # Effect on growth parameter (Beta, parameter-specific: k, Linf, L1)
 # K and Linf have negatively correlated variability
 Ecov_trend = c(0, 0.03)
 # When ecov trend positive, year when this trend will start to be simulated:

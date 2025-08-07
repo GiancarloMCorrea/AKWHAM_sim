@@ -1,5 +1,6 @@
-# Make sure you update the WHAM package:
-# remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='tuna')
+# Make sure you use the right version of the WHAM package:
+# remotes::install_github(repo = 'GiancarloMCorrea/wham', ref='6d06011cf3b85c795d7a51fd45d9bc1c91c34272')
+# From 'tuna' branch, use maturity parameters
 
 # Clear workspace
 rm(list=ls())
@@ -17,7 +18,7 @@ create_inputs = TRUE # want to create OM EM inputs? (just do it once)
 
 # -------------------------------------------------------------------------
 # IMPORTANT: Define species: cod or haddock
-this_sp = 'haddock' # or 'haddock'
+this_sp = 'cod' # 'cod' or 'haddock'
 save(this_sp, file = 'inputs/this_sp.RData')
 
 # -------------------------------------------------------------------------
@@ -65,11 +66,11 @@ run_iter <- function(sim, scen){
 # -------------------------------------------------------------------------
 # Run in parallel several simulations for all scenarios
 these_scenarios = c(1:nrow(df.scenario))
-snowfall::sfInit(parallel=TRUE, cpus=3) # modify this
+snowfall::sfInit(parallel=TRUE, cpus=10) # modify this
 snowfall::sfExportAll()
 for(sc in these_scenarios){
     snowfall::sfExportAll()
-    trash <- snowfall::sfLapply(1:10, function(sim) run_iter(sim, sc))
+    trash <- snowfall::sfLapply(1:40, function(sim) run_iter(sim, sc))
 }
 snowfall::sfStop()
 
