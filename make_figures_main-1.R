@@ -44,6 +44,11 @@ ts_df1 = readRDS(file = file.path(output_folder, 'ts_results.RDS')) %>% mutate(s
 par_df1 = readRDS(file = file.path(output_folder, 'par_results.RDS')) %>% mutate(species = 'Cod') # par data
 index_paa_df1 = readRDS(file = file.path(output_folder, 'index_paa_results.RDS')) %>% mutate(species = 'Cod') # Index pred paa
 waa_df1 = readRDS(file = file.path(output_folder, 'waa_results.RDS')) %>% mutate(species = 'Cod') # WAA data
+# Filter convergent reps. do it here because needs to be done by species:
+ts_df1 = filter_iter(ts_df1)
+par_df1 = filter_iter(par_df1)
+index_paa_df1 = filter_iter(index_paa_df1)
+waa_df1 = filter_iter(waa_df1)
 
 # Read for haddock:
 output_folder = file.path('outputs', 'haddock')
@@ -51,6 +56,11 @@ ts_df2 = readRDS(file = file.path(output_folder, 'ts_results.RDS')) %>% mutate(s
 par_df2 = readRDS(file = file.path(output_folder, 'par_results.RDS')) %>% mutate(species = 'Haddock') # par data
 index_paa_df2 = readRDS(file = file.path(output_folder, 'index_paa_results.RDS')) %>% mutate(species = 'Haddock') # Index pred paa
 waa_df2 = readRDS(file = file.path(output_folder, 'waa_results.RDS')) %>% mutate(species = 'Haddock') # WAA data
+# Filter convergent reps. do it here because needs to be done by species:
+ts_df2 = filter_iter(ts_df2)
+par_df2 = filter_iter(par_df2)
+index_paa_df2 = filter_iter(index_paa_df2)
+waa_df2 = filter_iter(waa_df2)
 
 # Merge both:
 ts_df = rbind(ts_df1, ts_df2)
@@ -70,8 +80,6 @@ temp = par_df %>% dplyr::filter(par %in% c('logit_q', 'mean_rec_pars', 'log_NAA_
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, conv_level = max_grad)
-# Filter first X reps:
-tmp_df = filter_iter(tmp_df)
 # Set par labels:
 tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_NAA_sigma'),
                                          labels = c(expression(bar(R)), 'Q', expression(sigma[R]))), # expression(N["1,1"]) 'F[1]'
@@ -98,8 +106,6 @@ temp = ts_df %>% dplyr::select(scenario, species, par, year, paa_generation, dat
 
 # Set EM and OM labels:
 tmp_df = set_labels(temp, conv_level = max_grad)
-# Filter first X reps:
-tmp_df = filter_iter(tmp_df)
 # Set par labels:
 tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec', 'F'),
                                      labels = c('SSB', 'R', 'F')), # expression(N["1,1"]) 'F[1]'
@@ -133,8 +139,6 @@ tmp_df = set_labels(temp, caal_type = c('random', 'strat'),
                     selex_type = c('fixed', 'varying'), 
                     ecov_type = c('stationary', 'trend'),
                     conv_level = max_grad)
-# Filter first X reps:
-tmp_df = filter_iter(tmp_df)
 # Set par labels:
 tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('mean_rec_pars', 'logit_q', 'log_NAA_sigma'),
                                          labels = c(expression(bar(R)), 'Q', expression(sigma[R]))) # expression(N["1,1"]) 'F[1]'
@@ -144,7 +148,7 @@ tmp_df = tmp_df %>% mutate(y_label = paste(caal_samp, Ecov_sim, age_selex, sep =
 # Prepare data for plot:
 plot_dat = tmp_df %>% group_by(em_label, par2, om_label, y_label,species) %>%
   dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult),
-                   precision = round(sd(rel_error)*re_mult))
+                   precision = round((quantile(rel_error, probs = 0.95) - quantile(rel_error, probs = 0.05))*re_mult))
 plot_dat = plot_dat %>% mutate(box_label = paste0(bias, '(', precision, ')'))
 
 # Make plot:
@@ -165,10 +169,10 @@ ggsave(filename = file.path(save_folder, paste0(paste('main', 'par-diff', sep = 
 
 
 # -------------------------------------------------------------------------
-# Plot annual Recruitment ts for both species, const+vary
-# Only show WAA-iid and stepwise
-temp = ts_df %>% dplyr::filter(par == 'Rec', growth_var > 0, paa_generation == 'stepwise', re_method == 'iid') %>% 
-  dplyr::select(scenario, species, year, data_scen, Ecov_sim, 
+# Plot average TS Rec SSB
+# Only stepwise
+temp = ts_df %>% dplyr::filter(par %in% c('Rec', 'SSB'), growth_var > 0, paa_generation == 'stepwise') %>% 
+  dplyr::select(scenario, species, year, data_scen, Ecov_sim,  par,
                 caal_samp, age_selex, re_method, method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence) 
 
 # Set EM and OM labels:
@@ -176,33 +180,35 @@ tmp_df = set_labels(temp, caal_type = c('random', 'strat'),
                     selex_type = c('fixed', 'varying'), 
                     ecov_type = c('stationary', 'trend'),
                     conv_level = max_grad)
-# Filter first X reps:
-tmp_df = filter_iter(tmp_df)
+# Set par labels:
+tmp_df = tmp_df %>% mutate(par2 = factor(par, levels = c('SSB', 'Rec'),
+                                         labels = c('SSB', 'R')) ) 
+tmp_df = tmp_df %>% mutate(y_label = paste(caal_samp, Ecov_sim, age_selex, sep = '/'))
 
-# Prepare data for plot:
-plot_dat = tmp_df %>% group_by(em_label, om_label, caal_samp, age_selex, Ecov_sim, species, year) %>%
-  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
-                   q50 = quantile(rel_error, probs = 0.5)*re_mult,
-                   q975 = quantile(rel_error, probs = 0.975)*re_mult) 
+# Plot:
+plot_dat = tmp_df %>% group_by(em_label, par2, om_label, y_label, year, species) %>%
+  dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
+                   precision = (quantile(rel_error, probs = 0.95) - quantile(rel_error, probs = 0.05))*re_mult) %>%
+  group_by(em_label, par2, om_label, y_label, species) %>%
+  dplyr::summarise(bias = round(mean(bias)),
+                   precision = round(mean(precision)))
+plot_dat = plot_dat %>% mutate(box_label = paste0(bias, '(', precision, ')'))
 
 # Make plot:
-p1 = ggplot(plot_dat, aes(x = year, y = q50)) +
-  geom_line(aes(color = caal_samp)) +
-  geom_ribbon(aes(ymin = q025, ymax = q975, fill = caal_samp), alpha = 0.3) +
-  geom_hline(yintercept=0, color=1, linetype='dashed') +
-  scale_color_manual(values = colpal2) +
-  scale_fill_manual(values = colpal2) +
-  coord_cartesian(ylim = 50*c(-1, 1)) +
-  ylab('Relative error (%)') + xlab('Simulated year') +
-  theme(legend.position = 'bottom',
-        axis.text.x = element_text(size = 9),
+col_vals = c("#075AFF", "white",  "#FF0000")
+p1 = ggplot(data = plot_dat, aes(x = em_label, y = y_label, fill = bias)) +
+  geom_tile(color = NA) +
+  geom_text(aes(label = box_label), color = 'black', size = 3) +
+  scale_fill_gradient2(low = col_vals[1], mid = col_vals[2], high = col_vals[3]) +
+  xlab(NULL) + ylab(NULL) +
+  theme(legend.position = 'none', 
+        axis.text.y = element_text(angle = 0, hjust = 1),
+        axis.text.x = element_text(angle = 45, vjust = 1, hjust=1, size = 9),
         strip.text = element_text(size = 10),
-        legend.text=element_text(size=10),
         strip.background = element_rect(fill="white")) +
-  facet_nested(species+Ecov_sim ~ om_label+age_selex, labeller = 'label_parsed') +
-  guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'rec-diff', sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 170, units = 'mm', dpi = img_res)
+  facet_nested(species+par2 ~ om_label, labeller = 'label_parsed')
+ggsave(filename = file.path(save_folder, paste0(paste('main', 'avg-ts-diff', sep = '-'), fig_type)), 
+       plot = p1, width = img_width, height = 150, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # Plot IAA-1 ts for both species
@@ -216,14 +222,12 @@ tmp_df = set_labels(temp, caal_type = c('random', 'strat'),
                     selex_type = c('fixed', 'varying'), 
                     ecov_type = c('stationary', 'trend'),
                     conv_level = max_grad)
-# Filter first X reps:
-tmp_df = filter_iter(tmp_df)
 temp = tmp_df %>% mutate(y_label = paste(caal_samp, Ecov_sim, age_selex, sep = '/'))
 
 # Prepare data for plot:
 plot_dat = temp %>% group_by(em_label, species, om_label, y_label, year) %>%
   dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                   precision = sd(rel_error)*re_mult) %>%
+                   precision = (quantile(rel_error, probs = 0.95) - quantile(rel_error, probs = 0.05))*re_mult) %>%
   group_by(em_label, species, om_label, y_label) %>%
   dplyr::summarise(bias = round(mean(bias)),
                    precision = round(mean(precision)))
@@ -245,47 +249,3 @@ p1 = ggplot(data = plot_dat, aes(x = em_label, y = y_label, fill = bias)) +
 ggsave(filename = file.path(save_folder, paste0(paste('main', 'iaa1-diff', sep = '-'), fig_type)), 
        plot = p1, width = img_width, height = 150, units = 'mm', dpi = img_res)
 
-
-# -------------------------------------------------------------------------
-# Plot WAA plus group ts for both species, EBS+MAB
-# Only show stepwise
-temp = waa_df %>% dplyr::filter(growth_var > 0, paa_generation == 'stepwise') %>% 
-  dplyr::select(scenario, species, year, data_scen, Ecov_sim, 
-                caal_samp, age_selex, re_method, method, growth_var, im, rel_error, maxgrad, na_sdrep, convergence) 
-
-# Set EM and OM labels:
-tmp_df = set_labels(temp, caal_type = c('random'), 
-                    selex_type = c('fixed'), # only fixed selec
-                    ecov_type = c('stationary', 'trend'),
-                    conv_level = max_grad)
-# Filter first X reps:
-tmp_df = filter_iter(tmp_df)
-# Make em label:
-tmp_df$em_label2 = factor(tmp_df$em_label, labels = c("WEm", expression(WNP*"-"*iid), 
-                                                    expression(WNP*"-"*2*"D"),
-                                                    expression(WNP*"-"*3*"D")))
-
-# Prepare data for plot:
-plot_dat = tmp_df %>% group_by(em_label2, om_label, caal_samp, Ecov_sim, species, year) %>%
-  dplyr::summarise(q025 = quantile(rel_error, probs = 0.025)*re_mult, 
-                   q50 = quantile(rel_error, probs = 0.5)*re_mult,
-                   q975 = quantile(rel_error, probs = 0.975)*re_mult) 
-
-# Make plot:
-p1 = ggplot(plot_dat, aes(x = year, y = q50)) +
-  geom_line(aes(color = caal_samp)) +
-  geom_ribbon(aes(ymin = q025, ymax = q975, fill = caal_samp), alpha = 0.3) +
-  geom_hline(yintercept=0, color=1, linetype='dashed') +
-  scale_color_manual(values = colpal2) +
-  scale_fill_manual(values = colpal2) +
-  coord_cartesian(ylim = 80*c(-1, 1)) +
-  ylab('Relative error (%)') + xlab('Simulated year') +
-  theme(legend.position = 'none',
-        axis.text.x = element_text(size = 9),
-        strip.text = element_text(size = 10),
-        legend.text=element_text(size=10),
-        strip.background = element_rect(fill="white")) +
-  facet_nested(species+em_label2 ~ om_label+Ecov_sim, labeller = 'label_parsed') +
-  guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
-ggsave(filename = file.path(save_folder, paste0(paste('main', 'waa-diff', sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 180, units = 'mm', dpi = img_res)

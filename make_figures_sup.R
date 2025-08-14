@@ -304,7 +304,13 @@ dev.off()
 # Supp figure: simulated variability in LAA:
 # WARNING: you need to run the previous plot (Ecov sim)
 
-this_sp = 'cod' # cod or haddock
+this_sp = 'haddock' # cod or haddock
+
+if(this_sp == 'cod') {
+  xint = 10 # x intercept for cod
+} else if(this_sp == 'haddock') {
+  xint = 8 # x intercept for haddock
+}
 this_path = file.path('sample_data', this_sp, 'LAA_sample')
 all_files = list.files(path = this_path)
 # Read sim data (growth var present):
@@ -327,7 +333,7 @@ merged_df = merged_df %>% mutate(om_label = factor(growth_var, levels = 0:2,
                                  i_group = paste(sim, ecov, sep = '-'))
 
 figs2 = ggplot(merged_df, aes(x=year, y=value, group = factor(i_group), color = ecov)) +
-  geom_vline(xintercept = 10, linetype = 'dashed') +
+  geom_vline(xintercept = xint, linetype = 'dashed') +
   geom_line(alpha = 1) +
   scale_color_manual(values = c(colpal1, 'gray50')) +
   xlab('Simulated year') +
@@ -352,7 +358,7 @@ output_folder = file.path('outputs', this_sp)
 max_grad = 1e-04
 min_alpha = 0.35
 ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))
-paa_gen_approach = 'traditional'
+paa_gen_approach = 'stepwise'
 
 this_age_selex = c('fixed', 'varying') # fixed or varying
 this_caal_samp = c('random') # random or strat
@@ -546,7 +552,7 @@ ggsave(filename = file.path(save_folder, this_sp, paste0('Figure_alksamp', fig_t
 # -------------------------------------------------------------------------
 # Sup figure: observed mean weight at age data before imputation
 
-this_sp = 'haddock' # cod or haddock
+this_sp = 'cod' # cod or haddock
 this_path = file.path('sample_data', this_sp, 'WAA_sample')
 all_files = list.files(path = this_path)
 # Read sim data (growth var present):

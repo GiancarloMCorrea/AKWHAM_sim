@@ -14,7 +14,7 @@ rm(list = ls())
 source('aux_functions.R')
 
 # These plots will be done by species. Select species:
-this_sp = 'haddock' # cod or haddock
+this_sp = 'cod' # cod or haddock
 
 # Save plot folder:
 save_folder = 'plots'

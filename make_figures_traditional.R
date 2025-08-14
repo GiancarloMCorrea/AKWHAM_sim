@@ -129,7 +129,7 @@ tmp_df = tmp_df %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
 # Plot:
 plot_dat = tmp_df %>% group_by(em_label, par2, om_label, y_label) %>%
   dplyr::summarise(bias = round(quantile(rel_error, probs = 0.5)*re_mult),
-                   precision = round(sd(rel_error)*re_mult))
+                   precision = round((quantile(rel_error, probs = 0.95) - quantile(rel_error, probs = 0.05))*re_mult))
 plot_dat = plot_dat %>% mutate(box_label = paste0(bias, '(', precision, ')'))
 
 p3 = make_heatmap(df = plot_dat, this_factor = bias, this_label = box_label, y_label = y_label)
@@ -159,7 +159,7 @@ tmp_df = tmp_df %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
 # Plot:
 plot_dat = tmp_df %>% group_by(em_label, par2, om_label, y_label, year) %>%
   dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                   precision = sd(rel_error)*re_mult) %>%
+                   precision = (quantile(rel_error, probs = 0.95) - quantile(rel_error, probs = 0.05))*re_mult) %>%
   group_by(em_label, par2, om_label, y_label) %>%
   dplyr::summarise(bias = round(mean(bias)),
                    precision = round(mean(precision)))
@@ -231,7 +231,7 @@ temp = temp %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
 # Prepare data for geom linerage plot:
 plot_dat = temp %>% group_by(em_label, par2, om_label, y_label, year) %>%
   dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                   precision = sd(rel_error)*re_mult) %>%
+                   precision = (quantile(rel_error, probs = 0.95) - quantile(rel_error, probs = 0.05))*re_mult) %>%
   group_by(em_label, par2, om_label, y_label) %>%
   dplyr::summarise(bias = round(mean(bias)),
                    precision = round(mean(precision)))
@@ -262,7 +262,7 @@ temp = temp %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
 # Prepare data for plot:
 plot_dat = temp %>% group_by(em_label, par2, om_label, y_label, year) %>%
   dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                   precision = sd(rel_error)*re_mult) %>%
+                   precision = (quantile(rel_error, probs = 0.95) - quantile(rel_error, probs = 0.05))*re_mult) %>%
   group_by(em_label, par2, om_label, y_label) %>%
   dplyr::summarise(bias = round(mean(bias)),
                    precision = round(mean(precision)))
@@ -294,7 +294,7 @@ temp = temp %>% mutate(y_label = paste(Ecov_sim, age_selex, sep = '/'))
 # Prepare data for plot:
 plot_dat = temp %>% group_by(em_label, par2, om_label, y_label, year) %>%
   dplyr::summarise(bias = quantile(rel_error, probs = 0.5)*re_mult,
-                   precision = sd(rel_error)*re_mult) %>%
+                   precision = (quantile(rel_error, probs = 0.95) - quantile(rel_error, probs = 0.05))*re_mult) %>%
   group_by(em_label, par2, om_label, y_label) %>%
   dplyr::summarise(bias = round(mean(bias)),
                    precision = round(mean(precision)))
