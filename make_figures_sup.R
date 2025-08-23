@@ -353,12 +353,12 @@ ggsave(filename = file.path('plots', this_sp, 'Figure_LAA.png'), plot = figs2,
 # TS data:
 
 # Specify these values (see main plot script)
-this_sp = 'haddock' # cod or haddock
+this_sp = 'cod' # cod or haddock
 output_folder = file.path('outputs', this_sp)
 max_grad = 1e-04
 min_alpha = 0.35
 ts_df = readRDS(file = file.path(output_folder, 'ts_results.RDS'))
-paa_gen_approach = 'stepwise'
+paa_gen_approach = 'traditional'
 
 this_age_selex = c('fixed', 'varying') # fixed or varying
 this_caal_samp = c('random') # random or strat
@@ -552,7 +552,7 @@ ggsave(filename = file.path(save_folder, this_sp, paste0('Figure_alksamp', fig_t
 # -------------------------------------------------------------------------
 # Sup figure: observed mean weight at age data before imputation
 
-this_sp = 'cod' # cod or haddock
+this_sp = 'haddock' # cod or haddock
 this_path = file.path('sample_data', this_sp, 'WAA_sample')
 all_files = list.files(path = this_path)
 # Read sim data (growth var present):

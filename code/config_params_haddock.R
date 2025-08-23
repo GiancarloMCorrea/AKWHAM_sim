@@ -32,9 +32,9 @@ sigma_R = 0.2 # sigma R recruitment
 
 # Selectivity ------------------------------------------------------
 agesel_based = list(model = c("logistic", "logistic"),
-                    initial_pars = list(c(2.5, 0.4), c(1.5, 0.225)))
+                    initial_pars = list(c(2.5, 0.55), c(1.5, 0.45)))
 lensel_based = list(model = c("len-logistic", "len-logistic"),
-                    initial_pars = list(c(28, 3), c(22, 3)))
+                    initial_pars = list(c(28, 1.75), c(22, 2.5)))
 
 # Ecov information ------------------------------------------------------
 

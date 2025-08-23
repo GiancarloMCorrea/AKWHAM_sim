@@ -241,9 +241,9 @@ for(i in 1:NROW(df.scenario)){
                                           bias_correct_pe = TRUE, bias_correct_oe = TRUE)
   # Fix some parameters:
   em_inputs[[i]]$par$log_NAA_sigma = log(sigma_R)
-  #em_inputs[[i]]$map$log_NAA_sigma <- factor(NA) # Fix NAA sigma
+  # em_inputs[[i]]$par$log_F1 <- log(0.05) # same as Fmin in make_om.R
+  # em_inputs[[i]]$map$log_F1 <- factor(NA) # fix log_F1
   em_inputs[[i]]$map$log_N1_pars <- factor(rep(NA, times = length(ages_base))) # Fix N1 pars
-  # em_inputs[[i]]$map$mean_rec_pars <- factor(c(NA, 1)) # Fix steepness
   # Define random variable:
   #em_inputs[[i]]$random = NULL # default for EWAA
   #if(df.scenario$method[i] == 'WAA') em_inputs[[i]]$random = 'WAA_re'

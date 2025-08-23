@@ -18,7 +18,7 @@ create_inputs = TRUE # want to create OM EM inputs? (just do it once)
 
 # -------------------------------------------------------------------------
 # IMPORTANT: Define species: cod or haddock
-this_sp = 'cod' # 'cod' or 'haddock'
+this_sp = 'haddock' # 'cod' or 'haddock'
 save(this_sp, file = 'inputs/this_sp.RData')
 
 # -------------------------------------------------------------------------

@@ -588,7 +588,7 @@ if(this_scenario$method %in% c('EWAA', 'WAA')) {
 # -------------------------------------------------------------------------
 # Maturity
 if(this_scenario$method %in% c('EWAA', 'WAA')) {
-  EM_input$data$mature = sim_data$mat_at_age
+  EM_input$data$mature = sim_data$mat_at_age[(n_years_burnin+1):(n_years_burnin+n_years_base),]
 }
 
 # -------------------------------------------------------------------------

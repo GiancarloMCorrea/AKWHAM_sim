@@ -9,7 +9,7 @@ theme_set(theme_bw())
 
 # Clean workspace
 rm(list = ls())
-this_sp = 'haddock' # 'haddock' or 'cod'
+this_sp = 'cod' # 'haddock' or 'cod'
 
 # Call aux functions
 source('aux_functions.R')

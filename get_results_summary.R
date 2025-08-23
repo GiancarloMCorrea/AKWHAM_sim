@@ -60,7 +60,9 @@ for(k in seq_along(scenario_names)) {
         # TIME SERIES -------------------------------
         ssb <- data.frame(par = 'SSB',
                           year = 1:nyears,
-                          est = rep_i$fit$rep$SSB,
+                          # est = rep_i$fit$rep$SSB,
+                          # We are calculating SSB in this way because small error when running last results. this error will not impact the model estimates:
+                          est = rowSums( rep_i$fit$rep$NAA * rep_i$fit$rep$pred_waa[2,,] * rep_i$truth$mat_at_age[(n_years_burnin+1):(n_years_burnin+n_years_base),] ),
                           truth = tail(rep_i$truth$SSB, n = n_years_base))
         recruits <- data.frame(par = 'Rec',
                                year = 1:nyears,

@@ -14,7 +14,7 @@ rm(list = ls())
 source('aux_functions.R')
 
 # These plots will be done by species. Select species:
-this_sp = 'cod' # cod or haddock
+this_sp = 'haddock' # cod or haddock
 
 # Save plot folder:
 save_folder = 'plots'
@@ -307,11 +307,12 @@ plot_dat2 = temp %>% group_by(em_label, par2, paa_generation, om_label) %>%
                    q975 = quantile(est, probs = 0.975, na.rm = T))
 
 # Merge:
-plot_dat = bind_rows(plot_dat1, plot_dat2)
+# plot_dat = bind_rows(plot_dat1, plot_dat2)
+plot_dat = plot_dat2
 
 # Make plot:
 p1 = make_plot_3b(plot_dat, paa_generation, violin_sep = 0.4, 
                   leg_pos = 'bottom', leg_title = '', col_vals = colpal1,
                   var_name = 'Value')
 ggsave(filename = file.path(save_tmp_folder, paste0(paste('main', 'sel-vary', sep = '-'), fig_type)), 
-       plot = p1, width = img_width, height = 180, units = 'mm', dpi = img_res)
+       plot = p1, width = img_width, height = 130, units = 'mm', dpi = img_res)
