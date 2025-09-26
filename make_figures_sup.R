@@ -241,8 +241,8 @@ par(mar = c(6,3.5,0.8,0.5))
 image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = '', 
       main = NULL)
 axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
-axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths_cod)), 
-     labels = fish_lengths_cod)
+axis(2, at = seq(from = 0, to = 1, length.out = 9), 
+     labels = seq(from = 2, to = 130, by = 16))
 fields::image.plot(t(phi_matrix), add=T, horizontal = TRUE,
                    col = rev(viridis::viridis(100)), legend.mar = 5)
 mtext(text = 'Age', side = 1, line = 2, cex = cex_lab)
@@ -251,12 +251,15 @@ box()
 
 # Phi matrix Haddock
 phi_matrix = om_sim1_had$rep$jan1_phi_mat[,,1]
+phi_matrix = rbind(phi_matrix, matrix(0, nrow = length(fish_lengths_cod) - length(fish_lengths_had),
+                                         ncol = ncol(phi_matrix)))
+# add rows below to make dims similar to cod, so we have same y-axis for both species
 par(mar = c(6,3.5,0.8,0.5))
 image(phi_matrix, axes=FALSE, col='transparent', xlab = '', ylab = '', 
       main = NULL)
 axis(1, at = seq(from = 0, to = 1, length.out = ncol(phi_matrix)), labels = 1:ncol(phi_matrix))
-axis(2, at = seq(from = 0, to = 1, length.out = length(fish_lengths_had)), 
-     labels = fish_lengths_had)
+axis(2, at = seq(from = 0, to = 1, length.out = 9), 
+     labels = seq(from = 2, to = 130, by = 16))
 fields::image.plot(t(phi_matrix), add=T, horizontal = TRUE,
                    col = rev(viridis::viridis(100)), legend.mar = 5)
 mtext(text = 'Age', side = 1, line = 2, cex = cex_lab)
