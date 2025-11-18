@@ -598,3 +598,45 @@ p1 = ggplot(tmp_df, aes(x = factor(age), y = n_na)) +
   guides(colour=guide_legend(title=NULL), fill=guide_legend(title=NULL))
 ggsave(filename = file.path(save_folder, this_sp, paste0('Figure_waasamp', fig_type)), plot = p1,
        width = img_width , height = 150, units = 'mm', dpi = img_res)
+
+
+# -------------------------------------------------------------------------
+# Figure impact of selectivity and time variability in growth
+# Only for cod
+# No used in the manuscript but nice to show in presentations
+
+# -------------------------------------------------------------------------
+# Sup figure: Impact of length-based selectivity and sampling
+
+om_sim1 = readRDS(file = 'sample_data/haddock/om_sample/om_sample_39.RDS')
+source(file.path('code', 'config_params_haddock.R'))
+# Phi2 df:
+sel_yrs = c(43, 36, 29) # only subset of years
+phi_df2 = list()
+for(k in seq_along(sel_yrs)) {
+  phi_mat2 = om_sim1$rep$jan1_phi_mat[,,sel_yrs[k]] # only first year
+  rownames(phi_mat2) = lengths_base
+  colnames(phi_mat2) = ages_base
+  tmp = reshape2::melt(phi_mat2, varnames = c('len', 'age')) %>% mutate(year = sel_yrs[k])
+  phi_df2[[k]] = tmp
+}
+phi_df2 = bind_rows(phi_df2)
+# Sel df:
+sel_df2 = data.frame(len = lengths_base, value = om_sim1$rep$selAL[[2]][1,], type = 'Survey')
+# Make plot:
+phi_df2 = phi_df2 %>% mutate(year = factor(year, labels = c('year=1', 'year=2', 'year=3')))
+p1 = ggplot() +
+  geom_rect(data = sel_df2, aes(xmin = len, xmax = len+2, 
+                                ymin = 0, ymax = max(phi_df2$value) + 0.05, fill=value), 
+            alpha = 0.75) +
+  geom_line(data = phi_df2, aes(x = len, y = value, group = factor(age))) +
+  coord_flip() +
+  scale_fill_gradientn(colours = rev(terrain.colors(7))) +
+  xlab('Length (cm)') + ylab('Proportion') +
+  theme_classic() +
+  theme(legend.position = 'none') +
+  facet_wrap(~ year, nrow = 1)
+ggsave(filename = file.path(save_folder, paste0('Figure_growthvar_selex', fig_type)), plot = p1,
+       width = img_width , height = 100, units = 'mm', dpi = img_res)
+
+
